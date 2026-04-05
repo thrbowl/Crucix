@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Crucix Dashboard Data Synthesizer
+// Crucix Cybersecurity Intelligence Dashboard Synthesizer
 // Reads runs/latest.json, fetches RSS news, generates signal-based ideas,
 // and injects everything into dashboard/public/jarvis.html
 //
@@ -49,7 +49,6 @@ const geoKeywords = {
   'Peru':[-10,-76],'Ecuador':[-2,-78],'Bolivia':[-17,-65],
   'Singapore':[1.35,103.8],'Malaysia':[4.2,101.9],'Vietnam':[16,108],
   'Algeria':[28,3],'Tunisia':[34,9],'Zimbabwe':[-20,30],'Mozambique':[-18,35],
-  // Americas expansion
   'Texas':[31,-100],'Florida':[28,-82],'Chicago':[41.9,-87.6],'Los Angeles':[34,-118],
   'San Francisco':[37.8,-122.4],'Seattle':[47.6,-122.3],'Miami':[25.8,-80.2],
   'Toronto':[43.7,-79.4],'Ottawa':[45.4,-75.7],'Vancouver':[49.3,-123.1],
@@ -59,26 +58,22 @@ const geoKeywords = {
   'Guatemala':[14.6,-90.5],'Honduras':[14.1,-87.2],'El Salvador':[13.7,-89.2],
   'Costa Rica':[10,-84],'Jamaica':[18.1,-77.3],'Haiti':[19,-72],
   'Dominican':[18.5,-70],'Puerto Rico':[18.2,-66.5],
-  // More Asia-Pacific
   'Sri Lanka':[7,80],'Hong Kong':[22.3,114.2],'Taipei':[25,121.5],
   'Seoul':[37.6,127],'Osaka':[34.7,135.5],'Mumbai':[19.1,72.9],
   'Delhi':[28.6,77.2],'Shanghai':[31.2,121.5],'Shenzhen':[22.5,114.1],
   'Auckland':[-36.8,174.8],'Papua New Guinea':[-6.3,147],
-  // More Europe
   'Berlin':[52.5,13.4],'Paris':[48.9,2.3],'Madrid':[40.4,-3.7],
   'Rome':[41.9,12.5],'Warsaw':[52.2,21],'Prague':[50.1,14.4],
   'Vienna':[48.2,16.4],'Budapest':[47.5,19.1],'Bucharest':[44.4,26.1],
-  'Kyiv':[50.4,30.5],'Oslo':[59.9,10.7],'Copenhagen':[55.7,12.6],
+  'Oslo':[59.9,10.7],'Copenhagen':[55.7,12.6],
   'Brussels':[50.8,4.4],'Zurich':[47.4,8.5],'Dublin':[53.3,-6.3],
   'Lisbon':[38.7,-9.1],'Athens':[37.9,23.7],'Minsk':[53.9,27.6],
-  // More Africa
   'Nairobi':[-1.3,36.8],'Lagos':[6.5,3.4],'Accra':[5.6,-0.2],
   'Addis Ababa':[9,38.7],'Cape Town':[-33.9,18.4],'Johannesburg':[-26.2,28],
   'Kinshasa':[-4.3,15.3],'Khartoum':[15.6,32.5],'Mogadishu':[2.1,45.3],
   'Dakar':[14.7,-17.5],'Abuja':[9.1,7.5],
-  // Tech/Economy keywords with US locations
   'Fed':[38.9,-77],'Congress':[38.9,-77],'Senate':[38.9,-77],
-  'Silicon Valley':[37.4,-122],'NASA':[28.6,-80.6],'Pentagon':[38.9,-77],
+  'Silicon Valley':[37.4,-122],'NASA':[28.6,-80.6],
   'IMF':[38.9,-77],'World Bank':[38.9,-77],'UN':[40.7,-74],
 };
 
@@ -100,49 +95,6 @@ function sanitizeExternalUrl(raw) {
   } catch {
     return undefined;
   }
-}
-
-function sumAirHotspots(hotspots = []) {
-  return hotspots.reduce((sum, hotspot) => sum + (hotspot.totalAircraft || 0), 0);
-}
-
-function summarizeAirHotspots(hotspots = []) {
-  return hotspots.map(h => ({
-    region: h.region,
-    total: h.totalAircraft || 0,
-    noCallsign: h.noCallsign || 0,
-    highAlt: h.highAltitude || 0,
-    top: Object.entries(h.byCountry || {}).sort((a, b) => b[1] - a[1]).slice(0, 5),
-  }));
-}
-
-function loadOpenSkyFallback(currentTimestamp) {
-  const runsDir = join(ROOT, 'runs');
-  if (!existsSync(runsDir)) return null;
-
-  const currentMs = currentTimestamp ? new Date(currentTimestamp).getTime() : NaN;
-  const files = readdirSync(runsDir)
-    .filter(name => /^briefing_.*\.json$/.test(name))
-    .sort()
-    .reverse();
-
-  for (const file of files) {
-    const filePath = join(runsDir, file);
-    try {
-      const prior = JSON.parse(readFileSync(filePath, 'utf8'));
-      const priorTimestamp = prior.sources?.OpenSky?.timestamp || prior.crucix?.timestamp || null;
-      if (priorTimestamp && Number.isFinite(currentMs) && new Date(priorTimestamp).getTime() >= currentMs) continue;
-
-      const hotspots = prior.sources?.OpenSky?.hotspots || [];
-      if (sumAirHotspots(hotspots) > 0) {
-        return { file, timestamp: priorTimestamp, hotspots };
-      }
-    } catch {
-      // Ignore unreadable historical runs and continue searching backward.
-    }
-  }
-
-  return null;
 }
 
 // === RSS Fetching ===
@@ -213,7 +165,6 @@ export async function fetchAllNews() {
     .filter(r => r.status === 'fulfilled')
     .flatMap(r => r.value);
 
-  // De-duplicate and geo-tag
   const seen = new Set();
   const geoNews = [];
   for (const item of allNews) {
@@ -248,7 +199,6 @@ export async function fetchAllNews() {
     selectedKeys.add(key);
   };
 
-  // Reserve a little space so newly-added regional feeds are not crowded out by larger globals.
   for (const source of REGIONAL_NEWS_SOURCES) {
     filtered.filter(item => item.source === source).slice(0, 2).forEach(pushUnique);
   }
@@ -256,373 +206,480 @@ export async function fetchAllNews() {
   return selected.slice(0, 50);
 }
 
-// === Leverageable Ideas from Signals ===
-export function generateIdeas(V2) {
-  const ideas = [];
-  const vix = V2.fred.find(f => f.id === 'VIXCLS');
-  const hy = V2.fred.find(f => f.id === 'BAMLH0A0HYM2');
-  const spread = V2.fred.find(f => f.id === 'T10Y2Y');
+// === Threat Level Computation ===
+function computeThreatLevel(data) {
+  let score = 0;
 
-  if (V2.tg.urgent.length > 3 && V2.energy.wti > 68) {
-    ideas.push({
-      title: 'Conflict-Energy Nexus Active',
-      text: `${V2.tg.urgent.length} urgent conflict signals with WTI at $${V2.energy.wti}. Geopolitical risk premium may expand. Consider energy exposure.`,
-      type: 'long', confidence: 'Medium', horizon: 'swing'
-    });
-  }
-  if (vix && vix.value > 20) {
-    ideas.push({
-      title: 'Elevated Volatility Regime',
-      text: `VIX at ${vix.value} — fear premium elevated. Portfolio hedges justified. Short-term equity upside is capped.`,
-      type: 'hedge', confidence: vix.value > 25 ? 'High' : 'Medium', horizon: 'tactical'
-    });
-  }
-  if (vix && vix.value > 20 && hy && hy.value > 3) {
-    ideas.push({
-      title: 'Safe Haven Demand Rising',
-      text: `VIX ${vix.value} + HY spread ${hy.value}% = risk-off building. Gold, treasuries, quality dividends may outperform.`,
-      type: 'hedge', confidence: 'Medium', horizon: 'tactical'
-    });
-  }
-  if (V2.energy.wtiRecent.length > 1) {
-    const latest = V2.energy.wtiRecent[0];
-    const oldest = V2.energy.wtiRecent[V2.energy.wtiRecent.length - 1];
-    const pct = ((latest - oldest) / oldest * 100).toFixed(1);
-    if (Math.abs(pct) > 3) {
-      ideas.push({
-        title: pct > 0 ? 'Oil Momentum Building' : 'Oil Under Pressure',
-        text: `WTI moved ${pct > 0 ? '+' : ''}${pct}% recently to $${V2.energy.wti}/bbl. ${pct > 0 ? 'Energy and commodity names benefit.' : 'Demand concerns may be emerging.'}`,
-        type: pct > 0 ? 'long' : 'watch', confidence: 'Medium', horizon: 'swing'
-      });
-    }
-  }
-  if (spread) {
-    ideas.push({
-      title: spread.value > 0 ? 'Yield Curve Normalizing' : 'Yield Curve Inverted',
-      text: `10Y-2Y spread at ${spread.value.toFixed(2)}. ${spread.value > 0 ? 'Recession signal fading — cyclical rotation possible.' : 'Inversion persists — defensive positioning warranted.'}`,
-      type: 'watch', confidence: 'Medium', horizon: 'strategic'
-    });
-  }
-  const debt = parseFloat(V2.treasury.totalDebt);
-  if (debt > 35e12) {
-    ideas.push({
-      title: 'Fiscal Trajectory Supports Hard Assets',
-      text: `National debt at $${(debt / 1e12).toFixed(1)}T. Long-term gold, bitcoin, and real asset appreciation thesis intact.`,
-      type: 'long', confidence: 'High', horizon: 'strategic'
-    });
-  }
-  const totalThermal = V2.thermal.reduce((s, t) => s + t.det, 0);
-  if (totalThermal > 30000 && V2.tg.urgent.length > 2) {
-    ideas.push({
-      title: 'Satellite Confirms Conflict Intensity',
-      text: `${totalThermal.toLocaleString()} thermal detections + ${V2.tg.urgent.length} urgent OSINT flags. Defense sector procurement may accelerate.`,
-      type: 'watch', confidence: 'Medium', horizon: 'swing'
-    });
-  }
+  const kevCount = data.sources['CISA-KEV']?.newEntries || 0;
+  score += Math.min(kevCount * 5, 20);
 
-  // Yield Curve + Labor Interaction
-  const unemployment = V2.bls.find(b => b.id === 'LNS14000000' || b.id === 'UNRATE');
-  const payrolls = V2.bls.find(b => b.id === 'CES0000000001' || b.id === 'PAYEMS');
-  if (spread && unemployment && payrolls) {
-    const weakLabor = (unemployment.value > 4.3) || (payrolls.momChange && payrolls.momChange < -50);
-    if (spread.value > 0.3 && weakLabor) {
-      ideas.push({
-        title: 'Steepening Curve Meets Weak Labor',
-        text: `10Y-2Y at ${spread.value.toFixed(2)} + UE ${unemployment.value}%. Curve steepening with deteriorating employment = recession positioning warranted.`,
-        type: 'hedge', confidence: 'High', horizon: 'tactical'
-      });
-    }
-  }
+  const critCVEs = (data.sources.NVD?.recentCVEs || []).filter(c => (c.cvssScore || 0) >= 9.0).length;
+  score += Math.min(critCVEs * 3, 15);
 
-  // ACLED Conflict + Energy Momentum
-  const conflictEvents = V2.acled?.totalEvents || 0;
-  if (conflictEvents > 50 && V2.energy.wtiRecent.length > 1) {
-    const wtiMove = V2.energy.wtiRecent[0] - V2.energy.wtiRecent[V2.energy.wtiRecent.length - 1];
-    if (wtiMove > 2) {
-      ideas.push({
-        title: 'Conflict Fueling Energy Momentum',
-        text: `${conflictEvents} ACLED events this week + WTI up $${wtiMove.toFixed(1)}. Conflict-energy transmission channel active.`,
-        type: 'long', confidence: 'Medium', horizon: 'swing'
-      });
-    }
-  }
+  const highEpss = (data.sources.EPSS?.highRisk || []).length;
+  score += Math.min(highEpss * 2, 10);
 
-  // Defense + Conflict Intensity
-  const totalFatalities = V2.acled?.totalFatalities || 0;
-  const totalThermalAll = V2.thermal.reduce((s, t) => s + t.det, 0);
-  if (totalFatalities > 500 && totalThermalAll > 20000) {
-    ideas.push({
-      title: 'Defense Procurement Acceleration Signal',
-      text: `${totalFatalities.toLocaleString()} conflict fatalities + ${totalThermalAll.toLocaleString()} thermal detections. Defense contractors may see accelerated procurement.`,
-      type: 'long', confidence: 'Medium', horizon: 'swing'
-    });
-  }
+  const c2Count = data.sources.Feodo?.onlineC2Count || 0;
+  score += Math.min(Math.floor(c2Count / 10), 10);
 
-  // HY Spread + VIX Divergence
-  if (hy && vix) {
-    const hyWide = hy.value > 3.5;
-    const vixLow = vix.value < 18;
-    const hyTight = hy.value < 2.5;
-    const vixHigh = vix.value > 25;
-    if (hyWide && vixLow) {
-      ideas.push({
-        title: 'Credit Stress Ignored by Equity Vol',
-        text: `HY spread ${hy.value.toFixed(1)}% (wide) but VIX only ${vix.value.toFixed(0)} (complacent). Equity may be underpricing credit deterioration.`,
-        type: 'watch', confidence: 'Medium', horizon: 'tactical'
-      });
-    } else if (hyTight && vixHigh) {
-      ideas.push({
-        title: 'Equity Fear Exceeds Credit Stress',
-        text: `VIX at ${vix.value.toFixed(0)} but HY spread only ${hy.value.toFixed(1)}%. Equity vol may be overshooting — credit markets aren't confirming.`,
-        type: 'watch', confidence: 'Medium', horizon: 'tactical'
-      });
-    }
-  }
+  const malwareCount = (data.sources.MalwareBazaar?.recentSamples || []).length;
+  score += Math.min(Math.floor(malwareCount / 5), 10);
 
-  // Supply Chain + Inflation Pipeline
-  const ppi = V2.bls.find(b => b.id === 'WPUFD49104' || b.id === 'PCU--PCU--');
-  const cpi = V2.bls.find(b => b.id === 'CUUR0000SA0' || b.id === 'CPIAUCSL');
-  if (ppi && cpi && V2.gscpi) {
-    const supplyPressure = V2.gscpi.value > 0.5;
-    const ppiRising = ppi.momChangePct > 0.3;
-    if (supplyPressure && ppiRising) {
-      ideas.push({
-        title: 'Inflation Pipeline Building Pressure',
-        text: `GSCPI at ${V2.gscpi.value.toFixed(2)} (${V2.gscpi.interpretation}) + PPI momentum +${ppi.momChangePct?.toFixed(1)}%. Input costs flowing through — CPI may follow.`,
-        type: 'long', confidence: 'Medium', horizon: 'strategic'
-      });
-    }
-  }
+  const ransomVictims = data.sources['Ransomware-Live']?.totalRecentVictims || 0;
+  score += Math.min(ransomVictims * 2, 15);
 
-  return ideas.slice(0, 8);
+  const maliciousIPs = data.sources.GreyNoise?.maliciousCount || 0;
+  score += Math.min(Math.floor(maliciousIPs / 50), 10);
+
+  const urlhausOnline = data.sources.URLhaus?.onlineCount || 0;
+  score += Math.min(Math.floor(urlhausOnline / 100), 10);
+
+  score = Math.min(score, 100);
+
+  let level, direction;
+  if (score >= 75) level = 'CRITICAL';
+  else if (score >= 50) level = 'HIGH';
+  else if (score >= 25) level = 'ELEVATED';
+  else level = 'LOW';
+
+  if (score >= 70) direction = 'worsening';
+  else if (score >= 40) direction = 'stable';
+  else direction = 'improving';
+
+  return { level, index: score, direction };
 }
 
-// === Synthesize raw sweep data into dashboard format ===
-export async function synthesize(data) {
-  const liveAirHotspots = data.sources.OpenSky?.hotspots || [];
-  const airFallback = sumAirHotspots(liveAirHotspots) > 0
-    ? null
-    : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp);
-  const effectiveAirHotspots = airFallback?.hotspots || liveAirHotspots;
-  const air = summarizeAirHotspots(effectiveAirHotspots);
-  const thermal = (data.sources.FIRMS?.hotspots || []).map(h => ({
-    region: h.region, det: h.totalDetections || 0, night: h.nightDetections || 0,
-    hc: h.highConfidence || 0,
-    fires: (h.highIntensity || []).slice(0, 8).map(f => ({ lat: f.lat, lon: f.lon, frp: f.frp || 0 }))
-  }));
-  const tSignals = data.sources.FIRMS?.signals || [];
-  const chokepoints = Object.values(data.sources.Maritime?.chokepoints || {}).map(c => ({
-    label: c.label || c.name, note: c.note || '', lat: c.lat || 0, lon: c.lon || 0
-  }));
-  const nuke = (data.sources.Safecast?.sites || []).map(s => ({
-    site: s.site, anom: s.anomaly || false, cpm: s.avgCPM, n: s.recentReadings || 0
-  }));
-  const nukeSignals = (data.sources.Safecast?.signals || []).filter(s => s);
-  const sdrData = data.sources.KiwiSDR || {};
-  const sdrNet = sdrData.network || {};
-  const sdrConflict = sdrData.conflictZones || {};
-  const sdrZones = Object.values(sdrConflict).map(z => ({
-    region: z.region, count: z.count || 0,
-    receivers: (z.receivers || []).slice(0, 5).map(r => ({ name: r.name || '', lat: r.lat || 0, lon: r.lon || 0 }))
-  }));
-  const tgData = data.sources.Telegram || {};
-  const tgUrgent = (tgData.urgentPosts || []).filter(p => isEnglish(p.text)).map(p => ({
-    channel: p.channel, text: p.text?.substring(0, 200), views: p.views, date: p.date, urgentFlags: p.urgentFlags || []
-  }));
-  const tgTop = (tgData.topPosts || []).filter(p => isEnglish(p.text)).map(p => ({
-    channel: p.channel, text: p.text?.substring(0, 200), views: p.views, date: p.date, urgentFlags: []
-  }));
-  const who = (data.sources.WHO?.diseaseOutbreakNews || []).slice(0, 10).map(w => ({
-    title: w.title?.substring(0, 120), date: w.date, summary: w.summary?.substring(0, 150)
-  }));
-  const fred = (data.sources.FRED?.indicators || []).map(f => ({
-    id: f.id, label: f.label, value: f.value, date: f.date,
-    recent: f.recent || [],
-    momChange: f.momChange, momChangePct: f.momChangePct
-  }));
-  const energyData = data.sources.EIA || {};
-  const oilPrices = energyData.oilPrices || {};
-  const wtiRecent = (oilPrices.wti?.recent || []).map(d => d.value);
-  const energy = {
-    wti: oilPrices.wti?.value, brent: oilPrices.brent?.value,
-    natgas: energyData.gasPrice?.value, crudeStocks: energyData.inventories?.crudeStocks?.value,
-    wtiRecent, signals: energyData.signals || []
-  };
-  const bls = data.sources.BLS?.indicators || [];
-  const treasuryData = data.sources.Treasury || {};
-  const debtArr = treasuryData.debt || [];
-  const treasury = { totalDebt: debtArr[0]?.totalDebt || '0', signals: treasuryData.signals || [] };
-  const gscpi = data.sources.GSCPI?.latest || null;
-  const defense = (data.sources.USAspending?.recentDefenseContracts || []).slice(0, 5).map(c => ({
-    recipient: c.recipient?.substring(0, 40), amount: c.amount, desc: c.description?.substring(0, 80)
-  }));
-  const noaa = {
-    totalAlerts: data.sources.NOAA?.totalSevereAlerts || 0,
-    alerts: (data.sources.NOAA?.topAlerts || []).filter(a => a.lat != null && a.lon != null).slice(0, 10).map(a => ({
-      event: a.event, severity: a.severity, headline: a.headline?.substring(0, 120),
-      lat: a.lat, lon: a.lon
-    }))
-  };
-
-  // EPA RadNet — pass through geo-tagged readings
-  const epaData = data.sources.EPA || {};
-  const epaStations = [];
-  const seenEpa = new Set();
-  for (const r of (epaData.readings || [])) {
-    if (r.lat == null || r.lon == null) continue;
-    const key = `${r.lat},${r.lon}`;
-    if (seenEpa.has(key)) continue;
-    seenEpa.add(key);
-    epaStations.push({ location: r.location, state: r.state, lat: r.lat, lon: r.lon, analyte: r.analyte, result: r.result, unit: r.unit });
+// === CVE Enrichment: merge NVD + EPSS + KEV + GitHub Advisory + ExploitDB ===
+function buildCVEList(data) {
+  const nvdCves = data.sources.NVD?.recentCVEs || [];
+  const epssMap = new Map();
+  for (const e of (data.sources.EPSS?.highRisk || [])) {
+    if (e.cveId) epssMap.set(e.cveId, e.epss);
   }
-  const epa = { totalReadings: epaData.totalReadings || 0, stations: epaStations.slice(0, 10) };
+  const kevSet = new Set(
+    (data.sources['CISA-KEV']?.vulnerabilities || data.sources['CISA-KEV']?.recentAdditions || [])
+      .map(v => v.cveID || v.cveId)
+      .filter(Boolean)
+  );
+  const exploitSet = new Set(
+    (data.sources.ExploitDB?.recentExploits || [])
+      .flatMap(e => (e.cveId ? [e.cveId] : []))
+  );
 
-  // Space/CelesTrak satellite data
-  const spaceData = data.sources.Space || {};
-  // Approximate subsatellite position from TLE orbital elements
-  function estimateSatPosition(sat) {
-    if (!sat?.inclination || !sat?.epoch) return null;
-    const epoch = new Date(sat.epoch);
-    const now = new Date();
-    const elapsed = (now - epoch) / 1000;
-    const period = (sat.period || 92.7) * 60; // minutes to seconds
-    const orbits = elapsed / period;
-    const frac = orbits % 1;
-    const lat = sat.inclination * Math.sin(frac * 2 * Math.PI);
-    const lonShift = (elapsed / 86400) * 360;
-    const orbitLon = frac * 360;
-    const lon = ((orbitLon - lonShift) % 360 + 540) % 360 - 180;
-    return { lat: +lat.toFixed(2), lon: +lon.toFixed(2), name: sat.name };
+  const cves = nvdCves.map(c => ({
+    id: c.cveId,
+    cvss: c.cvssScore || 0,
+    epss: epssMap.get(c.cveId) || null,
+    description: (c.description || '').substring(0, 200),
+    publishedDate: c.publishedDate,
+    inKEV: kevSet.has(c.cveId),
+    hasPoc: exploitSet.has(c.cveId),
+    sources: ['NVD',
+      ...(epssMap.has(c.cveId) ? ['EPSS'] : []),
+      ...(kevSet.has(c.cveId) ? ['KEV'] : []),
+      ...(exploitSet.has(c.cveId) ? ['ExploitDB'] : []),
+    ],
+  }));
+
+  // Also include GitHub advisories that have CVE IDs but weren't in NVD results
+  const existingIds = new Set(cves.map(c => c.id));
+  for (const adv of (data.sources['GitHub-Advisory']?.advisories || [])) {
+    const cveId = adv.cveId || adv.identifiers?.find(i => i.type === 'CVE')?.value;
+    if (cveId && !existingIds.has(cveId)) {
+      cves.push({
+        id: cveId,
+        cvss: adv.cvss || 0,
+        epss: epssMap.get(cveId) || null,
+        description: (adv.summary || '').substring(0, 200),
+        publishedDate: adv.publishedAt,
+        inKEV: kevSet.has(cveId),
+        hasPoc: exploitSet.has(cveId),
+        sources: ['GitHub-Advisory',
+          ...(epssMap.has(cveId) ? ['EPSS'] : []),
+          ...(kevSet.has(cveId) ? ['KEV'] : []),
+        ],
+      });
+      existingIds.add(cveId);
+    }
   }
-  const issPos = estimateSatPosition(spaceData.iss);
-  const spaceStations = (spaceData.spaceStations || []).map(s => estimateSatPosition(s)).filter(Boolean);
-  const space = {
-    totalNewObjects: spaceData.totalNewObjects || 0,
-    militarySats: spaceData.militarySatellites || 0,
-    militaryByCountry: spaceData.militaryByCountry || {},
-    constellations: spaceData.constellations || {},
-    iss: spaceData.iss || null,
-    issPosition: issPos,
-    stationPositions: spaceStations.slice(0, 5),
-    recentLaunches: (spaceData.recentLaunches || []).slice(0, 10).map(l => ({
-      name: l.name, country: l.country, epoch: l.epoch,
-      apogee: l.apogee, perigee: l.perigee, type: l.objectType
-    })),
-    launchByCountry: spaceData.launchByCountry || {},
-    signals: spaceData.signals || [],
-  };
 
-  // ACLED conflict events
+  cves.sort((a, b) => (b.cvss || 0) - (a.cvss || 0));
+
+  return {
+    recent: cves.slice(0, 50),
+    kevCount: cves.filter(c => c.inKEV).length,
+    criticalCount: cves.filter(c => c.cvss >= 9.0).length,
+    totalTracked: cves.length,
+  };
+}
+
+// === IOC Aggregation ===
+function buildIOCs(data) {
+  const malware = (data.sources.MalwareBazaar?.recentSamples || []).slice(0, 30).map(s => ({
+    hash: s.sha256_hash || s.sha256 || s.md5,
+    type: s.file_type || s.fileType || 'unknown',
+    tags: s.tags || [],
+    signature: s.signature || null,
+    firstSeen: s.first_seen || s.firstSeen,
+    source: 'MalwareBazaar',
+  }));
+
+  const threatfoxIOCs = (data.sources.ThreatFox?.recentIOCs || []).slice(0, 30).map(ioc => ({
+    indicator: ioc.ioc || ioc.indicator,
+    type: ioc.ioc_type || ioc.type || 'unknown',
+    threat: ioc.threat_type || ioc.malware || null,
+    tags: ioc.tags || [],
+    firstSeen: ioc.first_seen || ioc.firstSeen,
+    source: 'ThreatFox',
+  }));
+  malware.push(...threatfoxIOCs);
+
+  const c2 = [];
+  for (const entry of (data.sources.Feodo?.activeC2s || [])) {
+    c2.push({
+      ip: entry.ip || entry.ip_address,
+      port: entry.port,
+      malware: entry.malware,
+      status: entry.status || 'online',
+      firstSeen: entry.first_seen || entry.firstSeen,
+      lastOnline: entry.last_online || entry.lastOnline,
+      source: 'Feodo',
+    });
+  }
+  for (const entry of (data.sources.URLhaus?.activeUrls || []).slice(0, 30)) {
+    c2.push({
+      url: entry.url,
+      type: entry.url_type || entry.threat || 'malware_download',
+      status: entry.url_status || 'online',
+      tags: entry.tags || [],
+      firstSeen: entry.date_added || entry.dateAdded,
+      source: 'URLhaus',
+    });
+  }
+
+  const maliciousIPs = [];
+  for (const entry of (data.sources.AbuseIPDB?.reportedIPs || []).slice(0, 30)) {
+    maliciousIPs.push({
+      ip: entry.ipAddress || entry.ip,
+      reports: entry.totalReports || entry.reports || 0,
+      confidence: entry.abuseConfidenceScore || entry.confidence || 0,
+      country: entry.countryCode || entry.country,
+      source: 'AbuseIPDB',
+    });
+  }
+  for (const entry of (data.sources.GreyNoise?.topScanners || []).slice(0, 20)) {
+    maliciousIPs.push({
+      ip: entry.ip,
+      classification: entry.classification || 'malicious',
+      tags: entry.tags || [],
+      country: entry.metadata?.country || entry.country,
+      source: 'GreyNoise',
+    });
+  }
+  for (const entry of (data.sources.Spamhaus?.entries || data.sources.Spamhaus?.listings || []).slice(0, 20)) {
+    maliciousIPs.push({
+      ip: entry.ip || entry.address,
+      type: entry.type || entry.listType || 'spam',
+      source: 'Spamhaus',
+    });
+  }
+
+  const phishing = (data.sources.PhishTank?.urls || data.sources.PhishTank?.recentPhishing || []).slice(0, 30).map(p => ({
+    url: p.url,
+    target: p.target || p.brand || null,
+    verified: p.verified ?? true,
+    submitDate: p.submission_time || p.submitDate,
+    source: 'PhishTank',
+  }));
+
+  return {
+    malware,
+    c2,
+    maliciousIPs,
+    phishing,
+    total: malware.length + c2.length + maliciousIPs.length + phishing.length,
+  };
+}
+
+// === ATT&CK Matrix ===
+function buildAttackMatrix(data) {
+  const stix = data.sources['ATT&CK-STIX'] || {};
+  const tactics = (stix.tactics || []).map(t => ({
+    id: t.id || t.external_id,
+    name: t.name,
+    techniqueCount: t.techniqueCount || t.techniques?.length || 0,
+  }));
+  const techniques = (stix.techniques || []).slice(0, 100).map(t => ({
+    id: t.id || t.external_id,
+    name: t.name,
+    tacticId: t.tacticId || t.kill_chain_phases?.[0]?.phase_name,
+    count: t.count || 0,
+  }));
+  return {
+    tactics,
+    techniques,
+    totalTechniques: stix.totalTechniques || techniques.length,
+  };
+}
+
+// === Threat Actors ===
+function buildActors(data) {
+  const rlData = data.sources['Ransomware-Live'] || {};
+  const ransomwareGroups = Object.entries(rlData.byGroup || {}).map(([name, count]) => ({
+    name, victims: typeof count === 'number' ? count : count?.count || 0,
+  })).sort((a, b) => b.victims - a.victims).slice(0, 20);
+
+  const aptGroups = [];
+  for (const pulse of (data.sources.OTX?.pulses || []).slice(0, 20)) {
+    if (pulse.adversary || pulse.tags?.some(t => /apt|threat.actor/i.test(t))) {
+      aptGroups.push({
+        name: pulse.adversary || pulse.name,
+        tags: pulse.tags || [],
+        created: pulse.created,
+        references: pulse.references?.slice(0, 3) || [],
+        source: 'OTX',
+      });
+    }
+  }
+
+  const victims = (rlData.victims || []).slice(0, 50).map(v => ({
+    name: v.name,
+    group: v.group,
+    discovered: v.discovered,
+    country: v.country,
+    sector: v.sector,
+  }));
+
+  return {
+    ransomwareGroups,
+    aptGroups,
+    victims,
+    totalVictims: rlData.totalRecentVictims || victims.length,
+    bySector: rlData.bySector || {},
+    byCountry: rlData.byCountry || {},
+  };
+}
+
+// === Geographic Attack Points for Globe ===
+function buildGeoAttacks(data) {
+  const points = [];
+
+  // Ransomware victims by country
+  for (const v of (data.sources['Ransomware-Live']?.victims || []).slice(0, 40)) {
+    const geo = v.country ? geoTagText(v.country) : null;
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 2,
+        lon: geo.lon + (Math.random() - 0.5) * 2,
+        type: 'victim',
+        label: `${v.group}: ${v.name}`,
+        severity: 'high',
+        source: 'Ransomware-Live',
+      });
+    }
+  }
+
+  // GreyNoise top scanners
+  for (const s of (data.sources.GreyNoise?.topScanners || []).slice(0, 20)) {
+    const country = s.metadata?.country || s.country;
+    const geo = country ? geoTagText(country) : null;
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 3,
+        lon: geo.lon + (Math.random() - 0.5) * 3,
+        type: 'attack_source',
+        label: `Scanner: ${s.ip}`,
+        severity: 'critical',
+        source: 'GreyNoise',
+      });
+    }
+  }
+
+  // Feodo C2 servers — geo-tag by country field or fallback to IP text
+  for (const c of (data.sources.Feodo?.activeC2s || []).slice(0, 20)) {
+    const country = c.country || c.countryCode;
+    const geo = country ? geoTagText(country) : null;
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 2,
+        lon: geo.lon + (Math.random() - 0.5) * 2,
+        type: 'c2',
+        label: `C2: ${c.ip || c.ip_address} (${c.malware || 'unknown'})`,
+        severity: 'critical',
+        source: 'Feodo',
+      });
+    }
+  }
+
+  // AbuseIPDB reported IPs
+  for (const entry of (data.sources.AbuseIPDB?.reportedIPs || []).slice(0, 15)) {
+    const country = entry.countryCode || entry.country;
+    const geo = country ? geoTagText(country) : null;
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 2,
+        lon: geo.lon + (Math.random() - 0.5) * 2,
+        type: 'honeypot',
+        label: `Abuse: ${entry.ipAddress || entry.ip} (${entry.totalReports || 0} reports)`,
+        severity: 'medium',
+        source: 'AbuseIPDB',
+      });
+    }
+  }
+
+  // ACLED deadliest events (conflict context)
   const acledData = data.sources.ACLED || {};
-  const acled = acledData.error ? { totalEvents: 0, totalFatalities: 0, byRegion: {}, byType: {}, deadliestEvents: [] } : {
-    totalEvents: acledData.totalEvents || 0,
-    totalFatalities: acledData.totalFatalities || 0,
-    byRegion: acledData.byRegion || {},
-    byType: acledData.byType || {},
-    deadliestEvents: (acledData.deadliestEvents || []).slice(0, 15).map(e => ({
-      date: e.date, type: e.type, country: e.country, location: e.location,
-      fatalities: e.fatalities || 0, lat: e.lat || null, lon: e.lon || null
-    }))
-  };
+  for (const e of (acledData.deadliestEvents || []).slice(0, 15)) {
+    if (e.lat != null && e.lon != null) {
+      points.push({
+        lat: e.lat,
+        lon: e.lon,
+        type: 'conflict',
+        label: `${e.type}: ${e.location || e.country} (${e.fatalities} fatalities)`,
+        severity: e.fatalities > 50 ? 'critical' : 'high',
+        source: 'ACLED',
+      });
+    }
+  }
 
-  // GDELT news articles + geo events
-  const gdeltData = data.sources.GDELT || {};
-  const gdelt = {
-    totalArticles: gdeltData.totalArticles || 0,
-    conflicts: (gdeltData.conflicts || []).length,
-    economy: (gdeltData.economy || []).length,
-    health: (gdeltData.health || []).length,
-    crisis: (gdeltData.crisis || []).length,
-    topTitles: (gdeltData.allArticles || []).slice(0, 5).map(a => a.title?.substring(0, 80)),
-    geoPoints: (gdeltData.geoPoints || []).slice(0, 20).map(p => ({
-      lat: p.lat, lon: p.lon, name: (p.name || '').substring(0, 80), count: p.count || 1
-    }))
-  };
+  // CERT alerts by country
+  for (const alert of (data.sources['CERTs-Intl']?.recentAlerts || []).slice(0, 15)) {
+    const geo = geoTagText(alert.title || alert.cert || '');
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 2,
+        lon: geo.lon + (Math.random() - 0.5) * 2,
+        type: 'cert',
+        label: `CERT: ${(alert.title || '').substring(0, 60)}`,
+        severity: 'low',
+        source: 'CERTs-Intl',
+      });
+    }
+  }
 
-  const health = Object.entries(data.sources).map(([name, src]) => ({
-    n: name, err: Boolean(src.error), stale: Boolean(src.stale)
-  }));
-
-  // === Yahoo Finance live market data ===
-  const yfData = data.sources.YFinance || {};
-  const yfQuotes = yfData.quotes || {};
-  const markets = {
-    indexes: (yfData.indexes || []).map(q => ({
-      symbol: q.symbol, name: q.name, price: q.price,
-      change: q.change, changePct: q.changePct, history: q.history || []
-    })),
-    rates: (yfData.rates || []).map(q => ({
-      symbol: q.symbol, name: q.name, price: q.price,
-      change: q.change, changePct: q.changePct
-    })),
-    commodities: (yfData.commodities || []).map(q => ({
-      symbol: q.symbol, name: q.name, price: q.price,
-      change: q.change, changePct: q.changePct, history: q.history || []
-    })),
-    crypto: (yfData.crypto || []).map(q => ({
-      symbol: q.symbol, name: q.name, price: q.price,
-      change: q.change, changePct: q.changePct
-    })),
-    vix: yfQuotes['^VIX'] ? {
-      value: yfQuotes['^VIX'].price,
-      change: yfQuotes['^VIX'].change,
-      changePct: yfQuotes['^VIX'].changePct,
-    } : null,
-    timestamp: yfData.summary?.timestamp || null,
-  };
-
-  const yfGold = yfQuotes['GC=F'];
-  const yfSilver = yfQuotes['SI=F'];
-  const metals = {
-    gold: yfGold?.price,
-    goldChange: yfGold?.change,
-    goldChangePct: yfGold?.changePct,
-    goldRecent: yfGold?.history?.map(h => h.close) || [],
-    silver: yfSilver?.price,
-    silverChange: yfSilver?.change,
-    silverChangePct: yfSilver?.changePct,
-    silverRecent: yfSilver?.history?.map(h => h.close) || [],
-  };
-
-  // Override stale EIA prices with live Yahoo Finance data if available
-  const yfWti = yfQuotes['CL=F'];
-  const yfBrent = yfQuotes['BZ=F'];
-  const yfNatgas = yfQuotes['NG=F'];
-  if (yfWti?.price) energy.wti = yfWti.price;
-  if (yfBrent?.price) energy.brent = yfBrent.price;
-  if (yfNatgas?.price) energy.natgas = yfNatgas.price;
-  if (yfWti?.history?.length) energy.wtiRecent = yfWti.history.map(h => h.close);
-
-  // Fetch RSS
-  const news = await fetchAllNews();
-
-  const V2 = {
-    meta: data.crucix, air, thermal, tSignals, chokepoints, nuke, nukeSignals,
-    airMeta: {
-      fallback: Boolean(airFallback),
-      liveTotal: sumAirHotspots(liveAirHotspots),
-      timestamp: airFallback?.timestamp || data.sources.OpenSky?.timestamp || data.crucix?.timestamp || null,
-      source: airFallback ? 'OpenSky fallback' : 'OpenSky',
-      ...(airFallback ? { fallbackFile: airFallback.file } : {}),
-      ...(data.sources.OpenSky?.error ? { error: data.sources.OpenSky.error } : {}),
-    },
-    sdr: { total: sdrNet.totalReceivers || 0, online: sdrNet.online || 0, zones: sdrZones },
-    tg: { posts: tgData.totalPosts || 0, urgent: tgUrgent, topPosts: tgTop },
-    who, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, acled, gdelt, space, health, news,
-    markets, // Live Yahoo Finance market data
-    ideas: [], ideasSource: 'disabled',
-    // newsFeed for ticker (merged RSS + GDELT + Telegram)
-    newsFeed: buildNewsFeed(news, gdeltData, tgUrgent, tgTop),
-  };
-
-  return V2;
+  return points;
 }
 
-// === Unified News Feed for Ticker ===
-function buildNewsFeed(rssNews, gdeltData, tgUrgent, tgTop) {
+// === CERT & Advisory Alerts ===
+function buildCertAlerts(data) {
+  const cisa = (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 15).map(a => ({
+    title: (a.title || '').substring(0, 120),
+    date: a.date || a.published,
+    url: sanitizeExternalUrl(a.url || a.link),
+    severity: a.severity,
+  }));
+
+  const enisa = (data.sources.ENISA?.recentReports || []).slice(0, 10).map(r => ({
+    title: (r.title || '').substring(0, 120),
+    date: r.date || r.published,
+    url: sanitizeExternalUrl(r.url || r.link),
+  }));
+
+  const certs = (data.sources['CERTs-Intl']?.recentAlerts || []).slice(0, 15).map(a => ({
+    title: (a.title || '').substring(0, 120),
+    cert: a.cert || a.source,
+    date: a.date || a.published,
+    url: sanitizeExternalUrl(a.url || a.link),
+  }));
+
+  const china = [];
+  for (const a of (data.sources.CNCERT?.recentAlerts || []).slice(0, 10)) {
+    china.push({ title: (a.title || '').substring(0, 120), date: a.date, source: 'CNCERT', url: sanitizeExternalUrl(a.url) });
+  }
+  for (const v of (data.sources.CNVD?.recentVulns || []).slice(0, 10)) {
+    china.push({ title: (v.title || v.name || '').substring(0, 120), date: v.date, source: 'CNVD', url: sanitizeExternalUrl(v.url) });
+  }
+  for (const v of (data.sources.CNNVD?.recentVulns || []).slice(0, 10)) {
+    china.push({ title: (v.title || v.name || '').substring(0, 120), date: v.date, source: 'CNNVD', url: sanitizeExternalUrl(v.url) });
+  }
+
+  return {
+    cisa,
+    enisa,
+    certs,
+    china,
+    total: cisa.length + enisa.length + certs.length + china.length,
+  };
+}
+
+// === Security News from RSS Sources ===
+function buildSecurityNewsList(data) {
+  const items = [];
+
+  for (const a of (data.sources.ENISA?.recentReports || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link), date: a.date || a.published, source: 'ENISA', type: 'advisory' });
+  }
+  for (const a of (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link), date: a.date || a.published, source: 'CISA', type: 'advisory' });
+  }
+
+  // Chinese security news
+  for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 5)) {
+      items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link), date: a.date || a.published, source: src, type: 'news' });
+    }
+  }
+
+  // Community / OSINT
+  for (const a of (data.sources.Reddit?.posts || data.sources.Reddit?.items || []).slice(0, 5)) {
+    items.push({ title: (a.title || a.text || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.permalink), date: a.date || a.created, source: 'Reddit', type: 'community' });
+  }
+  for (const a of (data.sources.Bluesky?.posts || data.sources.Bluesky?.items || []).slice(0, 5)) {
+    items.push({ title: (a.text || a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date || a.createdAt, source: 'Bluesky', type: 'community' });
+  }
+
+  items.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  return items.slice(0, 30);
+}
+
+// === China Intelligence Section ===
+function buildChinaIntel(data) {
+  const cncertAlerts = (data.sources.CNCERT?.recentAlerts || []).slice(0, 15).map(a => ({
+    title: (a.title || '').substring(0, 120), date: a.date, url: sanitizeExternalUrl(a.url), severity: a.severity,
+  }));
+
+  const cnvdVulns = (data.sources.CNVD?.recentVulns || []).slice(0, 15).map(v => ({
+    id: v.id || v.cnvdId, title: (v.title || v.name || '').substring(0, 120), date: v.date,
+    severity: v.severity, url: sanitizeExternalUrl(v.url),
+  }));
+
+  const cnnvdVulns = (data.sources.CNNVD?.recentVulns || []).slice(0, 15).map(v => ({
+    id: v.id || v.cnnvdId, title: (v.title || v.name || '').substring(0, 120), date: v.date,
+    severity: v.severity, url: sanitizeExternalUrl(v.url),
+  }));
+
+  const threatbookData = data.sources.ThreatBook || null;
+
+  const qianxinThreats = (data.sources.Qianxin?.threats || data.sources.Qianxin?.items || []).slice(0, 10).map(t => ({
+    title: (t.title || t.name || '').substring(0, 120), date: t.date, type: t.type,
+  }));
+
+  const newsArticles = [];
+  for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 8)) {
+      newsArticles.push({
+        title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link),
+        date: a.date || a.published, source: src,
+      });
+    }
+  }
+  newsArticles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+  return {
+    cncertAlerts,
+    cnvdVulns,
+    cnnvdVulns,
+    threatbookData,
+    qianxinThreats,
+    newsArticles: newsArticles.slice(0, 20),
+  };
+}
+
+// === Unified Security News Feed for Ticker ===
+function buildSecurityNewsFeed(rssNews, data, tgUrgent, tgTop) {
   const feed = [];
 
-  // RSS news
+  // RSS general news
   for (const n of rssNews) {
     feed.push({
       headline: n.title, source: n.source, type: 'rss',
@@ -630,19 +687,53 @@ function buildNewsFeed(rssNews, gdeltData, tgUrgent, tgTop) {
     });
   }
 
-  // GDELT top articles
-  for (const a of (gdeltData.allArticles || []).slice(0, 10)) {
-    if (a.title) {
-      const geo = geoTagText(a.title);
+  // CISA advisories as news items
+  for (const a of (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 8)) {
+    feed.push({
+      headline: (a.title || '').substring(0, 100), source: 'CISA', type: 'advisory',
+      timestamp: a.date || a.published, region: 'US', urgent: true,
+      url: sanitizeExternalUrl(a.url || a.link),
+    });
+  }
+
+  // ENISA reports
+  for (const r of (data.sources.ENISA?.recentReports || []).slice(0, 5)) {
+    feed.push({
+      headline: (r.title || '').substring(0, 100), source: 'ENISA', type: 'advisory',
+      timestamp: r.date || r.published, region: 'EU', urgent: false,
+      url: sanitizeExternalUrl(r.url || r.link),
+    });
+  }
+
+  // Chinese security news (FreeBuf / Anquanke / 4hou)
+  for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 5)) {
       feed.push({
-        headline: a.title.substring(0, 100), source: 'GDELT', type: 'gdelt',
-        timestamp: new Date().toISOString(), region: geo?.region || 'Global', urgent: false, url: sanitizeExternalUrl(a.url)
+        headline: (a.title || '').substring(0, 100), source: src, type: 'sec-news',
+        timestamp: a.date || a.published, region: 'China', urgent: false,
+        url: sanitizeExternalUrl(a.url || a.link),
       });
     }
   }
 
+  // Reddit / Bluesky community OSINT
+  for (const p of (data.sources.Reddit?.posts || data.sources.Reddit?.items || []).slice(0, 5)) {
+    feed.push({
+      headline: (p.title || p.text || '').substring(0, 100), source: 'Reddit', type: 'community',
+      timestamp: p.date || p.created, region: 'Global', urgent: false,
+      url: sanitizeExternalUrl(p.url || p.permalink),
+    });
+  }
+  for (const p of (data.sources.Bluesky?.posts || data.sources.Bluesky?.items || []).slice(0, 5)) {
+    feed.push({
+      headline: (p.text || p.title || '').substring(0, 100), source: 'Bluesky', type: 'community',
+      timestamp: p.date || p.createdAt, region: 'Global', urgent: false,
+      url: sanitizeExternalUrl(p.url),
+    });
+  }
+
   // Telegram urgent
-  for (const p of tgUrgent.slice(0, 10)) {
+  for (const p of (tgUrgent || []).slice(0, 10)) {
     const text = (p.text || '').replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
     feed.push({
       headline: text.substring(0, 100), source: p.channel?.toUpperCase() || 'TELEGRAM',
@@ -651,7 +742,7 @@ function buildNewsFeed(rssNews, gdeltData, tgUrgent, tgTop) {
   }
 
   // Telegram top (non-urgent)
-  for (const p of tgTop.slice(0, 5)) {
+  for (const p of (tgTop || []).slice(0, 5)) {
     const text = (p.text || '').replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
     feed.push({
       headline: text.substring(0, 100), source: p.channel?.toUpperCase() || 'TELEGRAM',
@@ -659,7 +750,6 @@ function buildNewsFeed(rssNews, gdeltData, tgUrgent, tgTop) {
     });
   }
 
-  // Filter to last 30 days, sort by timestamp descending, limit to 50
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const recent = feed.filter(item => !item.timestamp || new Date(item.timestamp) >= cutoff);
   recent.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
@@ -679,6 +769,177 @@ function buildNewsFeed(rssNews, gdeltData, tgUrgent, tgTop) {
   }
   recent.forEach(pushUnique);
   return selected.slice(0, 50);
+}
+
+// === Leverageable Ideas from Cybersecurity Signals ===
+export function generateIdeas(V2) {
+  const ideas = [];
+
+  if (V2.threats.level === 'CRITICAL') {
+    ideas.push({
+      title: 'Critical Threat Level Active',
+      text: `Threat index at ${V2.threats.index}/100 (${V2.threats.direction}). Multiple high-severity signals active across ${V2.threats.activeSources} sources. Heightened defensive posture recommended.`,
+      type: 'alert', confidence: 'High', horizon: 'immediate'
+    });
+  }
+
+  if (V2.cves.kevCount > 3) {
+    ideas.push({
+      title: 'KEV Exploitation Surge',
+      text: `${V2.cves.kevCount} CVEs in CISA Known Exploited Vulnerabilities catalog. Prioritize patching — these are confirmed actively exploited in the wild.`,
+      type: 'patch', confidence: 'High', horizon: 'immediate'
+    });
+  }
+
+  const critWithEpss = V2.cves.recent.filter(c => c.cvss >= 9.0 && c.epss && c.epss > 0.5);
+  if (critWithEpss.length > 0) {
+    ideas.push({
+      title: 'High CVSS + High EPSS Convergence',
+      text: `${critWithEpss.length} CVEs with CVSS ≥ 9.0 AND EPSS > 50%. These represent the highest-risk vulnerabilities with both severity and exploitation likelihood.`,
+      type: 'patch', confidence: 'High', horizon: 'immediate'
+    });
+  }
+
+  if (V2.iocs.c2.length > 20) {
+    ideas.push({
+      title: 'C2 Infrastructure Expanding',
+      text: `${V2.iocs.c2.length} active C2 endpoints tracked across Feodo/URLhaus. Block at network perimeter and hunt for beaconing patterns in internal traffic.`,
+      type: 'block', confidence: 'Medium', horizon: 'tactical'
+    });
+  }
+
+  if (V2.actors.totalVictims > 10) {
+    const topGroup = V2.actors.ransomwareGroups[0];
+    ideas.push({
+      title: 'Ransomware Campaign Active',
+      text: `${V2.actors.totalVictims} recent ransomware victims.${topGroup ? ` ${topGroup.name} leads with ${topGroup.victims} victims.` : ''} Review backup integrity and segment critical assets.`,
+      type: 'alert', confidence: 'High', horizon: 'tactical'
+    });
+  }
+
+  const topSectors = Object.entries(V2.actors.bySector || {}).sort((a, b) => (b[1] || 0) - (a[1] || 0)).slice(0, 3);
+  if (topSectors.length > 0 && (topSectors[0]?.[1] || 0) > 3) {
+    ideas.push({
+      title: 'Sector Targeting Pattern Detected',
+      text: `Top targeted sectors: ${topSectors.map(([s, c]) => `${s} (${c})`).join(', ')}. Organizations in these sectors should elevate monitoring.`,
+      type: 'watch', confidence: 'Medium', horizon: 'tactical'
+    });
+  }
+
+  if (V2.iocs.phishing.length > 15) {
+    ideas.push({
+      title: 'Phishing Wave Detected',
+      text: `${V2.iocs.phishing.length} active phishing URLs tracked. Consider proactive URL filtering updates and user awareness reminders.`,
+      type: 'block', confidence: 'Medium', horizon: 'tactical'
+    });
+  }
+
+  if (V2.iocs.maliciousIPs.length > 30) {
+    ideas.push({
+      title: 'Malicious IP Surge',
+      text: `${V2.iocs.maliciousIPs.length} malicious IPs reported across AbuseIPDB/GreyNoise/Spamhaus. Update blocklists and review firewall rules.`,
+      type: 'block', confidence: 'Medium', horizon: 'tactical'
+    });
+  }
+
+  const conflictEvents = V2.acled?.totalEvents || 0;
+  if (conflictEvents > 50) {
+    ideas.push({
+      title: 'Geopolitical Conflict Cyber Spillover Risk',
+      text: `${conflictEvents} conflict events tracked via ACLED. Historically correlated with increased state-sponsored cyber operations and hacktivist activity.`,
+      type: 'watch', confidence: 'Medium', horizon: 'strategic'
+    });
+  }
+
+  if (V2.certAlerts.total > 10) {
+    ideas.push({
+      title: 'Multi-CERT Advisory Activity',
+      text: `${V2.certAlerts.total} advisories across CISA (${V2.certAlerts.cisa.length}), ENISA (${V2.certAlerts.enisa.length}), CERTs (${V2.certAlerts.certs.length}), China (${V2.certAlerts.china.length}). Cross-reference with internal asset inventory.`,
+      type: 'watch', confidence: 'Medium', horizon: 'tactical'
+    });
+  }
+
+  return ideas.slice(0, 10);
+}
+
+// === Synthesize raw sweep data into dashboard format ===
+export async function synthesize(data) {
+  const sourcesOk = data.crucix?.sourcesOk || 0;
+  const sourcesQueried = data.crucix?.sourcesQueried || 0;
+
+  const threatInfo = computeThreatLevel(data);
+  const cves = buildCVEList(data);
+  const iocs = buildIOCs(data);
+  const attackMatrix = buildAttackMatrix(data);
+  const actors = buildActors(data);
+  const geoAttacks = buildGeoAttacks(data);
+  const certAlerts = buildCertAlerts(data);
+  const securityNews = buildSecurityNewsList(data);
+  const chinaIntel = buildChinaIntel(data);
+
+  // ACLED conflict events (kept for geo-context)
+  const acledData = data.sources.ACLED || {};
+  const acled = acledData.error
+    ? { totalEvents: 0, totalFatalities: 0, byRegion: {}, byType: {}, deadliestEvents: [] }
+    : {
+        totalEvents: acledData.totalEvents || 0,
+        totalFatalities: acledData.totalFatalities || 0,
+        byRegion: acledData.byRegion || {},
+        byType: acledData.byType || {},
+        deadliestEvents: (acledData.deadliestEvents || []).slice(0, 15).map(e => ({
+          date: e.date, type: e.type, country: e.country, location: e.location,
+          fatalities: e.fatalities || 0, lat: e.lat || null, lon: e.lon || null
+        }))
+      };
+
+  // Source health
+  const health = Object.entries(data.sources).map(([name, src]) => ({
+    n: name, err: Boolean(src.error), stale: Boolean(src.stale)
+  }));
+
+  // Telegram data for news feed
+  const tgData = data.sources.Telegram || {};
+  const tgUrgent = (tgData.urgentPosts || []).filter(p => isEnglish(p.text)).map(p => ({
+    channel: p.channel, text: p.text?.substring(0, 200), views: p.views, date: p.date, urgentFlags: p.urgentFlags || []
+  }));
+  const tgTop = (tgData.topPosts || []).filter(p => isEnglish(p.text)).map(p => ({
+    channel: p.channel, text: p.text?.substring(0, 200), views: p.views, date: p.date, urgentFlags: []
+  }));
+
+  // Fetch RSS
+  const news = await fetchAllNews();
+
+  const V2 = {
+    meta: data.crucix,
+
+    threats: {
+      level: threatInfo.level,
+      index: threatInfo.index,
+      direction: threatInfo.direction,
+      activeSources: sourcesOk,
+      totalSources: sourcesQueried,
+    },
+
+    cves,
+    iocs,
+    attackMatrix,
+    actors,
+    geoAttacks,
+    certAlerts,
+    securityNews,
+    chinaIntel,
+
+    acled,
+
+    health,
+    news,
+    newsFeed: buildSecurityNewsFeed(news, data, tgUrgent, tgTop),
+
+    ideas: [],
+    ideasSource: 'disabled',
+  };
+
+  return V2;
 }
 
 // === CLI Mode: inject into HTML file ===
@@ -722,21 +983,18 @@ async function cliInject() {
 
   const json = JSON.stringify(V2);
   console.log('\n--- Synthesis ---');
-  console.log('Size:', json.length, 'bytes | Air:', V2.air.length, '| Thermal:', V2.thermal.length,
-    '| News:', V2.news.length, '| Ideas:', V2.ideas.length, '| Sources:', V2.health.length);
+  console.log('Size:', json.length, 'bytes | CVEs:', V2.cves.totalTracked, '| IOCs:', V2.iocs.total,
+    '| GeoAttacks:', V2.geoAttacks.length, '| News:', V2.news.length, '| Ideas:', V2.ideas.length,
+    '| Sources:', V2.health.length, '| Threat:', V2.threats.level, `(${V2.threats.index})`);
 
   const htmlPath = htmlOverride || join(ROOT, 'dashboard/public/jarvis.html');
   let html = readFileSync(htmlPath, 'utf8');
-  // Use a replacer function so JSON is inserted literally even if it contains `$`.
   html = html.replace(/^(let|const) D = .*;\s*$/m, () => 'let D = ' + json + ';');
   writeFileSync(htmlPath, html);
   console.log('Data injected into jarvis.html!');
 
   if (!shouldOpen) return;
 
-  // Auto-open dashboard in default browser
-  // NOTE: On Windows, `start` in PowerShell is an alias for Start-Service, not cmd's start.
-  // We must use `cmd /c start ""` to ensure it works in both cmd.exe and PowerShell.
   const openCmd = process.platform === 'win32' ? 'cmd /c start ""' :
                   process.platform === 'darwin' ? 'open' : 'xdg-open';
   const dashUrl = htmlPath.replace(/\\/g, '/');
