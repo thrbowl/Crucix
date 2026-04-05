@@ -1,328 +1,236 @@
 # Crucix Cybersecurity Edition — 版本发布路线图
 
-**生成日期：** 2026-04-05  
-**基于设计文档：** `2026-03-31-cybersec-intel-design.md`  
-**改造策略：** 方案二（领域替换 + 轻量重构）
+**更新日期：** 2026-04-05
+**基于设计文档：** `docs/superpowers/specs/2026-04-05-data-fix-layout-i18n-design.md`
+**当前版本：** v1.0.0
 
 ---
 
 ## 版本总览
 
 ```
-v0.1.0  基础骨架 ── 配置 / 认证 / 目录结构 / 标准化层
+v0.1.0  基础骨架 ✅  ── 配置 / 认证 / 目录结构 / 标准化层
   │
-v0.2.0  核心情报 ── 域 1-3（23 源）漏洞 + 威胁行为者 + 攻击活动
+v0.2.0  核心情报 ✅  ── 域 1-3（23 源）漏洞 + 威胁行为者 + 攻击活动
   │
-v0.3.0  全源就位 ── 域 4-5（19 源）事件追踪 + 中国情报 + 旧源清理
+v0.3.0  全源就位 ✅  ── 域 4-5（19 源）事件追踪 + 中国情报 + 旧源清理
   │
-v0.5.0  引擎上线 ── Delta 三层信号模型 + 四级告警体系
+v0.5.0  引擎上线 ✅  ── Delta 三层信号模型 + 四级告警体系
   │
-v0.8.0  大屏交付 ── 仪表板重设计 + 地球仪 + 四专项面板 + LLM 简报
+v0.8.0  大屏交付 ✅  ── 仪表板重设计 + 地球仪 + 四专项面板 + LLM 简报
   │
-v1.0.0  正式发布 ── IOC 导出 / REST API / 报告生成 / Watchlist / Bot 命令
+v1.0.0  正式发布 ✅  ── IOC 导出 / REST API / 报告生成 / Watchlist / Bot 命令
   │
-v1.1.0  情报增强 ── 域 6-7（43 源）搜索引擎 + 厂商公告 + MISP + RBAC + PDF
+v1.0.1  数据修复 🔧  ── 字段名对齐 / 源 bug 修复 / 安全 RSS / 非安全数据清理
   │
-v1.2.0  自动化   ── SOAR 联动 / 自动封堵 / 邮件订阅 / Webhook
+v1.1.0  大屏重塑 🎯  ── 地球仪居中放大 / 融合原版布局 / 数据密度提升
   │
-v1.3.0  智能化   ── ML 威胁预测 / 自动归因 / 知识图谱 / 暗网深度监控
+v1.2.0  国际化   🌐  ── zh.json / 前端 i18n / 中英文切换
+  │
+v1.3.0  情报增强 ── 域 6-7（43 源）搜索引擎 + 厂商公告 + MISP + RBAC + PDF
+  │
+v1.4.0  自动化   ── SOAR 联动 / 自动封堵 / 邮件订阅 / Webhook
+  │
+v1.5.0  智能化   ── ML 威胁预测 / 自动归因 / 知识图谱 / 暗网深度监控
   │
 v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 ```
 
 ---
 
-## v0.1.0 — 基础骨架（预计 4-5 天）
+## v1.0.1 — 数据修复（预计 2-3 天）
 
-> **目标：** 搭建新模块目录骨架，更新配置文件，完成认证模块和数据标准化层，为所有后续版本打地基。
+> **目标：** 修复数据源 bug、对齐字段名、替换通用 RSS 为安全 RSS、清理非安全数据残留，让仪表盘从"全 0"变为有真实数据。
+
+### 问题诊断
+
+当前 41 个安全数据源中，仅 15 个返回有效数据。问题分为四类：
+
+**字段名不匹配（inject.mjs 与源之间 7 处）：**
+
+| 数据源 | 源返回字段 | inject.mjs 期望字段 |
+|--------|-----------|-------------------|
+| Feodo | `c2Servers`, `onlineC2s` | `activeC2s`, `onlineC2Count` |
+| ThreatFox | `iocs` | `recentIOCs` |
+| URLhaus | `recentUrls` | `activeUrls`, `onlineCount` |
+| PhishTank | `recentPhish` | `urls` / `recentPhishing` |
+| FreeBuf | `recentArticles` | `articles` / `items` |
+| Qianxin | `recentThreats` | `threats` / `items` |
+| ATT&CK-STIX | 无数组输出 | `tactics`, `techniques` |
+
+**有 Key 但源代码有 bug（5 个）：**
+
+| 源 | Bug |
+|---|-----|
+| ThreatBook | API 首请求未传 apikey 参数 |
+| Qianxin | API 失败时错误返回 "no_credentials" |
+| ZoomEye | 凭证检测逻辑有误 |
+| FOFA | 凭证检测逻辑有误 |
+
+**免费源但返回空（8 个）：** MalwareBazaar, ThreatFox, URLhaus, ATT&CK-STIX, ExploitDB, PhishTank, ENISA, BGP-Ranking
+
+**RSS / 抓取失败（3 个）：** CNCERT, CNNVD, FreeBuf
 
 ### 功能清单
 
 | 模块 | 功能 | 优先级 |
 |------|------|--------|
-| **配置** | `crucix.config.mjs` 新增 `auth` / `watchlist` / `commercialFeeds` / `searchFeeds` / `delta.thresholds` 配置块 | P0 |
-| **环境变量** | `.env.example` 新增全部 API Key 占位（OTX、VT、Shodan 等） | P0 |
-| **认证** | `lib/auth/index.mjs` Bearer Token 认证中间件，`AUTH_ENABLED=false` 时跳过 | P0 |
-| **服务端** | `server.mjs` 挂载 auth 中间件，预留 API 端点桩（`/api/iocs`、`/api/cve/:id` 等），暂返回 501 | P0 |
-| **目录骨架** | 创建 `lib/normalize/`、`lib/export/`、`lib/watchlist/`、`lib/report/` | P0 |
-| **IOC 标准化** | `lib/normalize/ioc.mjs` — 5 种 IOC 类型统一 Schema、去重合并 | P0 |
-| **CVE 标准化** | `lib/normalize/cve.mjs` — CVE 统一 Schema、多源信息融合 | P0 |
-| **置信度引擎** | `lib/normalize/confidence.mjs` — 加权规则引擎（CERT +30 / 3源确认 +25 等） | P1 |
-| **标准化入口** | `lib/normalize/index.mjs` — 统一导出，对接 Delta 引擎 | P0 |
+| **字段名对齐** | inject.mjs 中 7 处字段名兼容修复（优先读源实际返回的字段） | P0 |
+| **源 bug 修复** | 修复 ThreatBook/Qianxin/ZoomEye/FOFA 4 个有 Key 但调用失败的源 | P0 |
+| **免费源修复** | 修复 MalwareBazaar/ThreatFox/URLhaus/ATT&CK-STIX/ExploitDB/PhishTank/ENISA 7 个免费源 | P0 |
+| **RSS 抓取修复** | 修复 CNCERT/CNNVD/FreeBuf 的 RSS 抓取策略 | P1 |
+| **安全 RSS 替换** | `fetchAllNews()` 全部替换为安全类 RSS（The Hacker News / BleepingComputer / Krebs / Dark Reading / SecurityWeek / CISA / FreeBuf / 安全客 / 嘶吼等） | P0 |
+| **ACLED 移除** | 移除 ACLED 冲突数据源（非网安数据），归档到 `_archived/` | P0 |
+| **残留清理** | `locales/en.json` 清理旧 OSINT 词条（OPENSKY, FRED 等） | P1 |
 
 ### 验收标准
 
-- [ ] 配置更新、auth 中间件可用
-- [ ] 目录结构创建完毕
-- [ ] `normalizeIOC()` / `normalizeCVE()` 单元测试通过
-- [ ] 现有功能不受影响（向后兼容）
+- [ ] 至少 30/41 源返回有效数据
+- [ ] 顶部状态栏 Active KEVs / APT Groups / Critical CVEs / Total IOCs 不再全为 0
+- [ ] Intelligence Feed 全部为安全相关内容（无 BBC/NYT 等通用新闻）
+- [ ] 地球仪上有来自 Feodo C2、AbuseIPDB、Ransomware-Live 的地理标记点
+- [ ] ACLED 已从 briefing.mjs 和 inject.mjs 中完全移除
 
 ### 文件变更
 
 ```
-新建:
-  lib/auth/index.mjs
-  lib/normalize/index.mjs
-  lib/normalize/ioc.mjs
-  lib/normalize/cve.mjs
-  lib/normalize/confidence.mjs
-  lib/export/index.mjs       (空骨架)
-  lib/watchlist/index.mjs    (空骨架)
-  lib/report/index.mjs       (空骨架)
-
 修改:
-  crucix.config.mjs
-  .env.example
-  server.mjs
-```
-
----
-
-## v0.2.0 — 核心情报源（预计 5-7 天）
-
-> **目标：** 接入漏洞情报、威胁行为者、攻击活动三大核心域共 23 个数据源，产出标准化 IOC/CVE 数据。
-
-### 功能清单
-
-| 域 | 数据源 | 数量 | 说明 |
-|----|--------|------|------|
-| **域 1：漏洞情报** | NVD、CISA-KEV（保留）、EPSS、GitHub Advisory、Exploit-DB、OSV | 6 | VulnCheck 推迟到 v1.1 |
-| **域 2：威胁行为者** | OTX、MalwareBazaar、ThreatFox、Feodo、ATT&CK STIX、VirusTotal、URLhaus | 7 | Malpedia 推迟到 v1.1 |
-| **域 3：攻击活动** | GreyNoise、Shodan、AbuseIPDB、Cloudflare（保留）、Shadowserver、Spamhaus、BGP Ranking、PhishTank | 8 | — |
-| **编排层** | `apis/briefing.mjs` 注册全部新源，输出经 normalize 层 | — | — |
-
-### 验收标准
-
-- [ ] 21 个新安全源 + 2 个保留源，共 23 源可拉取
-- [ ] `fullBriefing()` 输出标准化 IOC/CVE 数据
-- [ ] 每个源有 mock 测试，不依赖真实 API 的 CI 可通过
-- [ ] Rate Limiting 优雅降级和缓存就绪（VT 4次/分、Shodan 1次/秒）
-
-### 文件变更
-
-```
-新建:
-  apis/sources/nvd.mjs
-  apis/sources/epss.mjs
-  apis/sources/github-advisory.mjs
-  apis/sources/exploitdb.mjs
-  apis/sources/osv.mjs
-  apis/sources/otx.mjs
-  apis/sources/malwarebazaar.mjs
-  apis/sources/threatfox.mjs
-  apis/sources/feodo.mjs
-  apis/sources/attack-stix.mjs
-  apis/sources/virustotal.mjs
-  apis/sources/urlhaus.mjs
-  apis/sources/greynoise.mjs
-  apis/sources/shodan.mjs
-  apis/sources/abuseipdb.mjs
-  apis/sources/shadowserver.mjs
-  apis/sources/spamhaus.mjs
-  apis/sources/bgp-ranking.mjs
-  apis/sources/phishtank.mjs
-
-修改:
-  apis/briefing.mjs
-  apis/sources/cisa-kev.mjs    (适配标准化层)
-  apis/sources/cloudflare.mjs  (适配标准化层)
-```
-
----
-
-## v0.3.0 — 全源就位（预计 4-5 天）
-
-> **目标：** 接入事件追踪、中国情报源，移除全部非安全类旧数据源，v1.0 数据层完备。
-
-### 功能清单
-
-| 域 | 数据源 | 数量 | 说明 |
-|----|--------|------|------|
-| **域 4：事件追踪** | Ransomware.live、ENISA、CISA Alerts、多国 CERT 聚合（US/EU/JP/AU/KR/IN） | 4（新建） | — |
-| **域 4：社区适配** | Bluesky → infosec 社区、Reddit → r/netsec、Telegram → 安全频道 | 3（改造） | 复用现有源 |
-| **域 5：中国官方** | CNCERT/CC、CNVD、CNNVD | 3 | 需处理网页抓取与反爬 |
-| **域 5：中国商业** | 微步在线 ThreatBook、奇安信威胁情报中心 | 2 | 360 NetLab / Hunter.how 推迟到 v1.1 |
-| **域 5：中国测绘** | ZoomEye、FOFA | 2 | — |
-| **域 5：中国媒体** | FreeBuf RSS、安全客 RSS、嘶吼 RSS | 3 | — |
-| **旧源清理** | 移除 GDELT、OpenSky、FIRMS、Maritime、YFinance、WHO、FRED、NOAA、EPA、ACLED 等 ~20 个非安全源 | — | 归档处理 |
-
-### 验收标准
-
-- [ ] ~42 个活跃安全源全部可拉取
-- [ ] 旧源全部移除/归档，编排层仅包含安全类源
-- [ ] CNVD/CNNVD 抓取稳定，异常时优雅降级
-- [ ] `cisa-kev.mjs` 和 `cloudflare.mjs` 引用保持正常
-
-### 文件变更
-
-```
-新建:
-  apis/sources/ransomware-live.mjs
-  apis/sources/enisa.mjs
-  apis/sources/cisa-alerts.mjs
-  apis/sources/certs-intl.mjs
-  apis/sources/cncert.mjs
-  apis/sources/cnvd.mjs
-  apis/sources/cnnvd.mjs
-  apis/sources/threatbook.mjs
-  apis/sources/qianxin.mjs
-  apis/sources/zoomeye.mjs
-  apis/sources/fofa.mjs
-  apis/sources/freebuf-rss.mjs
-  apis/sources/anquanke-rss.mjs
-  apis/sources/4hou-rss.mjs
-
-修改:
-  apis/briefing.mjs          (注册域 4-5，移除旧源引用)
-  apis/sources/bluesky.mjs   (适配 infosec 社区)
-  apis/sources/reddit.mjs    (适配 r/netsec)
-  apis/sources/telegram.mjs  (适配安全频道)
+  dashboard/inject.mjs              (字段名对齐 + RSS 替换)
+  apis/briefing.mjs                 (移除 ACLED import 和调用)
+  apis/sources/threatbook.mjs       (API 传参修复)
+  apis/sources/qianxin.mjs          (错误处理修复)
+  apis/sources/zoomeye.mjs          (凭证检测修复)
+  apis/sources/fofa.mjs             (凭证检测修复)
+  apis/sources/malwarebazaar.mjs    (数据解析修复)
+  apis/sources/threatfox.mjs        (数据解析修复)
+  apis/sources/urlhaus.mjs          (数据解析修复)
+  apis/sources/attack-stix.mjs      (输出结构修复)
+  apis/sources/exploitdb.mjs        (XML 解析修复)
+  apis/sources/phishtank.mjs        (解析修复)
+  apis/sources/enisa.mjs            (RSS 兜底)
+  apis/sources/cncert.mjs           (抓取策略修复)
+  apis/sources/freebuf-rss.mjs      (RSS 修复)
+  locales/en.json                   (清理旧词条)
+  .env.example                      (移除 ACLED 变量)
 
 删除/归档:
-  apis/sources/gdelt.mjs
-  apis/sources/opensky.mjs
-  apis/sources/firms.mjs
-  apis/sources/maritime.mjs
-  ... (约 20 个非安全类源)
+  apis/sources/acled.mjs            (移至 _archived/)
 ```
 
 ---
 
-## v0.5.0 — 引擎上线（预计 3-4 天）
+## v1.1.0 — 大屏重塑（预计 4-5 天）
 
-> **目标：** 将 Delta 引擎从地缘政治信号模型改造为网络安全三层信号模型，告警体系输出正确级别和内容。
+> **目标：** 融合原版 CRUCIX MONITOR 的大布局风格与网安专业面板，地球仪放大居中，数据密度达到原版水平。
+
+### 布局设计
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ CRUCIX MONITOR  [威胁指数█████ 72]  KEV:12  APT:5  CVE:30  IOC:186 │
+│                  SWEEP 30s  Apr 5 14:21  Sources 36/41  [GLOBAL ▾]  │
+├──────────┬───────────────────────────────────┬───────────────────────┤
+│ SENSOR   │                                   │ CROSS-SOURCE SIGNALS  │
+│ GRID     │                                   │                       │
+│          │                                   │ SIGNAL 1              │
+│ ● CVEs   │        3D GLOBE                   │ 漏洞武器化预警：      │
+│   30     │        (占页面 60%+ 面积)          │ NVD + PoC + GreyNoise│
+│ ● IOCs   │                                   │                       │
+│   186    │        攻击弧线动画                │ SIGNAL 2              │
+│ ● C2     │        多类型地理标记              │ C2 基础设施扩张...    │
+│   45     │                                   │                       │
+│ ● Ransom │                                   │ SIGNAL 3              │
+│   12     │                                   │ 中国区高置信威胁...   │
+│ ● Phish  │                                   ├───────────────────────┤
+│   28     │                                   │ ALERT STREAM          │
+│ ● CERT   │                                   │                       │
+│   8      │           标记图例                 │ [CRIT] CVE-2026-xxxx │
+│          │  ● C2  ● 攻击源  ● 受害者  ● APT │ [HIGH] Ransomware... │
+│ LAYERS   │  ● 蜜罐 ● 暴露 ● CERT ● 钓鱼    │ [MED]  Phishing...   │
+│ [开关]   │                                   │ [LOW]  CERT alert... │
+├──────────┴───────────────────────────────────┴───────────────────────┤
+│ [CVE Timeline] [ATT&CK Heatmap] [Threat Actors] [China Intel] [LLM]│
+│                        (Tab 切换面板区域)                            │
+├──────────────────────────────────────────────────────────────────────┤
+│ ▶ TICKER: CVE-2026-1234 actively exploited │ LockBit claims new... │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
 ### 功能清单
 
 | 模块 | 功能 | 说明 |
 |------|------|------|
-| **原子信号（层 1）** | 13 种原子信号类型（新 CVE CVSS≥9.0、CVE 进入 KEV、EPSS 跃升、PoC 出现等） | 每种绑定默认级别 |
-| **关联信号（层 2）** | Rule A — 漏洞武器化预警（NVD + GitHub PoC + GreyNoise） | CRITICAL |
-| | Rule B — 定向攻击基础设施预警（AbuseIPDB + ThreatFox + GreyNoise + Watchlist） | HIGH |
-| | Rule C — 供应链攻击预警（GitHub + OSV/NVD + 媒体 RSS） | HIGH |
-| | Rule D — 中国区高置信度威胁（CNCERT + CNVD/CNNVD + 微步/奇安信） | CRITICAL |
-| **趋势信号（层 3）** | 滑动窗口追踪（24h / 7d / 30d）— 威胁行为者频率、漏洞利用趋势、行业/地区热度 | 异常检测触发 |
-| **告警体系** | 四级告警（CRITICAL / HIGH / MEDIUM / LOW）+ 按受众分发 | Telegram + Discord |
-| **内存模型** | `hot.json` 适配 IOC/CVE 状态、去重追踪、CVE 生命周期跟踪 | — |
+| **布局重构** | jarvis.html 大改：地球仪从右上角移至中央主视觉（60%+ 面积） | 参照原版 CRUCIX MONITOR 风格 |
+| **左侧面板** | Sensor Grid：Active CVEs / IOC Count / C2 Servers / Ransomware Victims / Phishing URLs / CERT Alerts，每项有实时计数和变化趋势 | 替代原来的简单图层列表 |
+| **右侧面板** | Cross-Source Signals（Delta 引擎关联信号）+ Alert Stream（四级告警分色滚动） | 替代原 Intelligence Feed |
+| **顶栏** | 威胁指数仪表（0-100 四色渐变）/ KEV 数 / APT 数 / CVE 数 / IOC 数 / 源状态 / Sweep 时间 / 区域过滤 | 信息密度大幅提升 |
+| **地球仪增强** | 新增 APT 活动区域（紫色脉冲）、钓鱼目标国家（粉色）、漏洞利用热区（橙色热力）、中国安全事件（金色）等标记；攻击弧线动画 | 总标记类型从 6 增至 10 |
+| **底部面板** | CVE Timeline / ATT&CK Heatmap / Threat Actors / China Intel / LLM Brief 改为 Tab 切换，不占常驻空间 | 释放垂直空间给地球仪 |
+| **底部 Ticker** | 安全新闻滚动条，来自安全 RSS + CISA + 中国安全媒体 | 类似原版 Live News Ticker |
 
 ### 验收标准
 
-- [ ] 三层信号模型运转，原子 / 关联 / 趋势信号均可触发
-- [ ] 四级告警输出正确级别、正确语义内容
-- [ ] IOC 去重追踪正常（避免重复告警）
-- [ ] CVE 生命周期状态可追踪（NVD → KEV → PoC → 在野利用）
+- [ ] 地球仪占据页面中心 60%+ 面积，视觉冲击力不低于原版截图
+- [ ] 左侧 Sensor Grid 所有计数器有实际数据
+- [ ] 右侧 Signals + Alert Stream 有内容滚动
+- [ ] 数据密度主观感受接近原版 CRUCIX MONITOR
+- [ ] 底部 Tab 面板切换正常
+- [ ] 底部 Ticker 安全新闻滚动
 
 ### 文件变更
 
 ```
 修改:
-  lib/delta/engine.mjs       (三层信号模型)
-  lib/delta/memory.mjs       (IOC/CVE 状态)
-  lib/alerts/telegram.mjs    (四级告警模板)
-  lib/alerts/discord.mjs     (四级告警模板)
+  dashboard/public/jarvis.html      (全面布局重构)
+  dashboard/inject.mjs              (新增地理标记类型 + Ticker 数据)
 ```
 
 ---
 
-## v0.8.0 — 大屏交付（预计 5-7 天）
+## v1.2.0 — 国际化（预计 3-4 天）
 
-> **目标：** 改造合成逻辑和前端仪表板，呈现网络安全情报大屏，地球仪渲染攻击数据，四专项面板可视化。
+> **目标：** 前端支持中英文切换，所有界面文案走 i18n 系统，安全术语中文本地化。
 
 ### 功能清单
 
 | 模块 | 功能 | 说明 |
 |------|------|------|
-| **合成逻辑** | 移除旧合成字段，新增 `threats` / `iocs` / `cves` / `attackMatrix` / `actors` / `geoAttacks` / `certAlerts` | inject.mjs 重构 |
-| **3D 地球仪** | 8 类标记重映射：攻击来源(红) / 受害者(橙) / 蜜罐(黄) / APT(紫) / C2(深红) / 暴露资产(蓝) / CERT(绿) / BGP异常(白) | 攻击弧线动画 |
-| **顶部状态栏** | 威胁指数(0-100, 四色渐变) / 在野利用 CVE 数 / 活跃 APT 组织数 / 今日新增 KEV / 地区过滤 | — |
-| **左侧图层** | 8 个图层开关控制 | — |
-| **右侧情报流** | CRITICAL / HIGH / MEDIUM / LOW 分色滚动面板，SSE 实时推送 | — |
-| **面板 1** | CVE 时间线 — D3 散点图（时间 × CVSS，圆点大小=EPSS） | — |
-| **面板 2** | ATT&CK 热力矩阵 — 战术 × 技术热力图 | — |
-| **面板 3** | 威胁行为者追踪板 — 卡片式 | — |
-| **面板 4** | LLM 威胁简报 — 替换原"交易建议"，三受众版本输出 | — |
+| **zh.json** | 新建 `locales/zh.json`，覆盖所有面板标题、按钮、状态文案、告警级别 | 安全缩写保留英文（CVE/IOC/APT/C2/EPSS/KEV/STIX/ATT&CK） |
+| **前端 i18n** | jarvis.html 接入 `window.__CRUCIX_LOCALE__`，硬编码英文替换为 `t()` 调用 | 已有后端基础设施，需前端消费 |
+| **语言切换** | 顶栏添加 ZH/EN 切换按钮，实时切换不刷新页面 | 动态重渲染文案 |
+| **en.json 更新** | 清理旧 OSINT 词条，补全网安术语 | 保持与 zh.json 结构一致 |
+| **时间格式** | 根据语言切换 `toLocaleString` 的 locale 参数 | zh → `zh-CN`，en → `en-US` |
+| **默认语言** | `.env` 新增 `CRUCIX_LANG=zh` 配置项 | 支持环境变量控制默认语言 |
+| **i18n 扩展** | `lib/i18n.mjs` 的 `SUPPORTED_LOCALES` 添加 `zh` | — |
 
 ### 验收标准
 
-- [ ] 仪表板地球仪渲染攻击数据，8 类标记颜色正确
-- [ ] 顶部状态栏指标实时更新
-- [ ] 四专项面板数据可视化正常
-- [ ] LLM 层输出三受众版本威胁简报
-- [ ] SSE 实时推送工作正常
-
-### 文件变更
-
-```
-修改:
-  dashboard/inject.mjs            (合成逻辑重构)
-  dashboard/public/jarvis.html    (全面重设计)
-  lib/llm/ideas.mjs               (威胁简报生成)
-```
-
----
-
-## v1.0.0 — 正式发布（预计 4-5 天）
-
-> **目标：** 实现 IOC 导出、REST API、报告生成、Watchlist、Bot 命令、国际化，达到正式发布标准。
-> 
-> **总源数：** ~42 个活跃源 | **总开发周期：** ~25-33 天
-
-### 功能清单
-
-| 模块 | 功能 | 说明 |
-|------|------|------|
-| **IOC 导出** | STIX 2.1 Bundle / CSV / JSON 导出，按类型/时间过滤 | `lib/export/` |
-| **REST API** | `GET /api/iocs` — IOC 导出端点（stix/csv/json） | — |
-| | `GET /api/cve/:id` — CVE 完整情报查询 | — |
-| | `GET /api/actor/:name` — 威胁行为者详情 | — |
-| | `GET /api/ioc/lookup?value=` — 跨源 IOC 查询 | — |
-| | `GET /api/feed/iocs` — TAXII 2.1 兼容 feed | — |
-| | `GET /api/report/daily` — HTML 日报 | — |
-| **报告生成** | HTML 日报模板（威胁摘要、Top CVEs、活跃 APTs、IOC 统计） | 凌晨 6 点自动生成 |
-| | 三版本：SOC 技术版 / 管理层摘要 / 监管合规 | — |
-| **Watchlist** | CRUD（vendors / industries / actors / keywords / cveIds / ipRanges） | 持久化到 `runs/watchlist.json` |
-| | 与 Delta 引擎联动（匹配提升信号优先级） | — |
-| **Bot 命令** | `/cve CVE-XXXX` — CVE 情报查询 | Telegram + Discord |
-| | `/ioc 1.2.3.4` — 跨源 IOC 查询 | — |
-| | `/actor APT41` — 威胁行为者动态 | — |
-| | `/watchlist add <keyword>` — 添加监控 | — |
-| | `/brief cn` — 中文威胁简报 | — |
-| | `/export ioc csv` — 导出 IOC 列表 | — |
-| **国际化** | `locales/en.json` / `locales/fr.json` 更新为安全术语，新增 `locales/zh.json` | — |
-
-### 验收标准
-
-- [ ] IOC 可导出 STIX 2.1 / CSV / JSON 三种格式
-- [ ] REST API 全部端点可访问、数据正确
-- [ ] HTML 日报可自动生成并通过 Bot 推送
-- [ ] Watchlist CRUD 可用，与 Delta 引擎联动正常
-- [ ] Bot 6 条新命令全部响应正确
-- [ ] 中文界面完整可用
+- [ ] 中英文一键切换，不刷新页面
+- [ ] 中文界面无遗漏英文硬编码
+- [ ] 安全术语缩写保持英文（CVE、IOC、APT 等）
+- [ ] `.env` 中 `CRUCIX_LANG=zh` 可设置默认语言
+- [ ] 时间格式随语言切换
 
 ### 文件变更
 
 ```
 新建:
-  lib/export/stix.mjs
-  lib/export/csv.mjs
-  lib/report/generator.mjs
-  lib/watchlist/index.mjs    (实现)
   locales/zh.json
 
 修改:
-  lib/export/index.mjs
-  server.mjs                 (REST API 端点实现)
-  lib/alerts/telegram.mjs    (新 Bot 命令)
-  lib/alerts/discord.mjs     (新 Bot 命令)
-  locales/en.json
-  locales/fr.json
+  lib/i18n.mjs                      (添加 zh 支持)
+  dashboard/public/jarvis.html      (i18n 消费 + 语言切换 UI)
+  locales/en.json                   (补全网安术语)
+  .env.example                      (新增 CRUCIX_LANG)
 ```
 
 ---
 
-## v1.1.0 — 情报增强（预计 v1.0 后 2-3 周）
+## v1.3.0 — 情报增强（预计 v1.2.0 后 2-3 周）
 
 > **目标：** 全量数据源接入（85 源），高级功能齐备，达到设计文档完整规格。
+> 
+> *注：此版本内容与原 v1.1.0 相同，因插入 v1.0.1/v1.1.0/v1.2.0 而版本号后移。*
 
 ### 功能清单
 
@@ -376,9 +284,11 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ---
 
-## v1.2.0 — 自动化响应（规划中，v1.1 后 3-4 周）
+## v1.4.0 — 自动化响应（规划中，v1.3.0 后 3-4 周）
 
 > **目标：** 从"情报收集"升级为"情报驱动的自动化响应"，打通安全运营闭环。
+>
+> *注：此版本内容与原 v1.2.0 相同。*
 
 ### 规划功能
 
@@ -394,9 +304,11 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ---
 
-## v1.3.0 — 智能化分析（规划中，v1.2 后 4-6 周）
+## v1.5.0 — 智能化分析（规划中，v1.4.0 后 4-6 周）
 
 > **目标：** 引入机器学习和知识图谱，提升威胁情报的预测能力和关联分析深度。
+>
+> *注：此版本内容与原 v1.3.0 相同。*
 
 ### 规划功能
 
@@ -433,17 +345,20 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ## 版本里程碑 & 时间线
 
-| 版本 | 里程碑 | 完成标准 | 预计时间 |
-|------|--------|---------|---------|
-| **v0.1.0** | 骨架就绪 | 配置 + auth + 标准化层测试通过 | 第 5 天 |
-| **v0.2.0** | 核心源上线 | 23 个安全源可拉取标准化数据 | 第 12 天 |
-| **v0.3.0** | 全源就位 | ~42 源运行，旧源清除 | 第 17 天 |
-| **v0.5.0** | 引擎改造 | 三层信号 + 四级告警输出正确 | 第 21 天 |
-| **v0.8.0** | 大屏交付 | 仪表板 + 地球仪 + 面板可视化 | 第 28 天 |
-| **v1.0.0** | 正式发布 | IOC 导出 + API + 日报 + Watchlist + Bot | 第 33 天 |
-| **v1.1.0** | 情报增强 | 85 源 + MISP + RBAC + PDF | v1.0 后 +14-21 天 |
-| **v1.2.0** | 自动化 | Webhook + SOAR + 邮件订阅 | v1.1 后 +21-28 天 |
-| **v1.3.0** | 智能化 | ML + 知识图谱 + 暗网 | v1.2 后 +28-42 天 |
+| 版本 | 里程碑 | 完成标准 | 状态 |
+|------|--------|---------|------|
+| **v0.1.0** | 骨架就绪 | 配置 + auth + 标准化层测试通过 | ✅ 已完成 |
+| **v0.2.0** | 核心源上线 | 23 个安全源可拉取标准化数据 | ✅ 已完成 |
+| **v0.3.0** | 全源就位 | ~42 源运行，旧源清除 | ✅ 已完成 |
+| **v0.5.0** | 引擎改造 | 三层信号 + 四级告警输出正确 | ✅ 已完成 |
+| **v0.8.0** | 大屏交付 | 仪表板 + 地球仪 + 面板可视化 | ✅ 已完成 |
+| **v1.0.0** | 正式发布 | IOC 导出 + API + 日报 + Watchlist + Bot | ✅ 已完成 |
+| **v1.0.1** | 数据复活 | 30+ 源有效数据，安全 RSS，指标非 0 | 🔧 待开发（2-3 天） |
+| **v1.1.0** | 大屏重塑 | 地球仪居中，融合布局，数据密度达标 | 🎯 待开发（4-5 天） |
+| **v1.2.0** | 国际化 | 中英文切换完整可用 | 🌐 待开发（3-4 天） |
+| **v1.3.0** | 情报增强 | 85 源 + MISP + RBAC + PDF | 待规划（+14-21 天） |
+| **v1.4.0** | 自动化 | Webhook + SOAR + 邮件订阅 | 待规划（+21-28 天） |
+| **v1.5.0** | 智能化 | ML + 知识图谱 + 暗网 | 待规划（+28-42 天） |
 | **v2.0.0** | 企业版 | 多租户 + SaaS + 私有化 | 根据市场需求启动 |
 
 ---
@@ -451,30 +366,27 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 ## 依赖关系 & 并行策略
 
 ```
-v0.1.0 (基础骨架)
-  ├──→ v0.2.0 (核心源 域1-3)  ─┐
-  │                             ├──→ v0.3.0 (扩展源 域4-5)
-  │    [LLM prompt 改造可并行] ─┘         │
-  │                                       ↓
-  │                              v0.5.0 (Delta 引擎)
-  │                                ├──→ v0.8.0 (仪表板) ──┐
-  │                                │                       ├──→ v1.0.0 (正式发布)
-  │                                └──→ [输出层可并行] ────┘         │
-  │                                                                  ↓
-  │                                                        v1.1.0 (情报增强)
-  │                                                                  │
-  │                                                        v1.2.0 (自动化)
-  │                                                                  │
-  │                                                        v1.3.0 (智能化)
-  │                                                                  │
-  │                                                        v2.0.0 (企业版)
+v1.0.0 (当前版本)
+  │
+  └──→ v1.0.1 (数据修复)
+         │
+         ├──→ v1.1.0 (大屏重塑) ────────┐
+         │                                ├──→ v1.2.0 (国际化)
+         └──→ [源修复可独立验证] ─────────┘         │
+                                                     ↓
+                                           v1.3.0 (情报增强)
+                                                     │
+                                           v1.4.0 (自动化)
+                                                     │
+                                           v1.5.0 (智能化)
+                                                     │
+                                           v2.0.0 (企业版)
 ```
 
 **可并行的工作：**
-- v0.2.0 中各域数据源可由不同人员并行开发
-- v0.3.0 中域 4 和域 5 可并行
-- v0.8.0（仪表板）和 v1.0.0 的输出集成层可在 v0.5.0 后并行推进
-- LLM prompt 改造可在 v0.1.0 后独立进行
+- v1.0.1 中各源 bug 修复可由不同人员并行
+- v1.1.0（布局）和 v1.2.0（i18n）可在 v1.0.1 后并行推进
+- v1.3.0 的域 6/7 源开发可在 v1.1.0 完成后提前启动
 
 ---
 
@@ -483,8 +395,9 @@ v0.1.0 (基础骨架)
 | 风险 | 影响 | 缓解措施 |
 |------|------|---------|
 | API Rate Limiting | 免费 API 有调用限制 | 实现优雅降级、缓存、分批拉取（VT 4次/分、Shodan 1次/秒） |
-| 中国源不稳定 | CNVD/CNNVD 可能需网页抓取 | 实现反爬策略、多备用解析路径、异常时自动降级 |
-| 内存占用 | 85 源并行拉取 | 分批执行、流式处理、监控内存水位 |
+| 中国源不稳定 | CNVD/CNNVD/CNCERT 可能需网页抓取 | 实现反爬策略、多备用解析路径、异常时自动降级 |
+| 内存占用 | 41+ 源并行拉取 | 分批执行、流式处理、监控内存水位 |
 | 向后兼容 | 改造中系统不可用 | 每个版本结束确保系统可运行，渐进式替换 |
 | 测试覆盖 | 依赖真实 API 测试不稳定 | 每个源提供 mock 测试数据，CI 不依赖真实 API |
 | 数据准确性 | 多源数据冲突 | 置信度加权引擎 + 交叉验证 + 人工审核机制 |
+| 字段名不一致 | 新增源与 inject.mjs 不匹配 | v1.0.1 建立字段命名规范，后续源严格遵守 |
