@@ -388,6 +388,8 @@ function buildIOCs(data) {
     maliciousIPs,
     phishing,
     total: malware.length + c2.length + maliciousIPs.length + phishing.length,
+    c2Count: c2.length,
+    phishCount: phishing.length,
   };
 }
 
@@ -530,6 +532,104 @@ function buildGeoAttacks(data) {
         source: 'CERTs-Intl',
       });
     }
+  }
+
+  // Feodo C2 by-country distribution
+  const feodoByCountry = data.sources.Feodo?.byCountry || {};
+  const countryGeo = {
+    US:[39,-98],CN:[35,105],DE:[51,10],FR:[46,2],NL:[52.1,5.3],GB:[54,-2],
+    RU:[56,38],BR:[-14,-51],IN:[20,78],JP:[36,138],KR:[37,127],SG:[1.35,103.8],
+    AU:[-25,134],CA:[56,-96],IT:[42,12],ES:[40,-4],SE:[62,15],HK:[22.3,114.2],
+    TW:[23.5,121],PL:[52,20],RO:[46,25],UA:[49,32],ID:[-2,118],TH:[15,100],
+    VN:[16,108],MX:[23,-102],AR:[-38,-63],ZA:[-30,25],TR:[39,35],EG:[27,30],
+  };
+  for (const [cc, count] of Object.entries(feodoByCountry)) {
+    if (count < 1) continue;
+    const geo = countryGeo[cc];
+    if (!geo) continue;
+    for (let i = 0; i < Math.min(count, 3); i++) {
+      points.push({
+        lat: geo[0] + (Math.random() - 0.5) * 4,
+        lon: geo[1] + (Math.random() - 0.5) * 4,
+        type: 'c2',
+        label: `C2 cluster: ${cc} (${count})`,
+        severity: count >= 5 ? 'critical' : 'high',
+        source: 'Feodo',
+      });
+    }
+  }
+
+  // CISA alerts → US region markers
+  for (const a of (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 8)) {
+    points.push({
+      lat: 38.9 + (Math.random() - 0.5) * 8,
+      lon: -95 + (Math.random() - 0.5) * 20,
+      type: 'cert',
+      label: `CISA: ${(a.title || '').substring(0, 60)}`,
+      severity: 'high',
+      source: 'CISA',
+    });
+  }
+
+  // ENISA reports → EU region markers
+  for (const r of (data.sources.ENISA?.recentReports || data.sources.ENISA?.links || []).slice(0, 6)) {
+    const geo = geoTagText(r.title || '') || { lat: 50 + (Math.random()-0.5)*10, lon: 10 + (Math.random()-0.5)*20 };
+    points.push({
+      lat: geo.lat + (Math.random() - 0.5) * 3,
+      lon: geo.lon + (Math.random() - 0.5) * 3,
+      type: 'cert',
+      label: `ENISA: ${(r.title || '').substring(0, 60)}`,
+      severity: 'medium',
+      source: 'ENISA',
+    });
+  }
+
+  // CNCERT/CNVD/CNNVD → China region markers
+  for (const a of (data.sources.CNCERT?.recentAlerts || []).slice(0, 6)) {
+    points.push({
+      lat: 35 + (Math.random() - 0.5) * 16,
+      lon: 105 + (Math.random() - 0.5) * 20,
+      type: 'cert',
+      label: `CNCERT: ${(a.title || '').substring(0, 50)}`,
+      severity: 'medium',
+      source: 'CNCERT',
+    });
+  }
+  for (const v of (data.sources.CNVD?.recentVulns || []).slice(0, 5)) {
+    points.push({
+      lat: 35 + (Math.random() - 0.5) * 16,
+      lon: 105 + (Math.random() - 0.5) * 20,
+      type: 'exposed_asset',
+      label: `CNVD: ${(v.title || v.name || '').substring(0, 50)}`,
+      severity: 'medium',
+      source: 'CNVD',
+    });
+  }
+  for (const v of (data.sources.CNNVD?.recentVulns || []).slice(0, 5)) {
+    points.push({
+      lat: 35 + (Math.random() - 0.5) * 16,
+      lon: 105 + (Math.random() - 0.5) * 20,
+      type: 'exposed_asset',
+      label: `CNNVD: ${(v.title || v.name || '').substring(0, 50)}`,
+      severity: 'medium',
+      source: 'CNNVD',
+    });
+  }
+
+  // KEV CVEs → spread globally with high severity
+  for (const c of (data.sources['CISA-KEV']?.recent || []).slice(0, 10)) {
+    const geo = geoTagText(c.vendorProject || c.product || '') || {
+      lat: (Math.random() - 0.5) * 100,
+      lon: (Math.random() - 0.5) * 300,
+    };
+    points.push({
+      lat: geo.lat + (Math.random() - 0.5) * 5,
+      lon: geo.lon + (Math.random() - 0.5) * 5,
+      type: 'exposed_asset',
+      label: `KEV: ${(c.vulnerabilityName || c.cveID || '').substring(0, 60)}`,
+      severity: 'critical',
+      source: 'CISA-KEV',
+    });
   }
 
   return points;
