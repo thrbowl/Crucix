@@ -455,14 +455,38 @@ function buildActors(data) {
 // === Geographic Attack Points for Globe ===
 function buildGeoAttacks(data) {
   const points = [];
+  const countryGeo = {
+    US:[39,-98],CN:[35,105],DE:[51,10],FR:[46,2],NL:[52.1,5.3],GB:[54,-2],
+    RU:[56,38],BR:[-14,-51],IN:[20,78],JP:[36,138],KR:[37,127],SG:[1.35,103.8],
+    AU:[-25,134],CA:[56,-96],IT:[42,12],ES:[40,-4],SE:[62,15],HK:[22.3,114.2],
+    TW:[23.5,121],PL:[52,20],RO:[46,25],UA:[49,32],ID:[-2,118],TH:[15,100],
+    VN:[16,108],MX:[23,-102],AR:[-38,-63],ZA:[-30,25],TR:[39,35],EG:[27,30],
+    CH:[47,8],AT:[48,16],CZ:[50,14.5],JO:[31.5,36],BW:[-22,24],SI:[46,14.5],
+    GR:[39,22],IL:[31.5,34.8],SA:[24,45],AE:[24,54],IQ:[33,44],IR:[32,53],
+    PK:[30,70],BD:[24,90],PH:[13,122],MM:[22,96],NP:[28,84],LK:[7,80],
+    KE:[-1,37],NG:[9.1,7.5],GH:[7.9,-1.0],DZ:[28,3],MA:[32,-5],TN:[34,9],
+    CO:[4,-74],PE:[-12,-77],CL:[-33.4,-70.7],VE:[10.5,-66.9],EC:[-1.8,-78],
+    HN:[14.1,-87.2],CR:[10,-84],PA:[9,-79.5],PR:[18.2,-66.5],
+    FI:[61,26],NO:[62,10],DK:[56,10],IE:[53.3,-6.3],PT:[38.7,-9.1],
+    BE:[50.8,4.4],LU:[49.8,6.1],SK:[48.7,19.7],HR:[45.8,16],RS:[44.8,20.5],
+    BG:[42.7,25.5],LT:[55.2,24],LV:[57,25],EE:[58.6,25],
+    EU:[50,10],
+  };
+
+  function geoFromCC(cc) {
+    if (!cc) return null;
+    const arr = countryGeo[cc];
+    if (arr) return { lat: arr[0], lon: arr[1] };
+    return geoTagText(cc);
+  }
 
   // Ransomware victims by country
   for (const v of (data.sources['Ransomware-Live']?.victims || []).slice(0, 40)) {
-    const geo = v.country ? geoTagText(v.country) : null;
+    const geo = geoFromCC(v.country);
     if (geo) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 2,
-        lon: geo.lon + (Math.random() - 0.5) * 2,
+        lat: geo.lat + (Math.random() - 0.5) * 3,
+        lon: geo.lon + (Math.random() - 0.5) * 3,
         type: 'victim',
         label: `${v.group}: ${v.name}`,
         severity: 'high',
@@ -474,7 +498,7 @@ function buildGeoAttacks(data) {
   // GreyNoise top scanners
   for (const s of (data.sources.GreyNoise?.topScanners || []).slice(0, 20)) {
     const country = s.metadata?.country || s.country;
-    const geo = country ? geoTagText(country) : null;
+    const geo = country ? geoFromCC(country) : null;
     if (geo) {
       points.push({
         lat: geo.lat + (Math.random() - 0.5) * 3,
@@ -506,7 +530,7 @@ function buildGeoAttacks(data) {
   // AbuseIPDB reported IPs
   for (const entry of (data.sources.AbuseIPDB?.reportedIPs || []).slice(0, 15)) {
     const country = entry.countryCode || entry.country;
-    const geo = country ? geoTagText(country) : null;
+    const geo = country ? geoFromCC(country) : null;
     if (geo) {
       points.push({
         lat: geo.lat + (Math.random() - 0.5) * 2,
@@ -536,13 +560,6 @@ function buildGeoAttacks(data) {
 
   // Feodo C2 by-country distribution
   const feodoByCountry = data.sources.Feodo?.byCountry || {};
-  const countryGeo = {
-    US:[39,-98],CN:[35,105],DE:[51,10],FR:[46,2],NL:[52.1,5.3],GB:[54,-2],
-    RU:[56,38],BR:[-14,-51],IN:[20,78],JP:[36,138],KR:[37,127],SG:[1.35,103.8],
-    AU:[-25,134],CA:[56,-96],IT:[42,12],ES:[40,-4],SE:[62,15],HK:[22.3,114.2],
-    TW:[23.5,121],PL:[52,20],RO:[46,25],UA:[49,32],ID:[-2,118],TH:[15,100],
-    VN:[16,108],MX:[23,-102],AR:[-38,-63],ZA:[-30,25],TR:[39,35],EG:[27,30],
-  };
   for (const [cc, count] of Object.entries(feodoByCountry)) {
     if (count < 1) continue;
     const geo = countryGeo[cc];
@@ -630,6 +647,54 @@ function buildGeoAttacks(data) {
       severity: 'critical',
       source: 'CISA-KEV',
     });
+  }
+
+  // Ransomware victims by country stats (fallback when individual victims unavailable)
+  const rlByCountry = data.sources['Ransomware-Live']?.byCountry || {};
+  for (const [cc, count] of Object.entries(rlByCountry)) {
+    const geo = geoFromCC(cc);
+    if (!geo || cc === 'Unknown') continue;
+    for (let i = 0; i < Math.min(count, 4); i++) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 5,
+        lon: geo.lon + (Math.random() - 0.5) * 5,
+        type: 'victim',
+        label: `Ransomware victim: ${cc} (${count} total)`,
+        severity: count >= 5 ? 'high' : 'medium',
+        source: 'Ransomware-Live',
+      });
+    }
+  }
+
+  // OTX pulses → spread based on title geo-matching
+  for (const p of (data.sources.OTX?.recentPulses || data.sources.OTX?.pulses || []).slice(0, 12)) {
+    const geo = geoTagText(p.name || p.title || '');
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 3,
+        lon: geo.lon + (Math.random() - 0.5) * 3,
+        type: 'attack_source',
+        label: `OTX: ${(p.name || p.title || '').substring(0, 50)}`,
+        severity: 'medium',
+        source: 'OTX',
+      });
+    }
+  }
+
+  // Shodan exposed services → spread globally
+  for (const s of (data.sources.Shodan?.topServices || data.sources.Shodan?.data || []).slice(0, 8)) {
+    const cc = s.country || s.location?.country_code;
+    const geo = cc ? geoFromCC(cc) : null;
+    if (geo) {
+      points.push({
+        lat: geo.lat + (Math.random() - 0.5) * 4,
+        lon: geo.lon + (Math.random() - 0.5) * 4,
+        type: 'exposed_asset',
+        label: `Shodan: ${s.port || s.service || 'exposed'} (${cc})`,
+        severity: 'low',
+        source: 'Shodan',
+      });
+    }
   }
 
   return points;
@@ -959,6 +1024,20 @@ export async function synthesize(data) {
 
   // Fetch RSS
   const news = await fetchAllNews();
+
+  // Enrich geoAttacks with news locations
+  for (const n of news.slice(0, 20)) {
+    if (n.lat && n.lon) {
+      geoAttacks.push({
+        lat: n.lat, lon: n.lon,
+        type: n.source === 'CISA News' || n.source === 'US-CERT' ? 'cert' :
+              n.title?.toLowerCase().includes('attack') || n.title?.toLowerCase().includes('breach') ? 'attack_source' : 'exposed_asset',
+        label: `${n.source}: ${(n.title || '').substring(0, 50)}`,
+        severity: n.source?.includes('CISA') || n.source?.includes('CERT') ? 'high' : 'medium',
+        source: n.source,
+      });
+    }
+  }
 
   const V2 = {
     meta: data.crucix,

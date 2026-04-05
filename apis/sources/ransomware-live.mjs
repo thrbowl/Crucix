@@ -18,7 +18,7 @@ function groupBy(victims, key) {
 
 export async function briefing() {
   const timestamp = new Date().toISOString();
-  const data = await safeFetch(API_URL, { timeout: 15000 });
+  const data = await safeFetch(API_URL, { timeout: 30000 });
 
   if (data.error) {
     return { source: 'Ransomware-Live', timestamp, error: data.error };
