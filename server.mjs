@@ -16,6 +16,7 @@ import { createLLMProvider } from './lib/llm/index.mjs';
 import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { TelegramAlerter } from './lib/alerts/telegram.mjs';
 import { DiscordAlerter } from './lib/alerts/discord.mjs';
+import { authMiddleware, isAuthEnabled } from './lib/auth/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -253,10 +254,39 @@ app.get('/', (req, res) => {
   }
 });
 
+// Auth middleware for /api/* routes
+app.use('/api', authMiddleware);
+
 // API: current data
 app.get('/api/data', (req, res) => {
   if (!currentData) return res.status(503).json({ error: 'No data yet — first sweep in progress' });
   res.json(currentData);
+});
+
+// === Cybersecurity API Endpoints (v0.1.0 stubs → v1.0.0 full) ===
+
+app.get('/api/iocs', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'IOC export (STIX/CSV/JSON)' });
+});
+
+app.get('/api/cve/:id', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'CVE intelligence lookup', cveId: req.params.id });
+});
+
+app.get('/api/actor/:name', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Threat actor details', actor: req.params.name });
+});
+
+app.get('/api/ioc/lookup', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Cross-source IOC lookup', value: req.query.value });
+});
+
+app.get('/api/feed/iocs', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'TAXII 2.1 compatible IOC feed' });
+});
+
+app.get('/api/report/daily', (req, res) => {
+  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Daily threat report' });
 });
 
 // API: health check
@@ -403,12 +433,13 @@ async function start() {
 
   console.log(`
   ╔══════════════════════════════════════════════╗
-  ║           CRUCIX INTELLIGENCE ENGINE         ║
-  ║          Local Palantir · 26 Sources         ║
+  ║      CRUCIX CYBERSECURITY INTELLIGENCE       ║
+  ║         Threat Intel · v0.1.0-alpha          ║
   ╠══════════════════════════════════════════════╣
   ║  Dashboard:  http://localhost:${port}${' '.repeat(14 - String(port).length)}║
   ║  Health:     http://localhost:${port}/api/health${' '.repeat(4 - String(port).length)}║
   ║  Refresh:    Every ${config.refreshIntervalMinutes} min${' '.repeat(20 - String(config.refreshIntervalMinutes).length)}║
+  ║  Auth:       ${isAuthEnabled() ? 'enabled (Bearer Token)' : 'disabled'}${' '.repeat(isAuthEnabled() ? 10 : 23)}║
   ║  LLM:        ${(config.llm.provider || 'disabled').padEnd(31)}║
   ║  Telegram:   ${config.telegram.botToken ? 'enabled' : 'disabled'}${' '.repeat(config.telegram.botToken ? 24 : 23)}║
   ║  Discord:    ${config.discord?.botToken ? 'enabled' : config.discord?.webhookUrl ? 'webhook only' : 'disabled'}${' '.repeat(config.discord?.botToken ? 24 : config.discord?.webhookUrl ? 20 : 23)}║
