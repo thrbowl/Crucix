@@ -17,6 +17,9 @@ import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { TelegramAlerter } from './lib/alerts/telegram.mjs';
 import { DiscordAlerter } from './lib/alerts/discord.mjs';
 import { authMiddleware, isAuthEnabled } from './lib/auth/index.mjs';
+import { exportIOCsJSON, exportIOCsCSV, exportIOCsSTIX, exportCVEsJSON, exportCVEsCSV } from './lib/export/index.mjs';
+import { matchIOC, matchCVE, filterByWatchlist } from './lib/watchlist/index.mjs';
+import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -253,30 +256,148 @@ app.get('/api/data', (req, res) => {
   res.json(currentData);
 });
 
-// === Cybersecurity API Endpoints (v0.1.0 stubs → v1.0.0 full) ===
+// === Cybersecurity API Endpoints (v1.0.0) ===
 
+// IOC export — supports JSON, CSV, STIX formats
 app.get('/api/iocs', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'IOC export (STIX/CSV/JSON)' });
+  if (!currentData?.iocs) return res.status(503).json({ error: 'No data available yet' });
+  const format = (req.query.format || 'json').toLowerCase();
+  const allIOCs = [
+    ...(currentData.iocs.malware || []),
+    ...(currentData.iocs.c2 || []),
+    ...(currentData.iocs.maliciousIPs || []),
+    ...(currentData.iocs.phishing || []),
+  ];
+  try {
+    switch (format) {
+      case 'csv':
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=crucix-iocs.csv');
+        return res.send(exportIOCsCSV(allIOCs));
+      case 'stix':
+        res.setHeader('Content-Type', 'application/json');
+        return res.send(exportIOCsSTIX(allIOCs));
+      default:
+        return res.json(JSON.parse(exportIOCsJSON(allIOCs)));
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// CVE intelligence lookup
 app.get('/api/cve/:id', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'CVE intelligence lookup', cveId: req.params.id });
+  if (!currentData?.cves) return res.status(503).json({ error: 'No data available yet' });
+  const cveId = req.params.id.toUpperCase();
+  const cve = (currentData.cves.recent || []).find(c => (c.id || c.cveId || '').toUpperCase() === cveId);
+  if (!cve) return res.status(404).json({ error: `CVE ${cveId} not found in current data` });
+  const lifecycle = memory.getCVELifecycle(cveId);
+  const watchlistMatches = matchCVE(cve);
+  res.json({ ...cve, lifecycle, watchlistMatches });
 });
 
+// Threat actor details
 app.get('/api/actor/:name', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Threat actor details', actor: req.params.name });
+  if (!currentData?.actors) return res.status(503).json({ error: 'No data available yet' });
+  const name = req.params.name.toLowerCase();
+  const group = (currentData.actors.ransomwareGroups || []).find(g => (g.name || '').toLowerCase() === name);
+  const victims = (currentData.actors.victims || []).filter(v => (v.group || '').toLowerCase() === name);
+  if (!group && victims.length === 0) return res.status(404).json({ error: `Actor "${req.params.name}" not found` });
+  res.json({ group, victims, totalVictims: victims.length });
 });
 
+// Cross-source IOC lookup
 app.get('/api/ioc/lookup', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Cross-source IOC lookup', value: req.query.value });
+  if (!currentData?.iocs) return res.status(503).json({ error: 'No data available yet' });
+  const value = (req.query.value || '').trim();
+  if (!value) return res.status(400).json({ error: 'Missing "value" query parameter' });
+  const allIOCs = [
+    ...(currentData.iocs.malware || []),
+    ...(currentData.iocs.c2 || []),
+    ...(currentData.iocs.maliciousIPs || []),
+    ...(currentData.iocs.phishing || []),
+  ];
+  const matches = allIOCs.filter(ioc => (ioc.value || '').toLowerCase().includes(value.toLowerCase()));
+  const watchlistMatches = matches.flatMap(ioc => matchIOC(ioc));
+  res.json({ query: value, total: matches.length, results: matches, watchlistMatches });
 });
 
+// STIX/TAXII compatible IOC feed
 app.get('/api/feed/iocs', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'TAXII 2.1 compatible IOC feed' });
+  if (!currentData?.iocs) return res.status(503).json({ error: 'No data available yet' });
+  const allIOCs = [
+    ...(currentData.iocs.malware || []),
+    ...(currentData.iocs.c2 || []),
+    ...(currentData.iocs.maliciousIPs || []),
+    ...(currentData.iocs.phishing || []),
+  ];
+  res.setHeader('Content-Type', 'application/stix+json;version=2.1');
+  res.send(exportIOCsSTIX(allIOCs));
 });
 
+// CVE export
+app.get('/api/cves', (req, res) => {
+  if (!currentData?.cves) return res.status(503).json({ error: 'No data available yet' });
+  const format = (req.query.format || 'json').toLowerCase();
+  const cves = currentData.cves.recent || [];
+  try {
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=crucix-cves.csv');
+      return res.send(exportCVEsCSV(cves));
+    }
+    return res.json(JSON.parse(exportCVEsJSON(cves)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Daily threat report
 app.get('/api/report/daily', (req, res) => {
-  res.status(501).json({ error: 'Not yet implemented', version: 'v1.0.0', description: 'Daily threat report' });
+  try {
+    const latestPath = join(RUNS_DIR, 'latest.json');
+    if (!existsSync(latestPath)) return res.status(503).json({ error: 'No sweep data available' });
+    const sweepData = JSON.parse(readFileSync(latestPath, 'utf8'));
+    const delta = memory.getLastDelta();
+    const format = (req.query.format || 'markdown').toLowerCase();
+    const report = generateDailyReport(sweepData, delta, memory);
+    if (format === 'html') {
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(`<!DOCTYPE html><html><head><title>Crucix Daily Report</title><style>body{font-family:Inter,sans-serif;max-width:900px;margin:40px auto;padding:20px;background:#0a0a0f;color:#e0e0e0;}h1{color:#00e5ff;}h2{color:#ff6d00;border-bottom:1px solid #333;padding-bottom:8px;}h3{color:#ffc107;}a{color:#00e5ff;}li{margin:4px 0;}</style></head><body>${generateReportHTML(report)}</body></html>`);
+    }
+    res.setHeader('Content-Type', 'text/markdown');
+    res.send(report);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Threat overview API
+app.get('/api/threats', (req, res) => {
+  const delta = memory.getLastDelta();
+  if (!delta) return res.status(503).json({ error: 'No threat data available yet' });
+  res.json({
+    level: delta.overallLevel,
+    index: delta.threatIndex,
+    direction: delta.direction,
+    signals: delta.summary,
+    correlated: delta.signals?.correlated || [],
+    topAtomic: (delta.signals?.atomic || []).filter(s => s.level === 'CRITICAL' || s.level === 'HIGH'),
+    trends: delta.signals?.trend || [],
+  });
+});
+
+// Watchlist matches
+app.get('/api/watchlist/matches', (req, res) => {
+  if (!currentData) return res.status(503).json({ error: 'No data available' });
+  const allIOCs = [
+    ...(currentData.iocs?.malware || []),
+    ...(currentData.iocs?.c2 || []),
+    ...(currentData.iocs?.maliciousIPs || []),
+  ];
+  const cves = currentData.cves?.recent || [];
+  const result = filterByWatchlist(allIOCs, cves);
+  res.json(result);
 });
 
 // API: health check
@@ -424,7 +545,7 @@ async function start() {
   console.log(`
   ╔══════════════════════════════════════════════╗
   ║      CRUCIX CYBERSECURITY INTELLIGENCE       ║
-  ║         Threat Intel · v0.5.0                ║
+  ║         Threat Intel · v1.0.0                ║
   ╠══════════════════════════════════════════════╣
   ║  Dashboard:  http://localhost:${port}${' '.repeat(14 - String(port).length)}║
   ║  Health:     http://localhost:${port}/api/health${' '.repeat(4 - String(port).length)}║
