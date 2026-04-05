@@ -1,10 +1,14 @@
-// PhishTank — Community-driven phishing URL database
-// No API key required for basic access.
-// Tracks verified phishing sites with target brand, submission, and verification data.
-
-import { safeFetch } from '../utils/fetch.mjs';
+// PhishTank — verified phishing URLs (JSON/RSS). Cloudflare often blocks datacenter IPs;
+// OpenPhish text feed is used as a fallback with the same shape for the dashboard.
 
 const PHISH_JSON_URL = 'https://data.phishtank.com/data/online-valid.json';
+const OPENPHISH_URL = 'https://openphish.com/feed.txt';
+
+const BROWSER_HEADERS = {
+  Accept: 'application/json, text/plain, */*',
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+};
 
 function aggregateByTarget(entries) {
   const counts = {};
@@ -15,91 +19,111 @@ function aggregateByTarget(entries) {
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15)
-    .reduce((acc, [k, v]) => { acc[k] = v; return acc; }, {});
+    .reduce((acc, [k, v]) => {
+      acc[k] = v;
+      return acc;
+    }, {});
 }
 
-async function fetchPhishData() {
-  // Try the full JSON feed with a generous timeout
-  const data = await safeFetch(PHISH_JSON_URL, { timeout: 25000, retries: 0 });
+function normalizePhishTankRow(e) {
+  const url = (e.url || '').trim();
+  if (!url) return null;
+  const submitDate = e.submission_time || e.submitDate || e.submissionDate || null;
+  const verificationDate = e.verification_time || e.verificationDate || null;
+  return {
+    url: url.substring(0, 500),
+    target: e.target || e.brand || null,
+    verified: e.verified === 'yes' || e.verified === true,
+    submitDate,
+    verificationDate,
+    phish_id: e.phish_id != null ? String(e.phish_id) : null,
+  };
+}
 
-  if (!data.error && Array.isArray(data)) {
-    return data;
-  }
-
-  // Fallback: try the RSS search for recent active phish
-  const rssUrl = 'https://phishtank.org/phish_search.php?valid=y&Search=Search&active=y&limitresult=20&format=rss';
+async function fetchPhishTankJson() {
+  const res = await fetch(PHISH_JSON_URL, {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(25000),
+    redirect: 'follow',
+  });
+  if (!res.ok) return { error: `PhishTank JSON HTTP ${res.status}` };
+  const text = await res.text();
+  let parsed;
   try {
-    const res = await fetch(rssUrl, {
-      headers: { 'User-Agent': 'Crucix/1.0' },
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (!res.ok) return { error: `RSS HTTP ${res.status}` };
-
-    const xml = await res.text();
-    return parseRSSItems(xml);
-  } catch (err) {
-    return { error: err.message || 'PhishTank fetch failed' };
+    parsed = JSON.parse(text);
+  } catch {
+    return { error: 'PhishTank JSON parse failed' };
   }
+  const rows = Array.isArray(parsed) ? parsed : parsed?.phish || parsed?.urls;
+  if (!Array.isArray(rows)) return { error: 'PhishTank JSON not an array' };
+  return { rows };
 }
 
-function parseRSSItems(xml) {
-  const items = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-  while ((match = itemRegex.exec(xml)) !== null) {
-    const block = match[1];
-    const get = tag => {
-      const m = block.match(new RegExp(`<${tag}><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`))
-        || block.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
-      return m ? m[1].trim() : null;
-    };
-    items.push({
-      url: get('title') || get('link'),
-      target: get('description')?.replace(/^Phishing against:\s*/i, '') || null,
-      submissionDate: get('pubDate') || null,
-      verificationDate: null,
-      phish_id: get('guid') || null,
-    });
-  }
-  return items;
+async function fetchOpenPhishFallback() {
+  const res = await fetch(OPENPHISH_URL, {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(20000),
+    redirect: 'follow',
+  });
+  if (!res.ok) return { error: `OpenPhish HTTP ${res.status}` };
+  const text = await res.text();
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const rows = lines.slice(0, 500).map(url => ({
+    url: url.substring(0, 500),
+    target: null,
+    verified: false,
+    submitDate: null,
+    verificationDate: null,
+    phish_id: null,
+    _openphish: true,
+  }));
+  return { rows, openphish: true };
 }
 
 export async function briefing() {
-  const result = await fetchPhishData();
+  const timestamp = new Date().toISOString();
+  const signals = [];
 
-  if (result.error) {
-    return {
-      source: 'PhishTank',
-      timestamp: new Date().toISOString(),
-      error: result.error,
-    };
+  let entries = [];
+  let fromOpenPhish = false;
+
+  const pt = await fetchPhishTankJson();
+  if (!pt.error) {
+    entries = pt.rows.map(normalizePhishTankRow).filter(Boolean);
   }
 
-  const entries = Array.isArray(result) ? result : [];
+  if (entries.length === 0) {
+    const op = await fetchOpenPhishFallback();
+    if (op.error) {
+      return {
+        source: 'PhishTank',
+        timestamp,
+        error: pt.error ? `${pt.error}; ${op.error}` : op.error,
+      };
+    }
+    entries = op.rows;
+    fromOpenPhish = op.openphish === true;
+    signals.push({
+      severity: 'info',
+      signal:
+        'PhishTank JSON/RSS unreachable (often blocked by Cloudflare); showing recent URLs from OpenPhish feed instead',
+    });
+  }
+
   const totalActivePhish = entries.length;
+  const recentPhishing = entries.slice(0, 30).map(({ _openphish, ...rest }) => rest);
 
-  const recentPhish = entries.slice(0, 30).map(e => ({
-    url: (e.url || '').substring(0, 200),
-    target: e.target || null,
-    submissionDate: e.submission_time || e.submissionDate || null,
-    verificationDate: e.verification_time || e.verificationDate || null,
-    phish_id: e.phish_id || null,
-  }));
-
-  const byTarget = aggregateByTarget(entries.slice(0, 500));
-
-  const signals = [];
+  const byTarget = fromOpenPhish ? {} : aggregateByTarget(entries.slice(0, 500));
 
   if (totalActivePhish > 5000) {
     signals.push({
       severity: 'high',
-      signal: `${totalActivePhish} active phishing sites verified — elevated phishing threat`,
+      signal: `${totalActivePhish} active phishing URLs in feed — elevated phishing threat`,
     });
-  } else if (totalActivePhish > 1000) {
+  } else if (totalActivePhish > 200) {
     signals.push({
       severity: 'medium',
-      signal: `${totalActivePhish} active verified phishing sites tracked by PhishTank`,
+      signal: `${totalActivePhish} phishing URLs tracked in current feed`,
     });
   }
 
@@ -113,9 +137,10 @@ export async function briefing() {
 
   return {
     source: 'PhishTank',
-    timestamp: new Date().toISOString(),
+    timestamp,
     totalActivePhish,
-    recentPhish,
+    urls: recentPhishing,
+    recentPhishing,
     byTarget,
     signals,
   };

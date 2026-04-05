@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v0.3.0: 42 active security sources across 5 domains
+// v1.0.1: 41 active security sources across 5 domains (ACLED removed)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -54,18 +54,22 @@ import { briefing as freebuf } from './sources/freebuf-rss.mjs';
 import { briefing as anquanke } from './sources/anquanke-rss.mjs';
 import { briefing as fourhou } from './sources/4hou-rss.mjs';
 
-// === Legacy retained (ACLED for geo-context) ===
-import { briefing as acled } from './sources/acled.mjs';
+// ACLED removed in v1.0.1 (non-cybersecurity data)
 
 const SOURCE_TIMEOUT_MS = 30_000;
 
 export async function runSource(name, fn, ...args) {
   const start = Date.now();
   let timer;
+  const timeoutMs =
+    name === 'ATT&CK-STIX' ? Math.max(SOURCE_TIMEOUT_MS, 120_000) : SOURCE_TIMEOUT_MS;
   try {
     const dataPromise = fn(...args);
     const timeoutPromise = new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`Source ${name} timed out after ${SOURCE_TIMEOUT_MS / 1000}s`)), SOURCE_TIMEOUT_MS);
+      timer = setTimeout(
+        () => reject(new Error(`Source ${name} timed out after ${timeoutMs / 1000}s`)),
+        timeoutMs
+      );
     });
     const data = await Promise.race([dataPromise, timeoutPromise]);
     return { name, status: 'ok', durationMs: Date.now() - start, data };
@@ -77,7 +81,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 42;
+  const totalSources = 41;
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -130,8 +134,6 @@ export async function fullBriefing() {
     runSource('Anquanke', anquanke),
     runSource('4hou', fourhou),
 
-    // Retained for geo-context
-    runSource('ACLED', acled),
   ];
 
   const results = await Promise.allSettled(allPromises);

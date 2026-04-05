@@ -1,81 +1,95 @@
-// BGP Ranking (CIRCL) — Autonomous System reputation ranking
-// No API key required. Ranks ASNs by malicious activity observed across threat feeds.
-// Useful for identifying networks hosting disproportionate threat infrastructure.
+// BGP Ranking (CIRCL) — ASN reputation. Legacy GET /json/asns was removed; use POST /json/asns_global_ranking.
 
-import { safeFetch, today } from '../utils/fetch.mjs';
+import { daysAgo } from '../utils/fetch.mjs';
 
 const BASE = 'https://bgpranking-ng.circl.lu/json';
 
-export async function briefing() {
-  const dateStr = today();
-
-  // Fetch top malicious ASNs from abuse.ch feed
-  const data = await safeFetch(
-    `${BASE}/asns?date=${dateStr}&source=abuse_ch`,
-    { timeout: 20000 },
-  );
-
-  if (data.error) {
-    // Try without date parameter as fallback
-    const fallback = await safeFetch(
-      `${BASE}/asns?source=abuse_ch`,
-      { timeout: 20000 },
-    );
-
-    if (fallback.error) {
-      return {
-        source: 'BGP-Ranking',
-        timestamp: new Date().toISOString(),
-        error: fallback.error,
-      };
-    }
-
-    return formatResult(fallback);
+async function postGlobalRanking(dateStr) {
+  const res = await fetch(`${BASE}/asns_global_ranking`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Crucix/1.0',
+    },
+    body: JSON.stringify({ date: dateStr }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
   }
-
-  return formatResult(data);
+  return res.json();
 }
 
-function formatResult(data) {
-  const response = data.response || data;
-  const asns = Array.isArray(response) ? response : response.asns || [];
-
-  const topMaliciousASNs = asns.slice(0, 30).map((entry, idx) => {
-    if (typeof entry === 'object') {
+function formatTuples(response, dateStr) {
+  const rows = Array.isArray(response) ? response : [];
+  const topMaliciousASNs = rows.slice(0, 30).map((entry, idx) => {
+    if (Array.isArray(entry) && entry.length >= 2) {
+      const [asn, score] = entry;
+      return {
+        asn: String(asn),
+        name: null,
+        rank: idx + 1,
+        score: typeof score === 'number' ? score : Number(score),
+        ipCount: null,
+      };
+    }
+    if (entry && typeof entry === 'object') {
       return {
         asn: entry.asn || entry.asNumber || null,
         name: entry.name || entry.description || null,
         rank: entry.rank ?? entry.ranking ?? idx + 1,
+        score: entry.score ?? null,
         ipCount: entry.ipCount || null,
       };
     }
-    return { asn: entry, name: null, rank: idx + 1 };
+    return { asn: entry != null ? String(entry) : null, name: null, rank: idx + 1, score: null, ipCount: null };
   });
 
   const signals = [];
-
   if (topMaliciousASNs.length > 0) {
     signals.push({
       severity: 'info',
-      signal: `${topMaliciousASNs.length} ASNs ranked by malicious activity via abuse.ch feed`,
+      signal: `${topMaliciousASNs.length} ASNs in global BGP ranking snapshot (${dateStr})`,
     });
   }
-
-  // Flag if any well-known large ASNs appear in top 10
   const top10 = topMaliciousASNs.slice(0, 10);
-  if (top10.length >= 10) {
+  if (top10.length >= 3 && top10[0].asn) {
     signals.push({
       severity: 'medium',
-      signal: `Top malicious ASN: ${top10[0].asn || 'unknown'} — monitor for hosting abuse or compromised infrastructure`,
+      signal: `Highest-ranked ASN in snapshot: ${top10[0].asn} — review for abuse or compromised infrastructure`,
     });
   }
 
   return {
     source: 'BGP-Ranking',
     timestamp: new Date().toISOString(),
-    date: new Date().toISOString().split('T')[0],
+    date: dateStr,
     topMaliciousASNs,
     signals,
+  };
+}
+
+export async function briefing() {
+  let lastError = null;
+  for (let i = 0; i < 7; i++) {
+    const dateStr = daysAgo(i);
+    try {
+      const data = await postGlobalRanking(dateStr);
+      const rows = data?.response;
+      if (Array.isArray(rows) && rows.length > 0) {
+        return formatTuples(rows, dateStr);
+      }
+      lastError = `No ranking data for ${dateStr}`;
+    } catch (e) {
+      lastError = e.message || String(e);
+    }
+  }
+
+  return {
+    source: 'BGP-Ranking',
+    timestamp: new Date().toISOString(),
+    error: lastError || 'No BGP ranking data for recent dates',
   };
 }
 

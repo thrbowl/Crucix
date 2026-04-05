@@ -1,13 +1,21 @@
 // Shared fetch utility with timeout, retries, and error handling
 
 export async function safeFetch(url, opts = {}) {
-  const { timeout = 15000, retries = 1, headers = {} } = opts;
+  const {
+    timeout = 15000,
+    retries = 1,
+    headers = {},
+    method = 'GET',
+    body = undefined,
+  } = opts;
   let lastError;
   for (let i = 0; i <= retries; i++) {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
       const res = await fetch(url, {
+        method,
+        body,
         signal: controller.signal,
         headers: { 'User-Agent': 'Crucix/1.0', ...headers },
       });

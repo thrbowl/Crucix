@@ -1,49 +1,90 @@
 // Abuse.ch URLhaus — Malicious URL feed
-// No API key required. Tracks URLs distributing malware.
+// Public JSON dump needs no key. Authenticated API uses ABUSECH_AUTH_KEY (free at auth.abuse.ch).
 
+import '../utils/env.mjs';
 import { safeFetch } from '../utils/fetch.mjs';
 
-const API_URL = 'https://urlhaus-api.abuse.ch/v1/urls/recent/limit/25/';
+const API_RECENT = 'https://urlhaus-api.abuse.ch/v1/urls/recent/';
 const FALLBACK_URL = 'https://urlhaus.abuse.ch/downloads/json_recent/';
+
+/** json_recent is an object keyed by URLhaus id → array of row objects (not a flat array). */
+function normalizeUrlhausPayload(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  if (Array.isArray(raw)) return raw.map(normalizeUrlRow);
+  if (Array.isArray(raw.urls)) return raw.urls.map(normalizeUrlRow);
+
+  const out = [];
+  for (const [id, val] of Object.entries(raw)) {
+    if (!Array.isArray(val)) continue;
+    for (const u of val) {
+      if (!u || typeof u !== 'object') continue;
+      out.push(normalizeUrlRow(u, id));
+    }
+  }
+  return out;
+}
+
+function normalizeUrlRow(u, idHint) {
+  const dateAdded = u.date_added || u.dateadded || null;
+  let host = u.host || null;
+  if (!host && u.url) {
+    try {
+      host = new URL(u.url).hostname;
+    } catch {
+      host = null;
+    }
+  }
+  return {
+    ...u,
+    id: u.id || idHint,
+    date_added: dateAdded,
+    dateAdded,
+    host,
+  };
+}
 
 export async function briefing() {
   const timestamp = new Date().toISOString();
+  const authKey = (process.env.ABUSECH_AUTH_KEY || '').trim();
 
   let urls = null;
 
-  try {
-    const res = await fetch('https://urlhaus-api.abuse.ch/v1/urls/recent/', {
+  if (authKey) {
+    const data = await safeFetch(API_RECENT, {
       method: 'POST',
-      signal: AbortSignal.timeout(20000),
+      headers: { 'Auth-Key': authKey },
+      timeout: 20000,
+      retries: 1,
     });
-    const data = await res.json();
-    if (data.urls && Array.isArray(data.urls)) {
-      urls = data.urls;
+    if (!data.error && Array.isArray(data.urls)) {
+      urls = data.urls.map(u => normalizeUrlRow(u));
     }
-  } catch {
-    // fall through to fallback
   }
 
-  if (!urls) {
-    const data = await safeFetch(FALLBACK_URL, { timeout: 20000 });
+  if (!urls || !urls.length) {
+    const data = await safeFetch(FALLBACK_URL, { timeout: 25000, retries: 1 });
     if (data.error) {
       return { source: 'URLhaus', timestamp, error: data.error };
     }
-    if (Array.isArray(data)) {
-      urls = data;
-    } else if (data.urls && Array.isArray(data.urls)) {
-      urls = data.urls;
-    } else {
-      return { source: 'URLhaus', timestamp, error: 'unexpected response format' };
+    urls = normalizeUrlhausPayload(data);
+    if (!urls.length) {
+      return {
+        source: 'URLhaus',
+        timestamp,
+        error: 'unexpected response format from URLhaus json_recent',
+      };
     }
   }
 
   const recentUrls = urls.slice(0, 50).map(u => ({
     url: u.url,
     status: u.url_status,
+    url_status: u.url_status,
     threat: u.threat || null,
+    url_type: u.threat || null,
     host: u.host || null,
-    dateAdded: u.date_added,
+    dateAdded: u.date_added || u.dateAdded,
+    date_added: u.date_added || u.dateAdded,
     tags: u.tags || [],
   }));
 
@@ -56,8 +97,12 @@ export async function briefing() {
     byStatus[status] = (byStatus[status] || 0) + 1;
   }
 
+  const onlineUrls = recentUrls.filter(
+    u => String(u.url_status || u.status || '').toLowerCase() === 'online'
+  );
+
   const signals = [];
-  const onlineCount = byStatus['online'] || 0;
+  const onlineCount = byStatus.online || 0;
   if (onlineCount > 20) {
     signals.push({
       severity: 'medium',
@@ -80,7 +125,9 @@ export async function briefing() {
     source: 'URLhaus',
     timestamp,
     totalUrls: urls.length,
+    onlineCount,
     recentUrls,
+    activeUrls: onlineUrls.length ? onlineUrls : recentUrls,
     byThreat,
     byStatus,
     signals,

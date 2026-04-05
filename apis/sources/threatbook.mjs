@@ -37,16 +37,30 @@ export async function briefing() {
   }
 
   try {
-    const data = await safeFetch(`${API_BASE}/scene/ip_reputation`, {
+    const sceneUrl = `${API_BASE}/scene/ip_reputation?apikey=${encodeURIComponent(key)}&resource=8.8.8.8`;
+    const data = await safeFetch(sceneUrl, {
       timeout: 15000,
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (data.error && data.error.includes('HTTP 4')) {
-      const overview = await safeFetch(`${API_BASE}/threat/overview?apikey=${key}`, { timeout: 15000 });
+    const sceneFailed =
+      (data.error && String(data.error).includes('HTTP 4')) ||
+      (typeof data.response_code === 'number' && data.response_code !== 0);
 
-      if (overview.error) {
-        return { source: 'ThreatBook', timestamp, status: 'api_error', error: overview.error, signals: [] };
+    if (sceneFailed) {
+      const overview = await safeFetch(`${API_BASE}/threat/overview?apikey=${encodeURIComponent(key)}`, { timeout: 15000 });
+
+      const overviewFailed =
+        overview.error ||
+        (typeof overview.response_code === 'number' && overview.response_code !== 0);
+      if (overviewFailed) {
+        const errMsg =
+          overview.error ||
+          overview.verbose_msg ||
+          data.verbose_msg ||
+          data.error ||
+          'ThreatBook API error';
+        return { source: 'ThreatBook', timestamp, status: 'api_error', error: errMsg, signals: [] };
       }
 
       return {

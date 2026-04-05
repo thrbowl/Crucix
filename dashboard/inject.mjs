@@ -120,41 +120,31 @@ async function fetchRSS(url, source) {
 }
 
 const RSS_SOURCE_FALLBACKS = {
-  'SBS Australia': { lat: -35.2809, lon: 149.13, region: 'Australia' },
-  'Indian Express': { lat: 28.6139, lon: 77.209, region: 'India' },
-  'The Hindu': { lat: 13.0827, lon: 80.2707, region: 'India' },
-  'MercoPress': { lat: -34.9011, lon: -56.1645, region: 'South America' }
+  'Krebs': { lat: 38.9, lon: -77, region: 'US' },
+  'Dark Reading': { lat: 40.7, lon: -74, region: 'US' },
+  'SecurityWeek': { lat: 37.4, lon: -122, region: 'US' },
 };
-const REGIONAL_NEWS_SOURCES = ['MercoPress', 'Indian Express', 'The Hindu', 'SBS Australia'];
+const REGIONAL_NEWS_SOURCES = [];
 
 export async function fetchAllNews() {
   const feeds = [
-    // Global
-    ['http://feeds.bbci.co.uk/news/world/rss.xml', 'BBC'],
-    ['https://rss.nytimes.com/services/xml/rss/nyt/World.xml', 'NYT'],
-    ['https://www.aljazeera.com/xml/rss/all.xml', 'Al Jazeera'],
-    // USA
-    ['https://feeds.npr.org/1001/rss.xml', 'NPR'],
-    ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Tech'],
-    ['http://feeds.bbci.co.uk/news/science_and_environment/rss.xml', 'BBC Science'],
-    ['https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml', 'NYT Americas'],
-    // Europe
-    ['https://rss.dw.com/rdf/rss-en-all', 'DW'],
-    ['https://www.france24.com/en/rss', 'France 24'],
-    ['https://www.euronews.com/rss?format=mrss', 'Euronews'],
-    // Africa & Cameroon region
-    ['https://rss.dw.com/rdf/rss-en-africa', 'DW Africa'],
-    ['https://www.rfi.fr/en/rss', 'RFI'],
-    ['https://www.africanews.com/feed/rss', 'Africa News'],
-    ['https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml', 'NYT Africa'],
-    // Asia-Pacific
-    ['https://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml', 'NYT Asia'],
-    ['https://www.sbs.com.au/news/topic/australia/feed', 'SBS Australia'],
-    // India
-    ['https://indianexpress.com/section/india/feed/', 'Indian Express'],
-    ['https://www.thehindu.com/news/national/feeder/default.rss', 'The Hindu'],
-    // South America
-    ['https://en.mercopress.com/rss/latin-america', 'MercoPress'],
+    // International security media
+    ['https://feeds.feedburner.com/TheHackersNews', 'The Hacker News'],
+    ['https://www.bleepingcomputer.com/feed/', 'BleepingComputer'],
+    ['https://krebsonsecurity.com/feed/', 'Krebs'],
+    ['https://www.darkreading.com/rss.xml', 'Dark Reading'],
+    ['https://www.securityweek.com/feed', 'SecurityWeek'],
+    ['https://threatpost.com/feed/', 'Threatpost'],
+    ['https://www.schneier.com/feed/atom/', 'Schneier'],
+    ['https://nakedsecurity.sophos.com/feed/', 'Naked Security'],
+    ['https://www.csoonline.com/feed/', 'CSO Online'],
+    // Official advisories
+    ['https://www.cisa.gov/news.xml', 'CISA News'],
+    ['https://us-cert.cisa.gov/ncas/alerts.xml', 'US-CERT'],
+    // Chinese security media
+    ['https://www.anquanke.com/rss.xml', 'Anquanke RSS'],
+    ['https://www.4hou.com/feed', '4hou RSS'],
+    ['https://www.freebuf.com/feed', 'FreeBuf RSS'],
   ];
 
   const results = await Promise.allSettled(
@@ -216,10 +206,10 @@ function computeThreatLevel(data) {
   const critCVEs = (data.sources.NVD?.recentCVEs || []).filter(c => (c.cvssScore || 0) >= 9.0).length;
   score += Math.min(critCVEs * 3, 15);
 
-  const highEpss = (data.sources.EPSS?.highRisk || []).length;
+  const highEpss = (data.sources.EPSS?.highRisk || data.sources.EPSS?.topByScore || []).length;
   score += Math.min(highEpss * 2, 10);
 
-  const c2Count = data.sources.Feodo?.onlineC2Count || 0;
+  const c2Count = data.sources.Feodo?.onlineC2Count || data.sources.Feodo?.onlineC2s || 0;
   score += Math.min(Math.floor(c2Count / 10), 10);
 
   const malwareCount = (data.sources.MalwareBazaar?.recentSamples || []).length;
@@ -231,7 +221,7 @@ function computeThreatLevel(data) {
   const maliciousIPs = data.sources.GreyNoise?.maliciousCount || 0;
   score += Math.min(Math.floor(maliciousIPs / 50), 10);
 
-  const urlhausOnline = data.sources.URLhaus?.onlineCount || 0;
+  const urlhausOnline = data.sources.URLhaus?.onlineCount || data.sources.URLhaus?.totalUrls || 0;
   score += Math.min(Math.floor(urlhausOnline / 100), 10);
 
   score = Math.min(score, 100);
@@ -324,7 +314,7 @@ function buildIOCs(data) {
     source: 'MalwareBazaar',
   }));
 
-  const threatfoxIOCs = (data.sources.ThreatFox?.recentIOCs || []).slice(0, 30).map(ioc => ({
+  const threatfoxIOCs = (data.sources.ThreatFox?.recentIOCs || data.sources.ThreatFox?.iocs || []).slice(0, 30).map(ioc => ({
     indicator: ioc.ioc || ioc.indicator,
     type: ioc.ioc_type || ioc.type || 'unknown',
     threat: ioc.threat_type || ioc.malware || null,
@@ -335,7 +325,7 @@ function buildIOCs(data) {
   malware.push(...threatfoxIOCs);
 
   const c2 = [];
-  for (const entry of (data.sources.Feodo?.activeC2s || [])) {
+  for (const entry of (data.sources.Feodo?.activeC2s || data.sources.Feodo?.c2Servers || [])) {
     c2.push({
       ip: entry.ip || entry.ip_address,
       port: entry.port,
@@ -346,7 +336,7 @@ function buildIOCs(data) {
       source: 'Feodo',
     });
   }
-  for (const entry of (data.sources.URLhaus?.activeUrls || []).slice(0, 30)) {
+  for (const entry of (data.sources.URLhaus?.activeUrls || data.sources.URLhaus?.recentUrls || []).slice(0, 30)) {
     c2.push({
       url: entry.url,
       type: entry.url_type || entry.threat || 'malware_download',
@@ -384,7 +374,7 @@ function buildIOCs(data) {
     });
   }
 
-  const phishing = (data.sources.PhishTank?.urls || data.sources.PhishTank?.recentPhishing || []).slice(0, 30).map(p => ({
+  const phishing = (data.sources.PhishTank?.recentPhishing || data.sources.PhishTank?.urls || data.sources.PhishTank?.recentPhish || []).slice(0, 30).map(p => ({
     url: p.url,
     target: p.target || p.brand || null,
     verified: p.verified ?? true,
@@ -496,7 +486,7 @@ function buildGeoAttacks(data) {
   }
 
   // Feodo C2 servers — geo-tag by country field or fallback to IP text
-  for (const c of (data.sources.Feodo?.activeC2s || []).slice(0, 20)) {
+  for (const c of (data.sources.Feodo?.activeC2s || data.sources.Feodo?.c2Servers || []).slice(0, 20)) {
     const country = c.country || c.countryCode;
     const geo = country ? geoTagText(country) : null;
     if (geo) {
@@ -523,21 +513,6 @@ function buildGeoAttacks(data) {
         label: `Abuse: ${entry.ipAddress || entry.ip} (${entry.totalReports || 0} reports)`,
         severity: 'medium',
         source: 'AbuseIPDB',
-      });
-    }
-  }
-
-  // ACLED deadliest events (conflict context)
-  const acledData = data.sources.ACLED || {};
-  for (const e of (acledData.deadliestEvents || []).slice(0, 15)) {
-    if (e.lat != null && e.lon != null) {
-      points.push({
-        lat: e.lat,
-        lon: e.lon,
-        type: 'conflict',
-        label: `${e.type}: ${e.location || e.country} (${e.fatalities} fatalities)`,
-        severity: e.fatalities > 50 ? 'critical' : 'high',
-        source: 'ACLED',
       });
     }
   }
@@ -615,7 +590,7 @@ function buildSecurityNewsList(data) {
 
   // Chinese security news
   for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
-    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 5)) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.recentArticles || data.sources[src]?.items || []).slice(0, 5)) {
       items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link), date: a.date || a.published, source: src, type: 'news' });
     }
   }
@@ -650,13 +625,13 @@ function buildChinaIntel(data) {
 
   const threatbookData = data.sources.ThreatBook || null;
 
-  const qianxinThreats = (data.sources.Qianxin?.threats || data.sources.Qianxin?.items || []).slice(0, 10).map(t => ({
+  const qianxinThreats = (data.sources.Qianxin?.recentThreats || data.sources.Qianxin?.threats || data.sources.Qianxin?.items || []).slice(0, 10).map(t => ({
     title: (t.title || t.name || '').substring(0, 120), date: t.date, type: t.type,
   }));
 
   const newsArticles = [];
   for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
-    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 8)) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.recentArticles || data.sources[src]?.items || []).slice(0, 8)) {
       newsArticles.push({
         title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link),
         date: a.date || a.published, source: src,
@@ -707,7 +682,7 @@ function buildSecurityNewsFeed(rssNews, data, tgUrgent, tgTop) {
 
   // Chinese security news (FreeBuf / Anquanke / 4hou)
   for (const src of ['FreeBuf', 'Anquanke', '4hou']) {
-    for (const a of (data.sources[src]?.articles || data.sources[src]?.items || []).slice(0, 5)) {
+    for (const a of (data.sources[src]?.articles || data.sources[src]?.recentArticles || data.sources[src]?.items || []).slice(0, 5)) {
       feed.push({
         headline: (a.title || '').substring(0, 100), source: src, type: 'sec-news',
         timestamp: a.date || a.published, region: 'China', urgent: false,
@@ -842,15 +817,6 @@ export function generateIdeas(V2) {
     });
   }
 
-  const conflictEvents = V2.acled?.totalEvents || 0;
-  if (conflictEvents > 50) {
-    ideas.push({
-      title: 'Geopolitical Conflict Cyber Spillover Risk',
-      text: `${conflictEvents} conflict events tracked via ACLED. Historically correlated with increased state-sponsored cyber operations and hacktivist activity.`,
-      type: 'watch', confidence: 'Medium', horizon: 'strategic'
-    });
-  }
-
   if (V2.certAlerts.total > 10) {
     ideas.push({
       title: 'Multi-CERT Advisory Activity',
@@ -876,21 +842,6 @@ export async function synthesize(data) {
   const certAlerts = buildCertAlerts(data);
   const securityNews = buildSecurityNewsList(data);
   const chinaIntel = buildChinaIntel(data);
-
-  // ACLED conflict events (kept for geo-context)
-  const acledData = data.sources.ACLED || {};
-  const acled = acledData.error
-    ? { totalEvents: 0, totalFatalities: 0, byRegion: {}, byType: {}, deadliestEvents: [] }
-    : {
-        totalEvents: acledData.totalEvents || 0,
-        totalFatalities: acledData.totalFatalities || 0,
-        byRegion: acledData.byRegion || {},
-        byType: acledData.byType || {},
-        deadliestEvents: (acledData.deadliestEvents || []).slice(0, 15).map(e => ({
-          date: e.date, type: e.type, country: e.country, location: e.location,
-          fatalities: e.fatalities || 0, lat: e.lat || null, lon: e.lon || null
-        }))
-      };
 
   // Source health
   const health = Object.entries(data.sources).map(([name, src]) => ({
@@ -928,8 +879,6 @@ export async function synthesize(data) {
     certAlerts,
     securityNews,
     chinaIntel,
-
-    acled,
 
     health,
     news,

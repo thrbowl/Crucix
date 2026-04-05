@@ -42,13 +42,17 @@ function parseRssItems(xml) {
 export async function briefing() {
   const timestamp = new Date().toISOString();
   const key = process.env.QIANXIN_API_KEY;
+  let apiError = null;
 
   try {
     if (key) {
-      const data = await safeFetch(`${API_BASE}/threat/recent?apikey=${key}&limit=20`, {
-        timeout: 15000,
-        headers: { Authorization: `Bearer ${key}` },
-      });
+      const data = await safeFetch(
+        `${API_BASE}/threat/recent?apikey=${encodeURIComponent(key)}&limit=20`,
+        {
+          timeout: 15000,
+          headers: { Authorization: `Bearer ${key}` },
+        },
+      );
 
       if (!data.error) {
         const threats = (data.data || data.results || []).slice(0, 20).map(t => ({
@@ -72,6 +76,7 @@ export async function briefing() {
           signals,
         };
       }
+      apiError = data.error || 'Qianxin API request failed';
     }
 
     const xml = await fetchBlogRss();
@@ -88,6 +93,17 @@ export async function briefing() {
         status: key ? 'api_fallback_to_blog' : 'public_blog',
         recentThreats: items.slice(0, 20),
         signals,
+      };
+    }
+
+    if (key) {
+      return {
+        source: 'Qianxin',
+        timestamp,
+        status: 'api_error',
+        error: apiError,
+        message: 'Qianxin API failed and blog RSS fallback is unavailable.',
+        signals: [],
       };
     }
 

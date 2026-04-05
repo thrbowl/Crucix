@@ -5,9 +5,9 @@
     "nativeName": "English"
   },
   "dashboard": {
-    "title": "CRUCIX — Intelligence Terminal",
+    "title": "CRUCIX — Cybersecurity Intelligence Terminal",
     "bootTitle": "CRUCIX INTELLIGENCE ENGINE",
-    "bootSubtitle": "Local Palantir · 31 Sources",
+    "bootSubtitle": "Cybersecurity Intelligence · 41 Sources",
     "waitingForSweep": "Waiting for first sweep...",
     "sourcesOk": "Sources OK",
     "lastSweep": "Last sweep",
@@ -16,114 +16,93 @@
     "sources": "SOURCES",
     "delta": "DELTA",
     "highAlert": "HIGH ALERT",
-    "riskOff": "RISK-OFF",
-    "riskOn": "RISK-ON",
     "mixed": "MIXED",
     "terminalActive": "TERMINAL ACTIVE",
-    "perf": "PERF",
-    "perfLow": "LOW",
-    "perfHigh": "HIGH",
     "guideBtn": "What Signals Mean"
   },
   "boot": {
-    "initializing": "INITIALIZING CRUCIX ENGINE v2.1.0",
-    "connecting": "CONNECTING {count} OSINT SOURCES...",
-    "sourceGroup1": "OPENSKY · FIRMS · KIWISDR · MARITIME",
-    "sourceGroup2": "FRED · BLS · EIA · TREASURY · GSCPI",
-    "sourceGroup3": "TELEGRAM · SAFECAST · EPA · WHO · OFAC",
-    "sourceGroup4": "GDELT · NOAA · PATENTS · BLUESKY · REDDIT",
-    "sourceGroup5": "USGS · ECB · CVE · COPERNICUS · CELESTRAK",
+    "initializing": "INITIALIZING CRUCIX ENGINE v1.0.1",
+    "connecting": "CONNECTING {count} SECURITY SOURCES...",
+    "sourceGroup1": "NVD · CISA-KEV · EPSS · GITHUB-ADVISORY",
+    "sourceGroup2": "OTX · MALWAREBAZAAR · THREATFOX · VIRUSTOTAL",
+    "sourceGroup3": "GREYNOISE · SHODAN · ABUSEIPDB · PHISHTANK",
+    "sourceGroup4": "RANSOMWARE-LIVE · ENISA · CISA-ALERTS · CERTS",
+    "sourceGroup5": "CNCERT · CNVD · CNNVD · THREATBOOK · ZOOMEYE",
     "sweepComplete": "SWEEP COMPLETE — {ok}/{total} SOURCES",
     "ok": "OK",
-    "acledLayer": "ACLED CONFLICT LAYER",
-    "events": "EVENTS",
     "degraded": "DEGRADED",
-    "flightCorridors": "FLIGHT CORRIDORS",
-    "active": "ACTIVE",
-    "dualProjection": "DUAL PROJECTION",
     "ready": "READY",
     "intelligenceSynthesis": "INTELLIGENCE SYNTHESIS"
   },
   "panels": {
     "sensorGrid": "Sensor Grid",
-    "tradeIdeas": "Leverageable Ideas",
-    "osintFeed": "OSINT Feed",
-    "osintStream": "OSINT Stream",
-    "nuclearWatch": "Nuclear Watch",
-    "newsTicker": "Live News Ticker",
+    "threatBrief": "Threat Brief",
+    "intelligenceFeed": "Intelligence Feed",
+    "alertStream": "Alert Stream",
+    "newsTicker": "Security News Ticker",
     "sweepDelta": "Sweep Delta",
-    "macroMarkets": "Macro + Markets",
-    "healthAlerts": "Health Alerts",
-    "riskGauges": "Risk Gauges",
     "crossSourceSignals": "Cross-Source Signals",
-    "signalCore": "Signal Core",
-    "seismicWatch": "Seismic Watch",
-    "cyberWatch": "Cyber Watch",
-    "spaceWatch": "Space Watch",
-    "europeAlerts": "Europe Alerts",
-    "ecbIndicators": "ECB Indicators"
+    "cveTimeline": "CVE Timeline",
+    "attackHeatmap": "ATT&CK Heatmap",
+    "threatActors": "Threat Actors",
+    "chinaIntel": "China Intel",
+    "llmBrief": "LLM Brief",
+    "sourceHealth": "Source Health"
   },
   "layers": {
-    "airActivity": "Air Activity",
-    "thermalSpikes": "Thermal Spikes",
-    "sdrCoverage": "SDR Coverage",
-    "maritimeWatch": "Maritime Watch",
-    "nuclearSites": "Nuclear Sites",
-    "conflictEvents": "Conflict Events",
-    "healthWatch": "Health Watch",
-    "worldNews": "World News",
-    "osintFeed": "OSINT Feed",
-    "theaters": "theaters",
-    "nightDet": "night det.",
-    "online": "online",
-    "chokepoints": "chokepoints",
-    "monitors": "monitors",
-    "fatalities": "fatalities",
-    "whoAlerts": "WHO alerts",
-    "rssGeolocated": "RSS geolocated",
-    "earthquakes": "Earthquakes",
-    "seismicEvents": "Seismic Events",
-    "cyberVulns": "Cyber Vulnerabilities",
-    "spaceActivity": "Space Activity",
-    "europeEmergency": "Europe Emergency"
+    "attackSources": "Attack Sources",
+    "victims": "Victims",
+    "honeypots": "Honeypots",
+    "aptGroups": "APT Groups",
+    "c2Infrastructure": "C2 Infrastructure",
+    "exposedAssets": "Exposed Assets",
+    "certAlerts": "CERT Alerts",
+    "bgpAnomalies": "BGP Anomalies",
+    "phishing": "Phishing"
   },
   "map": {
-    "worldNews": "World News",
-    "healthAlert": "Health Alert",
-    "chokepoint": "Chokepoint",
-    "nuclearSite": "Nuclear Site",
-    "osintEvent": "OSINT Event",
-    "thermalDetection": "Thermal Detection",
-    "aircraft": "Aircraft",
-    "rssGeolocated": "RSS geolocated",
-    "airTraffic": "Air Traffic",
-    "thermalFire": "Thermal/Fire",
-    "conflict": "Conflict",
-    "sdrReceiver": "SDR Receiver",
+    "attackSource": "Attack Source",
+    "victim": "Victim",
+    "c2Server": "C2 Server",
+    "honeypot": "Honeypot",
+    "aptActivity": "APT Activity",
+    "certAlert": "CERT Alert",
+    "exposedAsset": "Exposed Asset",
+    "phishingTarget": "Phishing Target",
     "scrollToZoom": "SCROLL TO ZOOM · DRAG TO PAN",
-    "globeMode": "GLOBE MODE",
-    "flatMode": "FLAT MODE",
-    "earthquake": "Earthquake",
-    "disaster": "Disaster",
-    "weatherAlert": "Weather Alert",
-    "epaRadNet": "EPA RadNet",
-    "spaceStation": "Space Station",
-    "gdeltEvent": "GDELT Event"
+    "globeMode": "GLOBE MODE"
+  },
+  "threats": {
+    "level": "Threat Level",
+    "critical": "CRITICAL",
+    "high": "HIGH",
+    "elevated": "ELEVATED",
+    "low": "LOW",
+    "index": "Threat Index",
+    "worsening": "WORSENING",
+    "stable": "STABLE",
+    "improving": "IMPROVING",
+    "activeKevs": "Active KEVs",
+    "aptGroups": "APT Groups",
+    "newKevsToday": "New KEVs Today",
+    "criticalCves": "Critical CVEs",
+    "totalIocs": "Total IOCs",
+    "activeSources": "Active Sources"
   },
   "ideas": {
     "confidence": "Confidence",
     "horizon": "Horizon",
-    "risk": "Risk",
+    "type": "Type",
     "signals": "Signals",
     "rationale": "Rationale",
     "aiEnhanced": "AI ENHANCED",
     "llmOff": "LLM OFF",
     "pending": "PENDING",
     "llmNotConfigured": "LLM NOT CONFIGURED",
-    "llmHelp": "Set LLM_PROVIDER + credentials in .env to enable AI-powered trade ideas",
-    "disclosure": "FOR INFORMATIONAL PURPOSES ONLY. This is not financial advice, a recommendation to buy or sell any security, or a solicitation of any kind. All signal-based observations are derived from publicly available OSINT data and should not be relied upon for investment decisions. Consult a licensed financial advisor before making any investment. Past performance does not guarantee future results."
+    "llmHelp": "Set LLM_PROVIDER + credentials in .env to enable AI-powered threat briefs"
   },
   "regions": {
+    "global": "Global",
     "world": "World",
     "americas": "Americas",
     "europe": "Europe",
@@ -132,17 +111,12 @@
     "africa": "Africa"
   },
   "badges": {
-    "radiation": "RADIATION",
     "live": "LIVE",
     "delayed": "DELAYED",
     "items": "ITEMS",
     "urgent": "URGENT",
     "worldview": "WORLDVIEW",
-    "hotMetrics": "HOT METRICS",
-    "stress": "STRESS",
-    "sweeping": "SWEEPING...",
-    "europe": "EUROPE",
-    "orbital": "ORBITAL"
+    "sweeping": "SWEEPING..."
   },
   "delta": {
     "baseline": "BASELINE",
@@ -156,80 +130,6 @@
     "critical": "Critical",
     "new": "NEW"
   },
-  "metrics": {
-    "wtiCrude": "WTI Crude",
-    "brent": "Brent",
-    "natGas": "Nat Gas",
-    "vix": "VIX",
-    "fedFunds": "Fed Funds",
-    "gscpi": "GSCPI",
-    "cpiMom": "CPI MoM",
-    "unemployment": "Unemployment",
-    "hySpread": "HY Spread",
-    "usdIndex": "USD Index",
-    "joblessClaims": "Jobless Claims",
-    "mortgage30y": "30Y Mortgage",
-    "m2Supply": "M2 Supply",
-    "natDebt": "Nat. Debt",
-    "wti5day": "WTI 5-DAY",
-    "indexes": "INDEXES",
-    "crypto": "CRYPTO",
-    "energyMacro": "ENERGY + MACRO",
-    "vsPrior": "vs prior",
-    "ecbRate": "ECB Rate",
-    "eurusd": "EUR/USD",
-    "euM3": "EU M3",
-    "euHicp": "EU HICP",
-    "earthquakes7d": "Earthquakes (7d)",
-    "criticalCves": "Critical CVEs",
-    "spaceObjects": "Space Objects",
-    "starlink": "Starlink",
-    "europeAlerts": "EU Alerts"
-  },
-  "signalMetrics": {
-    "incidentTempo": "Incident Tempo",
-    "airTheaters": "Air Theaters",
-    "thermalSpikes": "Thermal Spikes",
-    "sdrNodes": "SDR Nodes",
-    "chokepoints": "Chokepoints",
-    "whoAlerts": "WHO Alerts"
-  },
-  "nuclear": {
-    "allSitesNormal": "ALL SITES NORMAL",
-    "anomalyDetected": "ANOMALY DETECTED",
-    "noData": "No data"
-  },
-  "seismic": {
-    "noRecentQuakes": "NO SIGNIFICANT QUAKES",
-    "majorQuake": "MAJOR QUAKE DETECTED",
-    "tsunamiRisk": "TSUNAMI RISK",
-    "mag": "M"
-  },
-  "cyber": {
-    "noAlerts": "NO CRITICAL CVES",
-    "criticalAlert": "CRITICAL VULNERABILITIES",
-    "cvss": "CVSS",
-    "critical": "CRITICAL"
-  },
-  "space": {
-    "noActivity": "NORMAL ACTIVITY",
-    "launchDetected": "LAUNCH ACTIVITY",
-    "objectsTracked": "objects tracked",
-    "newLast30d": "new (30d)",
-    "satellites": "sats",
-    "recentLaunches": "Recent Launches",
-    "totalTracked": "Total Tracked",
-    "byCountry": "BY COUNTRY",
-    "constellations": "CONSTELLATIONS",
-    "launches": "launches"
-  },
-  "europe": {
-    "noAlerts": "NO ACTIVE ALERTS",
-    "activeAlerts": "ACTIVE ALERTS",
-    "fires": "Fires",
-    "floods": "Floods",
-    "types": "types"
-  },
   "time": {
     "justNow": "just now",
     "hoursAgo": "{hours}h ago",
@@ -240,52 +140,55 @@
       "status": "Get current system health, last sweep time, source status",
       "sweep": "Trigger a manual sweep cycle",
       "brief": "Get a compact text summary of the latest intelligence",
-      "portfolio": "Show current positions and P&L (if Alpaca connected)",
+      "cve": "Query CVE intelligence: /cve CVE-XXXX-XXXX",
+      "ioc": "Cross-source IOC lookup: /ioc 1.2.3.4",
+      "actor": "Threat actor dynamics: /actor APT41",
+      "watchlist": "Manage watchlist: /watchlist add <keyword>",
+      "export": "Export IOC list: /export ioc csv",
       "alerts": "Show recent alert history",
       "mute": "Mute alerts for 1h (or /mute 2h, /mute 4h)",
       "unmute": "Resume alerts",
       "help": "Show available commands"
     },
     "messages": {
-      "alertsMuted": "🔇 Alerts muted for {hours}h — until {time} UTC",
+      "alertsMuted": "Alerts muted for {hours}h — until {time} UTC",
       "useUnmute": "Use /unmute to resume.",
-      "alertsResumed": "🔔 Alerts resumed. You'll receive the next signal evaluation.",
-      "sweepTriggered": "🚀 Manual sweep triggered. You'll receive alerts if anything significant is detected.",
-      "sweepInProgress": "🔄 Sweep already in progress. Please wait.",
-      "noDataYet": "⏳ No data yet — waiting for first sweep to complete.",
+      "alertsResumed": "Alerts resumed. You'll receive the next signal evaluation.",
+      "sweepTriggered": "Manual sweep triggered. You'll receive alerts if anything significant is detected.",
+      "sweepInProgress": "Sweep already in progress. Please wait.",
+      "noDataYet": "No data yet — waiting for first sweep to complete.",
       "noRecentAlerts": "No recent alerts.",
-      "recentAlerts": "📋 Recent Alerts (last {count})",
+      "recentAlerts": "Recent Alerts (last {count})",
       "commandsTip": "Tip: Commands are case-insensitive",
-      "commandFailed": "❌ Command failed: {error}",
-      "portfolioNotAvailable": "📊 Portfolio integration requires Alpaca MCP connection.\nUse the Crucix dashboard or Claude agent for portfolio queries."
+      "commandFailed": "Command failed: {error}"
     },
     "status": {
-      "title": "🖥️ CRUCIX STATUS",
+      "title": "CRUCIX STATUS",
       "uptime": "Uptime",
       "lastSweep": "Last sweep",
       "nextSweep": "Next sweep",
       "sweepInProgress": "Sweep in progress",
-      "yes": "🔄 Yes",
-      "no": "⏸️ No",
+      "yes": "Yes",
+      "no": "No",
       "sources": "Sources",
       "failed": "failed",
       "llm": "LLM",
-      "enabled": "✅",
-      "disabled": "❌ Disabled",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
       "sseClients": "SSE clients",
       "dashboard": "Dashboard",
       "pending": "pending",
       "never": "never"
     },
     "brief": {
-      "title": "📋 CRUCIX BRIEF",
+      "title": "CRUCIX BRIEF",
       "direction": "Direction",
       "changes": "changes",
       "criticalChanges": "critical",
-      "osint": "📡 OSINT",
-      "urgentSignals": "urgent signals",
-      "totalPosts": "total posts",
-      "topIdeas": "💡 Top Ideas"
+      "threatLevel": "Threat Level",
+      "activeCVEs": "Active CVEs",
+      "iocCount": "IOC Count",
+      "topIdeas": "Top Threat Insights"
     },
     "alertTiers": {
       "flash": "FLASH",
@@ -296,16 +199,16 @@
   "alerts": {
     "tiers": {
       "flash": {
-        "label": "FLASH",
-        "description": "Immediate action required — market-moving, time-critical"
+        "label": "CRITICAL",
+        "description": "Immediate action required — active exploitation, critical infrastructure"
       },
       "priority": {
-        "label": "PRIORITY",
-        "description": "Important signal cluster — act within hours"
+        "label": "HIGH",
+        "description": "Important threat cluster — act within hours"
       },
       "routine": {
-        "label": "ROUTINE",
-        "description": "Noteworthy change — FYI, no urgency"
+        "label": "MEDIUM",
+        "description": "Noteworthy change — monitor, no immediate urgency"
       }
     },
     "confidence": {
@@ -320,36 +223,10 @@
       "action": "Action",
       "signals": "Signals",
       "monitor": "Monitor"
-    },
-    "messages": {
-      "alertsMuted": "Alerts Muted",
-      "mutedUntil": "Alerts silenced for {hours}h — until {time} UTC.",
-      "useUnmuteToResume": "Use /unmute to resume.",
-      "alertsResumed": "Alerts Resumed",
-      "willReceiveNext": "You will receive the next signal evaluation."
-    },
-    "ruleBasedHeadlines": {
-      "nuclearAnomaly": "Nuclear Anomaly Detected",
-      "crossDomainSignals": "{count} Critical Cross-Domain Signals",
-      "escalatingSignals": "{count} Escalating Signals",
-      "osintSurge": "OSINT Surge: {count} New Urgent Posts",
-      "signalChangeDetected": "Signal Change Detected"
-    }
-  },
-  "discord": {
-    "commands": {
-      "status": "System health, last sweep time, source status",
-      "sweep": "Trigger a manual sweep cycle",
-      "brief": "Compact intelligence summary",
-      "portfolio": "Portfolio status (if Alpaca connected)",
-      "alerts": "Recent alert history",
-      "mute": "Mute alerts (default 1h)",
-      "unmute": "Resume alerts",
-      "muteHoursOption": "Hours to mute (default: 1)"
     }
   },
   "llm": {
-    "systemPrompt": "You are a quantitative analyst at a macro intelligence firm. You receive structured OSINT + economic data from 25 sources and produce 5-8 actionable trade ideas.\n\nRules:\n- Each idea must cite specific data points from the input\n- Include entry rationale, risk factors, and time horizon\n- Blend geopolitical, economic, and market signals — cross-correlate across domains\n- Be specific: name instruments (tickers, futures, ETFs), not vague sectors\n- If delta shows significant changes, lead with those\n- Do NOT repeat ideas from the \"previous ideas\" list unless conditions have materially changed\n- Rate confidence: HIGH (multiple confirming signals), MEDIUM (thesis supported), LOW (speculative)\n\nOutput ONLY valid JSON array. Each object:\n{\n  \"title\": \"Short title (max 10 words)\",\n  \"type\": \"LONG|SHORT|HEDGE|WATCH|AVOID\",\n  \"ticker\": \"Primary instrument\",\n  \"confidence\": \"HIGH|MEDIUM|LOW\",\n  \"rationale\": \"2-3 sentence explanation citing specific data\",\n  \"risk\": \"Key risk factor\",\n  \"horizon\": \"Intraday|Days|Weeks|Months\",\n  \"signals\": [\"signal1\", \"signal2\"]\n}"
+    "systemPrompt": "You are a cybersecurity threat analyst at an intelligence firm. You receive structured data from 41 security sources and produce 5-8 actionable threat insights.\n\nRules:\n- Each insight must cite specific data points from the input\n- Include threat assessment, recommended actions, and time horizon\n- Cross-correlate across vulnerability, threat actor, and attack activity domains\n- Be specific: name CVEs, actors, malware families, IOC types\n- If delta shows significant changes, lead with those\n- Rate confidence: HIGH (multiple confirming signals), MEDIUM (thesis supported), LOW (speculative)\n\nOutput ONLY valid JSON array. Each object:\n{\n  \"title\": \"Short title (max 10 words)\",\n  \"type\": \"alert|patch|block|watch\",\n  \"confidence\": \"HIGH|MEDIUM|LOW\",\n  \"text\": \"2-3 sentence explanation citing specific data\",\n  \"horizon\": \"immediate|tactical|strategic\"\n}"
   },
   "api": {
     "errors": {

@@ -1,10 +1,11 @@
+import '../utils/env.mjs';
 import { safeFetch } from '../utils/fetch.mjs';
 
 const API_BASE = 'https://api.zoomeye.org';
 
 export async function briefing() {
   const timestamp = new Date().toISOString();
-  const key = process.env.ZOOMEYE_API_KEY;
+  const key = (process.env.ZOOMEYE_API_KEY || process.env.ZOOMEYE_KEY || '').trim();
 
   if (!key) {
     return {

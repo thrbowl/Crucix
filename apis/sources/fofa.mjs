@@ -1,11 +1,13 @@
+import '../utils/env.mjs';
 import { safeFetch } from '../utils/fetch.mjs';
 
 const API_BASE = 'https://fofa.info/api/v1';
 
 export async function briefing() {
   const timestamp = new Date().toISOString();
-  const email = process.env.FOFA_EMAIL;
-  const key = process.env.FOFA_API_KEY;
+  const email = (process.env.FOFA_EMAIL || '').trim();
+  // Official FOFA SDKs often use FOFA_KEY; this repo documents FOFA_API_KEY in .env.example
+  const key = (process.env.FOFA_API_KEY || process.env.FOFA_KEY || '').trim();
 
   if (!email || !key) {
     return {
@@ -20,7 +22,7 @@ export async function briefing() {
   try {
     const query = 'port=22 && country=CN';
     const qbase64 = Buffer.from(query).toString('base64');
-    const url = `${API_BASE}/search/all?email=${encodeURIComponent(email)}&key=${key}&qbase64=${qbase64}&size=10`;
+    const url = `${API_BASE}/search/all?email=${encodeURIComponent(email)}&key=${encodeURIComponent(key)}&qbase64=${encodeURIComponent(qbase64)}&size=10`;
 
     const data = await safeFetch(url, { timeout: 15000 });
 
