@@ -1,60 +1,20 @@
 #!/usr/bin/env node
 
-// Crucix Cybersecurity Orchestrator — runs all intelligence sources in parallel
-// Outputs structured JSON for synthesis into actionable threat intelligence
+// Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
+// v0.3.0: 42 active security sources across 5 domains
 
-import './utils/env.mjs'; // Load API keys from .env
+import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
 
-// === Tier 1: Core OSINT & Geopolitical (legacy, retained) ===
-import { briefing as gdelt } from './sources/gdelt.mjs';
-import { briefing as opensky } from './sources/opensky.mjs';
-import { briefing as firms } from './sources/firms.mjs';
-import { briefing as ships } from './sources/ships.mjs';
-import { briefing as safecast } from './sources/safecast.mjs';
-import { briefing as acled } from './sources/acled.mjs';
-import { briefing as reliefweb } from './sources/reliefweb.mjs';
-import { briefing as who } from './sources/who.mjs';
-import { briefing as ofac } from './sources/ofac.mjs';
-import { briefing as opensanctions } from './sources/opensanctions.mjs';
-import { briefing as adsb } from './sources/adsb.mjs';
-
-// === Tier 2: Economic & Financial (legacy, retained) ===
-import { briefing as fred } from './sources/fred.mjs';
-import { briefing as treasury } from './sources/treasury.mjs';
-import { briefing as bls } from './sources/bls.mjs';
-import { briefing as eia } from './sources/eia.mjs';
-import { briefing as gscpi } from './sources/gscpi.mjs';
-import { briefing as usaspending } from './sources/usaspending.mjs';
-import { briefing as comtrade } from './sources/comtrade.mjs';
-
-// === Tier 3: Weather, Environment, Technology, Social (legacy, retained) ===
-import { briefing as noaa } from './sources/noaa.mjs';
-import { briefing as epa } from './sources/epa.mjs';
-import { briefing as patents } from './sources/patents.mjs';
-import { briefing as bluesky } from './sources/bluesky.mjs';
-import { briefing as reddit } from './sources/reddit.mjs';
-import { briefing as telegram } from './sources/telegram.mjs';
-import { briefing as kiwisdr } from './sources/kiwisdr.mjs';
-
-// === Tier 4: Space & Satellites (legacy, retained) ===
-import { briefing as space } from './sources/space.mjs';
-
-// === Tier 5: Live Market Data (legacy, retained) ===
-import { briefing as yfinance } from './sources/yfinance.mjs';
-
-// === Tier 6: Cyber & Infrastructure (retained + expanded) ===
+// === Domain 1: Vulnerability Intelligence (7 sources) ===
 import { briefing as cisaKev } from './sources/cisa-kev.mjs';
-import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
-
-// === NEW: Domain 1 — Vulnerability Intelligence ===
 import { briefing as nvd } from './sources/nvd.mjs';
 import { briefing as epss } from './sources/epss.mjs';
 import { briefing as githubAdvisory } from './sources/github-advisory.mjs';
 import { briefing as exploitdb } from './sources/exploitdb.mjs';
 import { briefing as osv } from './sources/osv.mjs';
 
-// === NEW: Domain 2 — Threat Actors & Malware ===
+// === Domain 2: Threat Actors & Malware (7 sources) ===
 import { briefing as otx } from './sources/otx.mjs';
 import { briefing as malwarebazaar } from './sources/malwarebazaar.mjs';
 import { briefing as threatfox } from './sources/threatfox.mjs';
@@ -63,16 +23,41 @@ import { briefing as attackStix } from './sources/attack-stix.mjs';
 import { briefing as virustotal } from './sources/virustotal.mjs';
 import { briefing as urlhaus } from './sources/urlhaus.mjs';
 
-// === NEW: Domain 3 — Attack Activity & Exposure ===
+// === Domain 3: Attack Activity & Exposure (8 sources) ===
 import { briefing as greynoise } from './sources/greynoise.mjs';
 import { briefing as shodan } from './sources/shodan.mjs';
 import { briefing as abuseipdb } from './sources/abuseipdb.mjs';
+import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
 import { briefing as shadowserver } from './sources/shadowserver.mjs';
 import { briefing as spamhaus } from './sources/spamhaus.mjs';
 import { briefing as bgpRanking } from './sources/bgp-ranking.mjs';
 import { briefing as phishtank } from './sources/phishtank.mjs';
 
-const SOURCE_TIMEOUT_MS = 30_000; // 30s max per individual source
+// === Domain 4: Event Tracking & Intel Community (7 sources) ===
+import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
+import { briefing as enisa } from './sources/enisa.mjs';
+import { briefing as cisaAlerts } from './sources/cisa-alerts.mjs';
+import { briefing as certsIntl } from './sources/certs-intl.mjs';
+import { briefing as bluesky } from './sources/bluesky.mjs';
+import { briefing as reddit } from './sources/reddit.mjs';
+import { briefing as telegram } from './sources/telegram.mjs';
+
+// === Domain 5: China Intelligence (10 sources) ===
+import { briefing as cncert } from './sources/cncert.mjs';
+import { briefing as cnvd } from './sources/cnvd.mjs';
+import { briefing as cnnvd } from './sources/cnnvd.mjs';
+import { briefing as threatbook } from './sources/threatbook.mjs';
+import { briefing as qianxin } from './sources/qianxin.mjs';
+import { briefing as zoomeye } from './sources/zoomeye.mjs';
+import { briefing as fofa } from './sources/fofa.mjs';
+import { briefing as freebuf } from './sources/freebuf-rss.mjs';
+import { briefing as anquanke } from './sources/anquanke-rss.mjs';
+import { briefing as fourhou } from './sources/4hou-rss.mjs';
+
+// === Legacy retained (ACLED for geo-context) ===
+import { briefing as acled } from './sources/acled.mjs';
+
+const SOURCE_TIMEOUT_MS = 30_000;
 
 export async function runSource(name, fn, ...args) {
   const start = Date.now();
@@ -92,59 +77,20 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  console.error('[Crucix] Starting intelligence sweep — 48 sources...');
+  const totalSources = 42;
+  console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
   const allPromises = [
-    // Tier 1: Core OSINT & Geopolitical (legacy)
-    runSource('GDELT', gdelt),
-    runSource('OpenSky', opensky),
-    runSource('FIRMS', firms),
-    runSource('Maritime', ships),
-    runSource('Safecast', safecast),
-    runSource('ACLED', acled),
-    runSource('ReliefWeb', reliefweb),
-    runSource('WHO', who),
-    runSource('OFAC', ofac),
-    runSource('OpenSanctions', opensanctions),
-    runSource('ADS-B', adsb),
-
-    // Tier 2: Economic & Financial (legacy)
-    runSource('FRED', fred, process.env.FRED_API_KEY),
-    runSource('Treasury', treasury),
-    runSource('BLS', bls, process.env.BLS_API_KEY),
-    runSource('EIA', eia, process.env.EIA_API_KEY),
-    runSource('GSCPI', gscpi),
-    runSource('USAspending', usaspending),
-    runSource('Comtrade', comtrade),
-
-    // Tier 3: Weather, Environment, Technology, Social (legacy)
-    runSource('NOAA', noaa),
-    runSource('EPA', epa),
-    runSource('Patents', patents),
-    runSource('Bluesky', bluesky),
-    runSource('Reddit', reddit),
-    runSource('Telegram', telegram),
-    runSource('KiwiSDR', kiwisdr),
-
-    // Tier 4: Space & Satellites (legacy)
-    runSource('Space', space),
-
-    // Tier 5: Live Market Data (legacy)
-    runSource('YFinance', yfinance),
-
-    // Tier 6: Cyber & Infrastructure (retained)
+    // Domain 1: Vulnerability Intelligence
     runSource('CISA-KEV', cisaKev),
-    runSource('Cloudflare-Radar', cloudflareRadar),
-
-    // === NEW: Domain 1 — Vulnerability Intelligence ===
     runSource('NVD', nvd),
     runSource('EPSS', epss),
     runSource('GitHub-Advisory', githubAdvisory),
     runSource('ExploitDB', exploitdb),
     runSource('OSV', osv),
 
-    // === NEW: Domain 2 — Threat Actors & Malware ===
+    // Domain 2: Threat Actors & Malware
     runSource('OTX', otx),
     runSource('MalwareBazaar', malwarebazaar),
     runSource('ThreatFox', threatfox),
@@ -153,18 +99,41 @@ export async function fullBriefing() {
     runSource('VirusTotal', virustotal),
     runSource('URLhaus', urlhaus),
 
-    // === NEW: Domain 3 — Attack Activity & Exposure ===
+    // Domain 3: Attack Activity & Exposure
     runSource('GreyNoise', greynoise),
     runSource('Shodan', shodan),
     runSource('AbuseIPDB', abuseipdb),
+    runSource('Cloudflare-Radar', cloudflareRadar),
     runSource('Shadowserver', shadowserver),
     runSource('Spamhaus', spamhaus),
     runSource('BGP-Ranking', bgpRanking),
     runSource('PhishTank', phishtank),
+
+    // Domain 4: Event Tracking & Intel Community
+    runSource('Ransomware-Live', ransomwareLive),
+    runSource('ENISA', enisa),
+    runSource('CISA-Alerts', cisaAlerts),
+    runSource('CERTs-Intl', certsIntl),
+    runSource('Bluesky', bluesky),
+    runSource('Reddit', reddit),
+    runSource('Telegram', telegram),
+
+    // Domain 5: China Intelligence
+    runSource('CNCERT', cncert),
+    runSource('CNVD', cnvd),
+    runSource('CNNVD', cnnvd),
+    runSource('ThreatBook', threatbook),
+    runSource('Qianxin', qianxin),
+    runSource('ZoomEye', zoomeye),
+    runSource('FOFA', fofa),
+    runSource('FreeBuf', freebuf),
+    runSource('Anquanke', anquanke),
+    runSource('4hou', fourhou),
+
+    // Retained for geo-context
+    runSource('ACLED', acled),
   ];
 
-  // Each runSource has its own 30s timeout, so allSettled will resolve
-  // within ~30s even if APIs hang. Global timeout is a safety net.
   const results = await Promise.allSettled(allPromises);
 
   const sources = results.map(r => r.status === 'fulfilled' ? r.value : { status: 'failed', error: r.reason?.message });
@@ -172,7 +141,7 @@ export async function fullBriefing() {
 
   const output = {
     crucix: {
-      version: '2.0.0',
+      version: '0.3.0-cybersec',
       timestamp: new Date().toISOString(),
       totalDurationMs: totalMs,
       sourcesQueried: sources.length,
@@ -192,9 +161,7 @@ export async function fullBriefing() {
   return output;
 }
 
-// Run and output when executed directly
 const entryHref = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
-
 if (entryHref && import.meta.url === entryHref) {
   const data = await fullBriefing();
   console.log(JSON.stringify(data, null, 2));
