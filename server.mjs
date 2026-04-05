@@ -85,59 +85,63 @@ if (telegramAlerter.isConfigured) {
 
   telegramAlerter.onCommand('/brief', async () => {
     if (!currentData) return '⏳ No data yet — waiting for first sweep to complete.';
-
-    const tg = currentData.tg || {};
-    const energy = currentData.energy || {};
-    const metals = currentData.metals || {};
     const delta = memory.getLastDelta();
-    const ideas = (currentData.ideas || []).slice(0, 3);
-
     const sections = [
-      `📋 *CRUCIX BRIEF*`,
+      `🛡️ *CRUCIX THREAT BRIEF*`,
       `_${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC_`,
       ``,
     ];
 
-    // Delta direction
-    if (delta?.summary) {
-      const dirEmoji = { 'risk-off': '📉', 'risk-on': '📈', 'mixed': '↔️' }[delta.summary.direction] || '↔️';
-      sections.push(`${dirEmoji} Direction: *${delta.summary.direction.toUpperCase()}* | ${delta.summary.totalChanges} changes, ${delta.summary.criticalChanges} critical`);
+    if (delta) {
+      const dirEmoji = { worsening: '📈', improving: '📉', stable: '↔️' }[delta.summary?.direction] || '↔️';
+      sections.push(`${dirEmoji} Threat Level: *${delta.overallLevel}* (${delta.threatIndex}/100)`);
+      sections.push(`Signals: ${delta.summary.totalSignals} (${delta.summary.criticalCount}C/${delta.summary.highCount}H/${delta.summary.mediumCount}M)`);
       sections.push('');
-    }
 
-    // Key metrics
-    const vix = currentData.fred?.find(f => f.id === 'VIXCLS');
-    const hy = currentData.fred?.find(f => f.id === 'BAMLH0A0HYM2');
-    if (vix || energy.wti || metals.gold || metals.silver) {
-      sections.push(`📊 VIX: ${vix?.value || '--'} | WTI: $${energy.wti || '--'} | Brent: $${energy.brent || '--'}`);
-      sections.push(`   Gold: $${metals.gold || '--'} | Silver: $${metals.silver || '--'}${hy ? ` | HY Spread: ${hy.value}` : ''}`);
-      sections.push(`   NatGas: $${energy.natgas || '--'}`);
-      sections.push('');
-    }
-
-    // OSINT
-    if (tg.urgent?.length > 0) {
-      sections.push(`📡 OSINT: ${tg.urgent.length} urgent signals, ${tg.posts || 0} total posts`);
-      // Top 2 urgent
-      for (const p of tg.urgent.slice(0, 2)) {
-        sections.push(`  • ${(p.text || '').substring(0, 80)}`);
+      if (delta.signals?.correlated?.length > 0) {
+        sections.push('🔗 *Cross-Correlation Alerts:*');
+        for (const c of delta.signals.correlated.slice(0, 3)) {
+          sections.push(`  [${c.level}] ${c.name}`);
+        }
+        sections.push('');
       }
-      sections.push('');
-    }
 
-    // Top ideas
-    if (ideas.length > 0) {
-      sections.push(`💡 *Top Ideas:*`);
-      for (const idea of ideas) {
-        sections.push(`  ${idea.type === 'long' ? '📈' : idea.type === 'hedge' ? '🛡️' : '👁️'} ${idea.title}`);
+      const topAtomic = (delta.signals?.atomic || [])
+        .filter(s => s.level === 'CRITICAL' || s.level === 'HIGH')
+        .slice(0, 5);
+      if (topAtomic.length > 0) {
+        sections.push('⚠️ *Top Signals:*');
+        for (const s of topAtomic) {
+          sections.push(`  [${s.level}] ${s.label}: ${s.current}`);
+        }
+        sections.push('');
       }
     }
 
+    sections.push(`Sources: ${currentData.meta?.sourcesOk || 0}/${currentData.meta?.sourcesQueried || 0} OK`);
     return sections.join('\n');
   });
 
-  telegramAlerter.onCommand('/portfolio', async () => {
-    return '📊 Portfolio integration requires Alpaca MCP connection.\nUse the Crucix dashboard or Claude agent for portfolio queries.';
+  telegramAlerter.onCommand('/threats', async () => {
+    const delta = memory.getLastDelta();
+    if (!delta) return '⏳ No threat data yet.';
+    const lines = [`🎯 *THREAT LEVEL: ${delta.overallLevel}* (${delta.threatIndex}/100)\n`];
+    for (const s of (delta.signals?.atomic || []).filter(s => s.direction === 'escalated').slice(0, 8)) {
+      lines.push(`  • [${s.level}] ${s.label}: ${s.previous ?? '?'} → ${s.current}`);
+    }
+    return lines.join('\n');
+  });
+
+  telegramAlerter.onCommand('/cves', async () => {
+    const tracker = memory.getCVETracker();
+    const recent = Object.entries(tracker).slice(-10).reverse();
+    if (recent.length === 0) return '📭 No CVEs tracked yet.';
+    const lines = ['🔓 *Recent CVEs:*\n'];
+    for (const [id, info] of recent) {
+      const stages = info.stages?.join(' → ') || 'discovered';
+      lines.push(`  • ${id} — ${stages}${info.cvss ? ` (CVSS: ${info.cvss})` : ''}`);
+    }
+    return lines.join('\n');
   });
 
   // Start polling for bot commands
@@ -182,49 +186,35 @@ if (discordAlerter.isConfigured) {
 
   discordAlerter.onCommand('brief', async () => {
     if (!currentData) return '⏳ No data yet — waiting for first sweep to complete.';
-
-    const tg = currentData.tg || {};
-    const energy = currentData.energy || {};
-    const metals = currentData.metals || {};
     const delta = memory.getLastDelta();
-    const ideas = (currentData.ideas || []).slice(0, 3);
+    const sections = [`**🛡️ CRUCIX THREAT BRIEF**\n_${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC_\n`];
 
-    const sections = [`**📋 CRUCIX BRIEF**\n_${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC_\n`];
+    if (delta) {
+      const dirEmoji = { worsening: '📈', improving: '📉', stable: '↔️' }[delta.summary?.direction] || '↔️';
+      sections.push(`${dirEmoji} Threat Level: **${delta.overallLevel}** (${delta.threatIndex}/100)`);
+      sections.push(`Signals: ${delta.summary.totalSignals} (${delta.summary.criticalCount}C/${delta.summary.highCount}H/${delta.summary.mediumCount}M)\n`);
 
-    if (delta?.summary) {
-      const dirEmoji = { 'risk-off': '📉', 'risk-on': '📈', 'mixed': '↔️' }[delta.summary.direction] || '↔️';
-      sections.push(`${dirEmoji} Direction: **${delta.summary.direction.toUpperCase()}** | ${delta.summary.totalChanges} changes, ${delta.summary.criticalChanges} critical\n`);
-    }
-
-    const vix = currentData.fred?.find(f => f.id === 'VIXCLS');
-    const hy = currentData.fred?.find(f => f.id === 'BAMLH0A0HYM2');
-    if (vix || energy.wti || metals.gold || metals.silver) {
-      sections.push(`📊 VIX: ${vix?.value || '--'} | WTI: $${energy.wti || '--'} | Brent: $${energy.brent || '--'}`);
-      sections.push(`   Gold: $${metals.gold || '--'} | Silver: $${metals.silver || '--'}${hy ? ` | HY Spread: ${hy.value}` : ''}`);
-      sections.push(`   NatGas: $${energy.natgas || '--'}`);
-      sections.push('');
-    }
-
-    if (tg.urgent?.length > 0) {
-      sections.push(`📡 OSINT: ${tg.urgent.length} urgent signals, ${tg.posts || 0} total posts`);
-      for (const p of tg.urgent.slice(0, 2)) {
-        sections.push(`  • ${(p.text || '').substring(0, 80)}`);
-      }
-      sections.push('');
-    }
-
-    if (ideas.length > 0) {
-      sections.push(`**💡 Top Ideas:**`);
-      for (const idea of ideas) {
-        sections.push(`  ${idea.type === 'long' ? '📈' : idea.type === 'hedge' ? '🛡️' : '👁️'} ${idea.title}`);
+      if (delta.signals?.correlated?.length > 0) {
+        sections.push('**🔗 Cross-Correlation Alerts:**');
+        for (const c of delta.signals.correlated.slice(0, 3)) {
+          sections.push(`  [${c.level}] ${c.name}`);
+        }
+        sections.push('');
       }
     }
 
+    sections.push(`Sources: ${currentData.meta?.sourcesOk || 0}/${currentData.meta?.sourcesQueried || 0} OK`);
     return sections.join('\n');
   });
 
-  discordAlerter.onCommand('portfolio', async () => {
-    return '📊 Portfolio integration requires Alpaca MCP connection.\nUse the Crucix dashboard or Claude agent for portfolio queries.';
+  discordAlerter.onCommand('threats', async () => {
+    const delta = memory.getLastDelta();
+    if (!delta) return '⏳ No threat data yet.';
+    const lines = [`**🎯 THREAT LEVEL: ${delta.overallLevel}** (${delta.threatIndex}/100)\n`];
+    for (const s of (delta.signals?.atomic || []).filter(s => s.direction === 'escalated').slice(0, 8)) {
+      lines.push(`  • [${s.level}] ${s.label}: ${s.previous ?? '?'} → ${s.current}`);
+    }
+    return lines.join('\n');
   });
 
   // Start the Discord bot (non-blocking — connection happens async)
@@ -364,8 +354,8 @@ async function runSweepCycle() {
     console.log('[Crucix] Synthesizing dashboard data...');
     const synthesized = await synthesize(rawData);
 
-    // 4. Delta computation + memory
-    const delta = memory.addRun(synthesized);
+    // 4. Delta computation + memory (feed raw sweep data to the cybersec engine)
+    const delta = memory.addRun(rawData);
     synthesized.delta = delta;
 
     // 5. LLM-powered trade ideas (LLM-only feature) — isolated so failures don't kill sweep
@@ -393,7 +383,7 @@ async function runSweepCycle() {
     }
 
     // 6. Alert evaluation — Telegram + Discord (LLM with rule-based fallback, multi-tier, semantic dedup)
-    if (delta?.summary?.totalChanges > 0) {
+    if (delta?.summary?.totalSignals > 0 || delta?.summary?.totalChanges > 0) {
       if (telegramAlerter.isConfigured) {
         telegramAlerter.evaluateAndAlert(llmProvider, delta, memory).catch(err => {
           console.error('[Crucix] Telegram alert error:', err.message);
@@ -416,7 +406,7 @@ async function runSweepCycle() {
 
     console.log(`[Crucix] Sweep complete — ${currentData.meta.sourcesOk}/${currentData.meta.sourcesQueried} sources OK`);
     console.log(`[Crucix] ${currentData.ideas.length} ideas (${synthesized.ideasSource}) | ${currentData.news.length} news | ${currentData.newsFeed.length} feed items`);
-    if (delta?.summary) console.log(`[Crucix] Delta: ${delta.summary.totalChanges} changes, ${delta.summary.criticalChanges} critical, direction: ${delta.summary.direction}`);
+    if (delta?.summary) console.log(`[Crucix] Delta: ${delta.summary.totalSignals} signals (${delta.summary.criticalCount}C/${delta.summary.highCount}H/${delta.summary.mediumCount}M), threat index: ${delta.threatIndex}/100, direction: ${delta.summary.direction}`);
     console.log(`[Crucix] Next sweep at ${new Date(Date.now() + config.refreshIntervalMinutes * 60000).toLocaleTimeString()}`);
 
   } catch (err) {
@@ -434,7 +424,7 @@ async function start() {
   console.log(`
   ╔══════════════════════════════════════════════╗
   ║      CRUCIX CYBERSECURITY INTELLIGENCE       ║
-  ║         Threat Intel · v0.1.0-alpha          ║
+  ║         Threat Intel · v0.5.0                ║
   ╠══════════════════════════════════════════════╣
   ║  Dashboard:  http://localhost:${port}${' '.repeat(14 - String(port).length)}║
   ║  Health:     http://localhost:${port}/api/health${' '.repeat(4 - String(port).length)}║
