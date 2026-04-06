@@ -6,8 +6,9 @@
   },
   "dashboard": {
     "title": "CRUCIX — Cybersecurity Intelligence Terminal",
-    "bootTitle": "CRUCIX INTELLIGENCE ENGINE",
-    "bootSubtitle": "Cybersecurity Intelligence · 41 Sources",
+    "bootLogo": "CRUCIX CYBER",
+    "bootFinal": "THREAT INTELLIGENCE ONLINE",
+    "brand": "CRUCIX",
     "waitingForSweep": "Waiting for first sweep...",
     "sourcesOk": "Sources OK",
     "lastSweep": "Last sweep",
@@ -21,13 +22,17 @@
     "guideBtn": "What Signals Mean"
   },
   "boot": {
-    "initializing": "INITIALIZING CRUCIX ENGINE v1.0.1",
+    "initializing": "INITIALIZING CRUCIX ENGINE v1.2.0",
     "connecting": "CONNECTING {count} SECURITY SOURCES...",
-    "sourceGroup1": "NVD · CISA-KEV · EPSS · GITHUB-ADVISORY",
-    "sourceGroup2": "OTX · MALWAREBAZAAR · THREATFOX · VIRUSTOTAL",
-    "sourceGroup3": "GREYNOISE · SHODAN · ABUSEIPDB · PHISHTANK",
-    "sourceGroup4": "RANSOMWARE-LIVE · ENISA · CISA-ALERTS · CERTS",
-    "sourceGroup5": "CNCERT · CNVD · CNNVD · THREATBOOK · ZOOMEYE",
+    "steps": [
+      "Initializing threat intelligence core",
+      "Connecting CISA KEV feed",
+      "Loading MITRE ATT&CK framework",
+      "Scanning CNVD/CNNVD/CNCERT sources",
+      "Bootstrapping IOC correlation engine",
+      "Globe renderer ready"
+    ],
+    "sourcesOnline": "sources online",
     "sweepComplete": "SWEEP COMPLETE — {ok}/{total} SOURCES",
     "ok": "OK",
     "degraded": "DEGRADED",
@@ -47,7 +52,13 @@
     "threatActors": "Threat Actors",
     "chinaIntel": "China Intel",
     "llmBrief": "LLM Brief",
-    "sourceHealth": "Source Health"
+    "sourceHealth": "Source Health",
+    "iocMonitor": "IOC MONITOR",
+    "certAlerts": "CERT ALERTS",
+    "securityNews": "SECURITY NEWS",
+    "cveTrends": "CVE TRENDS",
+    "aiThreatBrief": "AI THREAT BRIEF",
+    "hotMetrics": "HOT METRICS"
   },
   "layers": {
     "attackSources": "Attack Sources",
@@ -70,7 +81,10 @@
     "exposedAsset": "Exposed Asset",
     "phishingTarget": "Phishing Target",
     "scrollToZoom": "SCROLL TO ZOOM · DRAG TO PAN",
-    "globeMode": "GLOBE MODE"
+    "globeMode": "GLOBE MODE",
+    "flatMode": "FLAT MODE",
+    "markers": "MARKERS",
+    "arcs": "ARCS"
   },
   "threats": {
     "level": "Threat Level",
@@ -108,7 +122,11 @@
     "europe": "Europe",
     "middleEast": "Middle East",
     "asiaPacific": "Asia Pacific",
-    "africa": "Africa"
+    "africa": "Africa",
+    "china": "China",
+    "us": "US",
+    "eu": "EU",
+    "apac": "APAC"
   },
   "badges": {
     "live": "LIVE",
@@ -134,6 +152,109 @@
     "justNow": "just now",
     "hoursAgo": "{hours}h ago",
     "daysAgo": "{days}d ago"
+  },
+  "sensors": {
+    "kevActive": "KEV Active",
+    "kevSub": "CISA exploited",
+    "criticalCve": "Critical CVE",
+    "cveSub": "CVSS ≥ 9.0",
+    "iocTotal": "IOC Total",
+    "iocSub": "hashes+IPs+URLs",
+    "c2Servers": "C2 Servers",
+    "c2Sub": "Feodo+ThreatFox",
+    "aptGroups": "APT Groups",
+    "aptSub": "active tracking",
+    "geoMarkers": "Geo Markers",
+    "geoSub": "on globe",
+    "phishingUrls": "Phishing URLs",
+    "phishSub": "PhishTank+OpenPhish",
+    "cncertAlerts": "CNCERT Alerts",
+    "cncertSub": "CN CERT",
+    "cnvdCnnvd": "CNVD/CNNVD",
+    "cnSub": "CN vulns",
+    "newsItems": "News Items",
+    "newsSub": "security feeds"
+  },
+  "tabs": {
+    "cve": "CVEs",
+    "attack": "ATT&CK",
+    "actors": "Actors",
+    "china": "China",
+    "llm": "LLM"
+  },
+  "feed": {
+    "title": "Threat Signals",
+    "liveFeed": "LIVE FEED"
+  },
+  "sidebar": {
+    "sensorGrid": "Sensor Grid",
+    "mapLayers": "Map Layers",
+    "sources": "Sources"
+  },
+  "emptyStates": {
+    "noCveData": "No CVE data available",
+    "noAttackData": "No ATT&CK data available",
+    "noActorData": "No threat actor data available",
+    "awaitingLlm": "Awaiting LLM threat analysis...",
+    "awaitingFeed": "Awaiting intelligence feed..."
+  },
+  "cveTimeline": {
+    "inKev": "In KEV",
+    "hasPoc": "Has PoC",
+    "other": "Other",
+    "cvss": "CVSS",
+    "publishedDate": "Published Date"
+  },
+  "chinaIntel": {
+    "cncertAlerts": "CNCERT Alerts",
+    "cnvdVulns": "CNVD Vulnerabilities",
+    "cnnvdVulns": "CNNVD Vulnerabilities",
+    "newsArticles": "News Articles",
+    "recentCertAlerts": "Recent CERT Alerts (China)"
+  },
+  "actors": {
+    "victims": "victims"
+  },
+  "ioc": {
+    "malware": "Malware Samples",
+    "c2": "C2 Servers",
+    "maliciousIPs": "Malicious IPs",
+    "phishing": "Phishing URLs"
+  },
+  "cert": {
+    "intl": "CERTs Intl"
+  },
+  "metrics": {
+    "threatGroups": "Threat Groups",
+    "certAlerts": "CERT Alerts"
+  },
+  "sweep": {
+    "awaiting": "Awaiting sweep data..."
+  },
+  "signal": {
+    "label": "SIGNAL",
+    "escalated": "Escalated since last sweep",
+    "detected": "Detected in current sweep",
+    "kevExploits": "Active KEV Exploits Detected",
+    "kevExploitsDesc": "Vulnerabilities in CISA KEV catalog actively exploited in the wild. Immediate patching recommended.",
+    "c2Activity": "Elevated C2 Infrastructure Activity",
+    "c2ActivityDesc": "C2 servers tracked across multiple threat feeds. Monitor egress traffic for IOC matches.",
+    "attackSources": "Attack Sources",
+    "originsDetected": "Origins Detected",
+    "attackSourcesDesc": "Geographic attack sources identified from multiple intelligence feeds.",
+    "activeGroups": "Active Threat Groups Tracked",
+    "activeGroupsDesc": "Ransomware and APT groups with recent victim claims. Cross-reference with your sector exposure.",
+    "phishing": "Phishing Campaign Indicators",
+    "phishingDesc": "Phishing URLs detected. Review email gateway logs and user reports."
+  },
+  "cveTrend": {
+    "totalTracked": "Total Tracked",
+    "avgCvss": "Avg CVSS",
+    "recent7d": "Recent (7d)"
+  },
+  "lang": {
+    "switchTo": "中文",
+    "current": "EN"
   },
   "bot": {
     "commands": {

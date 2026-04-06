@@ -1,0 +1,357 @@
+{
+  "meta": {
+    "code": "zh",
+    "name": "Chinese",
+    "nativeName": "简体中文"
+  },
+  "dashboard": {
+    "title": "CRUCIX — 网络安全情报终端",
+    "bootLogo": "CRUCIX CYBER",
+    "bootFinal": "威胁情报系统就绪",
+    "brand": "CRUCIX",
+    "waitingForSweep": "等待首次数据采集...",
+    "sourcesOk": "数据源正常",
+    "lastSweep": "上次采集",
+    "nextSweep": "下次采集",
+    "sweep": "采集",
+    "sources": "数据源",
+    "delta": "变化",
+    "highAlert": "高危告警",
+    "mixed": "混合",
+    "terminalActive": "终端活跃",
+    "guideBtn": "信号含义说明"
+  },
+  "boot": {
+    "initializing": "正在初始化 CRUCIX 引擎 v1.2.0",
+    "connecting": "正在连接 {count} 个安全数据源...",
+    "steps": [
+      "初始化威胁情报核心引擎",
+      "连接 CISA KEV 漏洞数据源",
+      "加载 MITRE ATT&CK 框架",
+      "扫描 CNVD/CNNVD/CNCERT 数据源",
+      "启动 IOC 关联分析引擎",
+      "地球仪渲染器就绪"
+    ],
+    "sourcesOnline": "个数据源已上线",
+    "sweepComplete": "数据采集完成 — {ok}/{total} 个数据源",
+    "ok": "正常",
+    "degraded": "降级",
+    "ready": "就绪",
+    "intelligenceSynthesis": "情报合成中"
+  },
+  "panels": {
+    "sensorGrid": "传感器面板",
+    "threatBrief": "威胁简报",
+    "intelligenceFeed": "情报信息流",
+    "alertStream": "告警信息流",
+    "newsTicker": "安全新闻滚动条",
+    "sweepDelta": "采集变化",
+    "crossSourceSignals": "跨源关联信号",
+    "cveTimeline": "CVE 时间线",
+    "attackHeatmap": "ATT&CK 热力图",
+    "threatActors": "威胁行为者",
+    "chinaIntel": "中国情报",
+    "llmBrief": "LLM 简报",
+    "sourceHealth": "数据源状态",
+    "iocMonitor": "IOC 监控",
+    "certAlerts": "CERT 通报",
+    "securityNews": "安全新闻",
+    "cveTrends": "CVE 趋势",
+    "aiThreatBrief": "AI 威胁简报",
+    "hotMetrics": "热点指标"
+  },
+  "layers": {
+    "attackSources": "攻击源",
+    "victims": "受害者",
+    "honeypots": "蜜罐",
+    "aptGroups": "APT 组织",
+    "c2Infrastructure": "C2 基础设施",
+    "exposedAssets": "暴露资产",
+    "certAlerts": "CERT 通报",
+    "bgpAnomalies": "BGP 异常",
+    "phishing": "钓鱼"
+  },
+  "map": {
+    "attackSource": "攻击源",
+    "victim": "受害者",
+    "c2Server": "C2 服务器",
+    "honeypot": "蜜罐",
+    "aptActivity": "APT 活动",
+    "certAlert": "CERT 通报",
+    "exposedAsset": "暴露资产",
+    "phishingTarget": "钓鱼目标",
+    "scrollToZoom": "滚轮缩放 · 拖拽平移",
+    "globeMode": "地球仪模式",
+    "flatMode": "平面模式",
+    "markers": "标记",
+    "arcs": "弧线"
+  },
+  "threats": {
+    "level": "威胁等级",
+    "critical": "严重",
+    "high": "高危",
+    "elevated": "中危",
+    "low": "低危",
+    "index": "威胁指数",
+    "worsening": "恶化中",
+    "stable": "稳定",
+    "improving": "改善中",
+    "activeKevs": "活跃 KEV",
+    "aptGroups": "APT 组织",
+    "newKevsToday": "今日新增 KEV",
+    "criticalCves": "严重 CVE",
+    "totalIocs": "IOC 总数",
+    "activeSources": "活跃数据源"
+  },
+  "ideas": {
+    "confidence": "置信度",
+    "horizon": "时间跨度",
+    "type": "类型",
+    "signals": "信号",
+    "rationale": "分析依据",
+    "aiEnhanced": "AI 增强",
+    "llmOff": "LLM 关闭",
+    "pending": "等待中",
+    "llmNotConfigured": "LLM 未配置",
+    "llmHelp": "请在 .env 中设置 LLM_PROVIDER 及凭证以启用 AI 威胁简报"
+  },
+  "regions": {
+    "global": "全球",
+    "world": "世界",
+    "americas": "美洲",
+    "europe": "欧洲",
+    "middleEast": "中东",
+    "asiaPacific": "亚太",
+    "africa": "非洲",
+    "china": "中国",
+    "us": "美国",
+    "eu": "欧盟",
+    "apac": "亚太"
+  },
+  "badges": {
+    "live": "实时",
+    "delayed": "延迟",
+    "items": "条目",
+    "urgent": "紧急",
+    "worldview": "全局视图",
+    "sweeping": "采集中..."
+  },
+  "delta": {
+    "baseline": "基线",
+    "escalation": "升级",
+    "deescalation": "降级",
+    "stable": "稳定",
+    "newSignals": "新信号",
+    "resolved": "已解决",
+    "noChanges": "上次采集以来无变化",
+    "changes": "变化",
+    "critical": "严重",
+    "new": "新增"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "hoursAgo": "{hours}小时前",
+    "daysAgo": "{days}天前"
+  },
+  "sensors": {
+    "kevActive": "活跃 KEV",
+    "kevSub": "CISA 在野利用",
+    "criticalCve": "严重 CVE",
+    "cveSub": "CVSS ≥ 9.0",
+    "iocTotal": "IOC 总数",
+    "iocSub": "哈希+IP+URL",
+    "c2Servers": "C2 服务器",
+    "c2Sub": "Feodo+ThreatFox",
+    "aptGroups": "APT 组织",
+    "aptSub": "活跃追踪",
+    "geoMarkers": "地理标记",
+    "geoSub": "地球仪上",
+    "phishingUrls": "钓鱼 URL",
+    "phishSub": "PhishTank+OpenPhish",
+    "cncertAlerts": "CNCERT 通报",
+    "cncertSub": "国家互联网应急中心",
+    "cnvdCnnvd": "CNVD/CNNVD",
+    "cnSub": "国内漏洞",
+    "newsItems": "新闻条目",
+    "newsSub": "安全信息源"
+  },
+  "tabs": {
+    "cve": "CVE",
+    "attack": "ATT&CK",
+    "actors": "行为者",
+    "china": "中国",
+    "llm": "LLM"
+  },
+  "feed": {
+    "title": "威胁信号",
+    "liveFeed": "实时信息"
+  },
+  "sidebar": {
+    "sensorGrid": "传感器面板",
+    "mapLayers": "地图图层",
+    "sources": "数据源"
+  },
+  "emptyStates": {
+    "noCveData": "暂无 CVE 数据",
+    "noAttackData": "暂无 ATT&CK 数据",
+    "noActorData": "暂无威胁行为者数据",
+    "awaitingLlm": "等待 LLM 威胁分析...",
+    "awaitingFeed": "等待情报信息流..."
+  },
+  "cveTimeline": {
+    "inKev": "在 KEV 中",
+    "hasPoc": "有 PoC",
+    "other": "其他",
+    "cvss": "CVSS",
+    "publishedDate": "发布日期"
+  },
+  "chinaIntel": {
+    "cncertAlerts": "CNCERT 通报",
+    "cnvdVulns": "CNVD 漏洞",
+    "cnnvdVulns": "CNNVD 漏洞",
+    "newsArticles": "新闻文章",
+    "recentCertAlerts": "近期 CERT 通报（中国）"
+  },
+  "actors": {
+    "victims": "受害者"
+  },
+  "ioc": {
+    "malware": "恶意样本",
+    "c2": "C2 服务器",
+    "maliciousIPs": "恶意 IP",
+    "phishing": "钓鱼 URL"
+  },
+  "cert": {
+    "intl": "国际 CERT"
+  },
+  "metrics": {
+    "threatGroups": "威胁组织",
+    "certAlerts": "CERT 通报"
+  },
+  "sweep": {
+    "awaiting": "等待采集数据..."
+  },
+  "signal": {
+    "label": "信号",
+    "escalated": "上次采集后升级",
+    "detected": "本次采集检测到",
+    "kevExploits": "检测到活跃 KEV 漏洞利用",
+    "kevExploitsDesc": "CISA KEV 目录中有漏洞正在被积极利用，建议立即修补。",
+    "c2Activity": "C2 基础设施活动升级",
+    "c2ActivityDesc": "多个威胁情报源追踪到 C2 服务器，请监控出口流量并匹配 IOC。",
+    "attackSources": "攻击来源",
+    "originsDetected": "个源头被检测",
+    "attackSourcesDesc": "从多个情报源识别出地理攻击来源。",
+    "activeGroups": "个活跃威胁组织被追踪",
+    "activeGroupsDesc": "勒索软件和 APT 组织有近期受害者声明，请结合行业暴露面交叉验证。",
+    "phishing": "钓鱼活动指标",
+    "phishingDesc": "检测到钓鱼 URL，请检查邮件网关日志和用户报告。"
+  },
+  "cveTrend": {
+    "totalTracked": "跟踪总数",
+    "avgCvss": "平均 CVSS",
+    "recent7d": "近 7 天"
+  },
+  "lang": {
+    "switchTo": "EN",
+    "current": "中文"
+  },
+  "bot": {
+    "commands": {
+      "status": "获取当前系统健康状态、上次采集时间、数据源状态",
+      "sweep": "触发手动数据采集",
+      "brief": "获取最新情报的简要文字摘要",
+      "cve": "查询 CVE 情报：/cve CVE-XXXX-XXXX",
+      "ioc": "跨源 IOC 查询：/ioc 1.2.3.4",
+      "actor": "威胁行为者动态：/actor APT41",
+      "watchlist": "管理关注列表：/watchlist add <关键词>",
+      "export": "导出 IOC 列表：/export ioc csv",
+      "alerts": "显示近期告警历史",
+      "mute": "静音告警 1 小时（或 /mute 2h、/mute 4h）",
+      "unmute": "恢复告警",
+      "help": "显示可用命令"
+    },
+    "messages": {
+      "alertsMuted": "告警已静音 {hours} 小时 — 直到 {time} UTC",
+      "useUnmute": "使用 /unmute 恢复告警。",
+      "alertsResumed": "告警已恢复。您将在下次信号评估时收到通知。",
+      "sweepTriggered": "手动数据采集已触发。如检测到重要信息，您将收到告警。",
+      "sweepInProgress": "数据采集进行中，请稍候。",
+      "noDataYet": "暂无数据 — 等待首次数据采集完成。",
+      "noRecentAlerts": "无近期告警。",
+      "recentAlerts": "近期告警（最近 {count} 条）",
+      "commandsTip": "提示：命令不区分大小写",
+      "commandFailed": "命令执行失败：{error}"
+    },
+    "status": {
+      "title": "CRUCIX 状态",
+      "uptime": "运行时间",
+      "lastSweep": "上次采集",
+      "nextSweep": "下次采集",
+      "sweepInProgress": "采集进行中",
+      "yes": "是",
+      "no": "否",
+      "sources": "数据源",
+      "failed": "失败",
+      "llm": "LLM",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "sseClients": "SSE 客户端",
+      "dashboard": "仪表盘",
+      "pending": "等待中",
+      "never": "从未"
+    },
+    "brief": {
+      "title": "CRUCIX 简报",
+      "direction": "趋势",
+      "changes": "变化",
+      "criticalChanges": "严重",
+      "threatLevel": "威胁等级",
+      "activeCVEs": "活跃 CVE",
+      "iocCount": "IOC 数量",
+      "topIdeas": "核心威胁洞察"
+    },
+    "alertTiers": {
+      "flash": "紧急",
+      "priority": "优先",
+      "routine": "常规"
+    }
+  },
+  "alerts": {
+    "tiers": {
+      "flash": {
+        "label": "严重",
+        "description": "需要立即响应 — 活跃利用、关键基础设施"
+      },
+      "priority": {
+        "label": "高危",
+        "description": "重要威胁集群 — 需在数小时内处理"
+      },
+      "routine": {
+        "label": "中危",
+        "description": "值得关注的变化 — 持续监控，无紧急性"
+      }
+    },
+    "confidence": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "fields": {
+      "direction": "趋势",
+      "confidence": "置信度",
+      "crossCorrelation": "跨源关联",
+      "action": "操作",
+      "signals": "信号",
+      "monitor": "监控"
+    }
+  },
+  "llm": {
+    "systemPrompt": "你是一家情报公司的网络安全威胁分析师。你接收来自 41 个安全数据源的结构化数据，并生成 5-8 条可执行的威胁洞察。\n\n规则：\n- 每条洞察必须引用输入数据中的具体数据点\n- 包含威胁评估、建议操作和时间范围\n- 跨漏洞、威胁行为者和攻击活动领域进行交叉关联\n- 具体化：指明 CVE 编号、行为者名称、恶意软件家族、IOC 类型\n- 如果 delta 显示重大变化，优先报告\n- 置信度评级：HIGH（多个确认信号）、MEDIUM（有支持论据）、LOW（推测性）\n\n仅输出有效 JSON 数组。每个对象：\n{\n  \"title\": \"简短标题（最多 10 个字）\",\n  \"type\": \"alert|patch|block|watch\",\n  \"confidence\": \"HIGH|MEDIUM|LOW\",\n  \"text\": \"2-3 句解释，引用具体数据\",\n  \"horizon\": \"immediate|tactical|strategic\"\n}"
+  },
+  "api": {
+    "errors": {
+      "noDataYet": "暂无数据 — 首次数据采集进行中"
+    }
+  }
+}

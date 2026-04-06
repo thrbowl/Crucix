@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
 import config from './crucix.config.mjs';
-import { getLocale, currentLanguage, getSupportedLocales } from './lib/i18n.mjs';
+import { getLocale, currentLanguage, getSupportedLocales, loadLocaleByCode, isSupported } from './lib/i18n.mjs';
 import { fullBriefing } from './apis/briefing.mjs';
 import { synthesize, generateIdeas } from './dashboard/inject.mjs';
 import { MemoryManager } from './lib/delta/index.mjs';
@@ -238,9 +238,8 @@ app.get('/', (req, res) => {
     const htmlPath = join(ROOT, 'dashboard/public/jarvis.html');
     let html = readFileSync(htmlPath, 'utf-8');
     
-    // Inject locale data into the HTML
     const locale = getLocale();
-    const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script>')};</script>`;
+    const localeScript = `<script>window.__CRUCIX_LOCALE__=${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script>')};window.__CRUCIX_LANG__="${currentLanguage}";</script>`;
     html = html.replace('</head>', `${localeScript}\n</head>`);
     
     res.type('html').send(html);
@@ -419,6 +418,17 @@ app.get('/api/health', (req, res) => {
     refreshIntervalMinutes: config.refreshIntervalMinutes,
     language: currentLanguage,
   });
+});
+
+// API: get a specific locale by code (for client-side language switching)
+app.get('/api/locale/:lang', (req, res) => {
+  const lang = req.params.lang;
+  if (!isSupported(lang)) {
+    return res.status(404).json({ error: `Unsupported locale: ${lang}` });
+  }
+  const locale = loadLocaleByCode(lang);
+  if (!locale) return res.status(404).json({ error: `Locale not found: ${lang}` });
+  res.json(locale);
 });
 
 // API: available locales

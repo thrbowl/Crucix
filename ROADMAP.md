@@ -1,8 +1,8 @@
 # Crucix Cybersecurity Edition — 版本发布路线图
 
-**更新日期：** 2026-04-05
+**更新日期：** 2026-04-06
 **基于设计文档：** `docs/superpowers/specs/2026-04-05-data-fix-layout-i18n-design.md`
-**当前版本：** v1.0.0
+**当前版本：** v1.2.0
 
 ---
 
@@ -25,7 +25,7 @@ v1.0.1  数据修复 ✅  ── 字段名对齐 / 源 bug 修复 / 安全 RSS /
   │
 v1.1.0  大屏重塑 ✅  ── 地球仪居中放大 / 融合原版布局 / 数据密度提升
   │
-v1.2.0  国际化   🌐  ── zh.json / 前端 i18n / 中英文切换
+v1.2.0  国际化   ✅  ── zh.json / 前端 i18n / 中英文切换
   │
 v1.3.0  情报增强 ── 域 6-7（43 源）搜索引擎 + 厂商公告 + MISP + RBAC + PDF
   │
@@ -187,7 +187,7 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ---
 
-## v1.2.0 — 国际化（预计 3-4 天）
+## v1.2.0 — 国际化 ✅
 
 > **目标：** 前端支持中英文切换，所有界面文案走 i18n 系统，安全术语中文本地化。
 
@@ -205,23 +205,24 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ### 验收标准
 
-- [ ] 中英文一键切换，不刷新页面
-- [ ] 中文界面无遗漏英文硬编码
-- [ ] 安全术语缩写保持英文（CVE、IOC、APT 等）
-- [ ] `.env` 中 `CRUCIX_LANG=zh` 可设置默认语言
-- [ ] 时间格式随语言切换
+- [x] 中英文一键切换，不刷新页面
+- [x] 中文界面无遗漏英文硬编码
+- [x] 安全术语缩写保持英文（CVE、IOC、APT 等）
+- [x] `.env` 中 `CRUCIX_LANG=zh` 可设置默认语言
+- [x] 时间格式随语言切换
 
 ### 文件变更
 
 ```
 新建:
-  locales/zh.json
+  locales/zh.json                   (完整中文翻译，覆盖所有面板/按钮/状态/告警/传感器/空状态文案)
 
 修改:
-  lib/i18n.mjs                      (添加 zh 支持)
-  dashboard/public/jarvis.html      (i18n 消费 + 语言切换 UI)
-  locales/en.json                   (补全网安术语)
-  .env.example                      (新增 CRUCIX_LANG)
+  lib/i18n.mjs                      (SUPPORTED_LOCALES 添加 zh + loadLocaleByCode + clearLocaleCache)
+  server.mjs                        (新增 GET /api/locale/:lang + 注入 __CRUCIX_LANG__)
+  dashboard/public/jarvis.html      (前端 t() 翻译函数 + data-i18n 属性 + ZH/EN 切换按钮 + 动态 locale)
+  locales/en.json                   (补全 sensors/tabs/feed/sidebar/emptyStates/cveTimeline/chinaIntel/actors/lang 等键)
+  .env.example                      (新增 CRUCIX_LANG=zh)
 ```
 
 ---
@@ -353,9 +354,9 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 | **v0.5.0** | 引擎改造 | 三层信号 + 四级告警输出正确 | ✅ 已完成 |
 | **v0.8.0** | 大屏交付 | 仪表板 + 地球仪 + 面板可视化 | ✅ 已完成 |
 | **v1.0.0** | 正式发布 | IOC 导出 + API + 日报 + Watchlist + Bot | ✅ 已完成 |
-| **v1.0.1** | 数据复活 | 30+ 源有效数据，安全 RSS，指标非 0 | 🔧 待开发（2-3 天） |
-| **v1.1.0** | 大屏重塑 | 地球仪居中，融合布局，数据密度达标 | 🎯 待开发（4-5 天） |
-| **v1.2.0** | 国际化 | 中英文切换完整可用 | 🌐 待开发（3-4 天） |
+| **v1.0.1** | 数据复活 | 30+ 源有效数据，安全 RSS，指标非 0 | ✅ 已完成 |
+| **v1.1.0** | 大屏重塑 | 地球仪居中，融合布局，数据密度达标 | ✅ 已完成 |
+| **v1.2.0** | 国际化 | 中英文切换完整可用 | ✅ 已完成 |
 | **v1.3.0** | 情报增强 | 85 源 + MISP + RBAC + PDF | 待规划（+14-21 天） |
 | **v1.4.0** | 自动化 | Webhook + SOAR + 邮件订阅 | 待规划（+21-28 天） |
 | **v1.5.0** | 智能化 | ML + 知识图谱 + 暗网 | 待规划（+28-42 天） |
