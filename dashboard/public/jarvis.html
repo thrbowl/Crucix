@@ -1525,7 +1525,7 @@ function renderChinaIntel(){
       <h5>${esc(t('chinaIntel.cnnvdVulns'))}</h5>
       <div class="china-count">${Array.isArray(ci.cnnvdVulns) ? ci.cnnvdVulns.length : safe(ci.cnnvdVulns, 0)}</div>
       <h5 style="margin-top:12px">${esc(t('chinaIntel.newsArticles'))}</h5>
-      <div class="china-count">${safe(ci.newsArticles, 0)}</div>
+      <div class="china-count">${Array.isArray(ci.newsArticles) ? ci.newsArticles.length : safe(ci.newsArticles, 0)}</div>
     </div>
   `;
 
