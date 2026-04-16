@@ -101,11 +101,6 @@ export async function briefing() {
         signal: `${rdpTotal.toLocaleString()} RDP services exposed with screenshots`,
       });
     }
-  } else if (accountInfo.credits === 0) {
-    signals.push({
-      severity: 'info',
-      signal: 'Shodan query credits exhausted — skipping host search',
-    });
   } else {
     signals.push({
       severity: 'info',
