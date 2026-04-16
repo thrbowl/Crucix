@@ -1051,6 +1051,7 @@ export async function synthesize(data) {
       index: threatInfo.index,
       direction: threatInfo.direction,
       activeSources: sourcesOk,
+      inactiveSources: sourcesInactive,
       totalSources: sourcesQueried,
     },
 
