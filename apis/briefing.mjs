@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.2: 36 active security sources across 5 domains (+OpenPhish)
+// v1.4.3: 37 active security sources across 5 domains (+DShield)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -30,6 +30,7 @@ import { briefing as abuseipdb } from './sources/abuseipdb.mjs';
 import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
 import { briefing as spamhaus } from './sources/spamhaus.mjs';
 import { briefing as openPhish } from './sources/openphish.mjs';
+import { briefing as dshield } from './sources/dshield.mjs';
 
 // === Domain 4: Event Tracking & Intel Community (8 sources) ===
 import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
@@ -124,7 +125,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 36; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish
+  const totalSources = 37; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -153,6 +154,7 @@ export async function fullBriefing() {
     runSource('Cloudflare-Radar', cloudflareRadar),
     runSource('Spamhaus', spamhaus),
     runSource('OpenPhish', openPhish),
+    runSource('DShield', dshield),
 
     // Domain 4: Event Tracking & Intel Community
     runSource('Ransomware-Live', ransomwareLive),
