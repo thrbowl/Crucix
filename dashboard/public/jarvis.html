@@ -233,6 +233,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* CERT Alert rows */
 .cert-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background 0.15s}
 .cert-row:hover{background:rgba(0,229,255,0.04)}
+.clickable{cursor:pointer}
+.clickable:hover{opacity:0.85}
 .cert-org{font-family:var(--mono);font-size:9px;color:var(--dim);display:flex;align-items:center;gap:5px}
 .cert-org .co-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .cert-count{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)}
@@ -1592,20 +1594,18 @@ function renderCertAlerts(){
   const el = document.getElementById('certAlertsList');
   if(!el) return;
   const ca = D.certAlerts || {};
-  const chi = D.chinaIntel || {};
-  const rows = [
-    { org:'CISA', items:ca.cisa||[], color:'var(--red)', url:'https://www.cisa.gov/news-events/alerts' },
-    { org:'ENISA', items:ca.enisa||[], color:'var(--orange)', url:'https://www.enisa.europa.eu/publications' },
-    { org:t('cert.intl','CERTs Intl'), items:ca.certs||[], color:'var(--blue)', url:'' },
-    { org:'CNCERT', items:Array.isArray(chi.cncertAlerts)?chi.cncertAlerts:[], color:'var(--green)', url:'https://www.cert.org.cn' },
-    { org:'CNVD/CNNVD', items:[...(Array.isArray(chi.cnvdVulns)?chi.cnvdVulns:[]),...(Array.isArray(chi.cnnvdVulns)?chi.cnnvdVulns:[])], color:'var(--accent)', url:'https://www.cnvd.org.cn' },
-  ];
-  const total = rows.reduce((s,r)=>s+r.items.length,0);
+  const items = ca.items || [];
+  const total = ca.total || 0;
   document.getElementById('certTotalBadge').textContent = total;
-  el.innerHTML = rows.map(r => `
-    <div class="cert-row"${r.url?` onclick="window.open('${r.url}','_blank','noopener')"`:''}>
-      <div class="cert-org"><div class="co-dot" style="background:${r.color}"></div>${esc(r.org)}</div>
-      <div class="cert-count" style="color:${r.color}">${r.items.length}</div>
+  if(!items.length){
+    el.innerHTML = `<div class="cert-row"><div class="cert-org" style="color:var(--dim)">${esc(t('emptyStates.noCerts','No CERT data'))}</div></div>`;
+    return;
+  }
+  el.innerHTML = items.map(r => `
+    <div class="cert-row${r.orgUrl?' clickable':''}" style="cursor:${r.orgUrl?'pointer':'default'}"
+      ${r.orgUrl?`onclick="window.open('${r.orgUrl}','_blank','noopener noreferrer')"`:''}>
+      <div class="cert-org"><div class="co-dot" style="background:${r.color}"></div>${esc(r.label)}</div>
+      <div class="cert-count" style="color:${r.color}">${r.count}</div>
     </div>`).join('');
 }
 
