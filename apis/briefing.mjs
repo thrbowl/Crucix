@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.6: 40 active security sources across 5 domains (+Qianxin-TI)
+// v1.4.7: 41 active security sources across 5 domains (+Baidu-Search)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -51,6 +51,7 @@ import { briefing as cnnvd } from './sources/cnnvd.mjs';
 import { briefing as qianxin } from './sources/qianxin.mjs';
 import { briefing as qianxinHunter } from './sources/qianxin-hunter.mjs';
 import { briefing as qianxinTI } from './sources/qianxin-ti.mjs';
+import { briefing as baiduSearch } from './sources/baidu-search.mjs';
 import { briefing as fofa } from './sources/fofa.mjs';
 import { briefing as zoomeye } from './sources/zoomeye.mjs';
 import { briefing as freebuf } from './sources/freebuf-rss.mjs';
@@ -128,7 +129,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 40; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI
+  const totalSources = 41; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -178,6 +179,7 @@ export async function fullBriefing() {
     runSource('Qianxin', qianxin),
     runSource('Qianxin-Hunter', qianxinHunter),
     runSource('Qianxin-TI', qianxinTI),
+    runSource('Baidu-Search', baiduSearch),
     runSource('FOFA', fofa),
     runSource('ZoomEye', zoomeye),
     runSource('FreeBuf', freebuf),
