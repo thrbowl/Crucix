@@ -57,6 +57,48 @@ import { briefing as fourhou } from './sources/4hou-rss.mjs';
 
 const SOURCE_TIMEOUT_MS = 30_000;
 
+// Map error messages/status strings to canonical reason codes
+function inferReason(statusOrError) {
+  const s = String(statusOrError).toLowerCase();
+  if (s.includes('no_credentials') || s.includes('no credential') || s.includes('api key') || s.includes('apikey') || s.includes('key not set') || s.includes('missing key')) return 'no_key';
+  if (s.includes('rate') || s.includes('429') || s.includes('quota') || s.includes('limit')) return 'rate_limited';
+  if (s.includes('not available in your area') || s.includes('geo') || s.includes('region') || s.includes('country')) return 'geo_blocked';
+  if (s.includes('auth') || s.includes('401') || s.includes('forbidden') || s.includes('invalid api') || s.includes('invalid method')) return 'api_error';
+  return 'unreachable';
+}
+
+// Normalize any source return value to { status: 'active' } or { status: 'inactive', reason, message }
+function normalizeSourceData(name, data) {
+  if (!data || typeof data !== 'object') {
+    return { source: name, timestamp: new Date().toISOString(), status: 'inactive', reason: 'unreachable', message: 'Source returned no data' };
+  }
+  // Already normalized — pass through
+  if (data.status === 'active' || data.status === 'inactive') return data;
+  // Has error field → inactive
+  if (data.error) {
+    return { ...data, status: 'inactive', reason: inferReason(data.error), message: String(data.error) };
+  }
+  // Statuses that mean "has data"
+  const ACTIVE_STATUSES = new Set(['connected', 'bot_api', 'bot_api_empty_fallback_scrape', 'public_feed', 'web_scrape', 'partial']);
+  if (data.status && ACTIVE_STATUSES.has(data.status)) {
+    return { ...data, status: 'active' };
+  }
+  // Statuses that mean "no data"
+  const INACTIVE_STATUSES = {
+    'no_credentials': 'no_key',
+    'rss_unavailable': 'unreachable',
+    'api_error': 'api_error',
+    'auth_failed': 'api_error',
+    'unavailable': 'unreachable',
+    'API and public feed both unreachable': 'unreachable',
+  };
+  if (data.status && data.status in INACTIVE_STATUSES) {
+    return { ...data, status: 'inactive', reason: INACTIVE_STATUSES[data.status], message: data.message || data.status };
+  }
+  // No status, no error → assume active
+  return { ...data, status: 'active' };
+}
+
 export async function runSource(name, fn, ...args) {
   const start = Date.now();
   let timer;
@@ -71,7 +113,7 @@ export async function runSource(name, fn, ...args) {
       );
     });
     const data = await Promise.race([dataPromise, timeoutPromise]);
-    return { name, status: 'ok', durationMs: Date.now() - start, data };
+    return { name, status: 'ok', durationMs: Date.now() - start, data: normalizeSourceData(name, data) };
   } catch (e) {
     return { name, status: 'error', durationMs: Date.now() - start, error: e.message };
   } finally {
@@ -80,7 +122,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 41;
+  const totalSources = 36; // ThreatBook disabled (API broken)
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -145,7 +187,8 @@ export async function fullBriefing() {
       timestamp: new Date().toISOString(),
       totalDurationMs: totalMs,
       sourcesQueried: sources.length,
-      sourcesOk: sources.filter(s => s.status === 'ok').length,
+      sourcesOk: sources.filter(s => s.status === 'ok' && s.data?.status === 'active').length,
+      sourcesInactive: sources.filter(s => s.status === 'ok' && s.data?.status === 'inactive').length,
       sourcesFailed: sources.filter(s => s.status !== 'ok').length,
     },
     sources: Object.fromEntries(
@@ -157,7 +200,7 @@ export async function fullBriefing() {
     ),
   };
 
-  console.error(`[Crucix] Sweep complete in ${totalMs}ms — ${output.crucix.sourcesOk}/${sources.length} sources returned data`);
+  console.error(`[Crucix] Sweep complete in ${totalMs}ms — ${output.crucix.sourcesOk} active / ${output.crucix.sourcesInactive} inactive / ${output.crucix.sourcesFailed} failed`);
   return output;
 }
 
