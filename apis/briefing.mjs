@@ -48,6 +48,7 @@ import { briefing as cnnvd } from './sources/cnnvd.mjs';
 // import { briefing as threatbook } from './sources/threatbook.mjs'; // API broken — "Invalid Api method", awaiting vendor doc update
 import { briefing as qianxin } from './sources/qianxin.mjs';
 import { briefing as fofa } from './sources/fofa.mjs';
+import { briefing as zoomeye } from './sources/zoomeye.mjs';
 import { briefing as freebuf } from './sources/freebuf-rss.mjs';
 import { briefing as anquanke } from './sources/anquanke-rss.mjs';
 import { briefing as fourhou } from './sources/4hou-rss.mjs';
@@ -126,6 +127,7 @@ export async function fullBriefing() {
     // runSource('ThreatBook', threatbook), // API broken — "Invalid Api method"
     runSource('Qianxin', qianxin),
     runSource('FOFA', fofa),
+    runSource('ZoomEye', zoomeye),
     runSource('FreeBuf', freebuf),
     runSource('Anquanke', anquanke),
     runSource('4hou', fourhou),
