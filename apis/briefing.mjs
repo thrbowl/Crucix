@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.8: 42 active security sources across 5 domains (+VulnCheck)
+// v1.4.9: 44 active security sources across 5 domains (+CIRCL-CVE +CIRCL-PDNS)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -14,6 +14,7 @@ import { briefing as githubAdvisory } from './sources/github-advisory.mjs';
 import { briefing as exploitdb } from './sources/exploitdb.mjs';
 import { briefing as osv } from './sources/osv.mjs';
 import { briefing as vulncheck } from './sources/vulncheck.mjs';
+import { briefing as circlCve } from './sources/circl-cve.mjs';
 
 // === Domain 2: Threat Actors & Malware (7 sources) ===
 import { briefing as otx } from './sources/otx.mjs';
@@ -23,6 +24,7 @@ import { briefing as feodo } from './sources/feodo.mjs';
 import { briefing as attackStix } from './sources/attack-stix.mjs';
 import { briefing as virustotal } from './sources/virustotal.mjs';
 import { briefing as urlhaus } from './sources/urlhaus.mjs';
+import { briefing as circlPdns } from './sources/circl-pdns.mjs';
 
 // === Domain 3: Attack Activity & Exposure (4 sources) ===
 import { briefing as greynoise } from './sources/greynoise.mjs';
@@ -130,7 +132,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 42; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck
+  const totalSources = 44; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -143,6 +145,7 @@ export async function fullBriefing() {
     runSource('ExploitDB', exploitdb),
     runSource('OSV', osv),
     runSource('VulnCheck', vulncheck),
+    runSource('CIRCL-CVE', circlCve),
 
     // Domain 2: Threat Actors & Malware
     runSource('OTX', otx),
@@ -152,6 +155,7 @@ export async function fullBriefing() {
     runSource('ATT&CK-STIX', attackStix),
     runSource('VirusTotal', virustotal),
     runSource('URLhaus', urlhaus),
+    runSource('CIRCL-PDNS', circlPdns),
 
     // Domain 3: Attack Activity & Exposure
     runSource('GreyNoise', greynoise),
