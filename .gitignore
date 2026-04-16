@@ -26,6 +26,9 @@ desktop.ini
 CLAUDE.md
 AGENTS.md
 
+# Git worktrees
+.worktrees/
+
 
 # Playwright
 .playwright-cli/
