@@ -4,6 +4,10 @@
 
 import { safeFetch } from '../utils/fetch.mjs';
 
+if (!process.env.SHADOWSERVER_API_KEY || !process.env.SHADOWSERVER_API_SECRET) {
+  console.warn('[Crucix] SHADOWSERVER_API_KEY/SECRET not set — Shadowserver disabled. Register: https://www.shadowserver.org/');
+}
+
 const API_BASE = 'https://transform.shadowserver.org/api2/';
 
 export async function briefing() {

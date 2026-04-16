@@ -9,6 +9,10 @@
 import { safeFetch } from '../utils/fetch.mjs';
 import '../utils/env.mjs';
 
+if (!process.env.CLOUDFLARE_API_TOKEN) {
+  console.warn('[Crucix] CLOUDFLARE_API_TOKEN not set — Cloudflare Radar disabled. Free token: https://dash.cloudflare.com/profile/api-tokens');
+}
+
 const RADAR_BASE = 'https://api.cloudflare.com/client/v4/radar';
 
 // Countries of intelligence interest for internet monitoring

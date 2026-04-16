@@ -1,5 +1,9 @@
 import { safeFetch } from '../utils/fetch.mjs';
 
+if (!process.env.CNVD_API_KEY) {
+  console.warn('[Crucix] CNVD_API_KEY not set — CNVD API disabled (HTML fallback active). Register: https://www.cnvd.org.cn');
+}
+
 const PUBLIC_URL = 'https://www.cnvd.org.cn/webinfo/list?type=2';
 
 const itemRegex = /<item>([\s\S]*?)<\/item>/g;

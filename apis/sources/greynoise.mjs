@@ -4,6 +4,10 @@
 
 import { safeFetch } from '../utils/fetch.mjs';
 
+if (!process.env.GREYNOISE_API_KEY) {
+  console.warn('[Crucix] GREYNOISE_API_KEY not set — GreyNoise disabled. Free key: https://viz.greynoise.io/signup');
+}
+
 const GNQL_URL = 'https://api.greynoise.io/v2/experimental/gnql';
 const GNQL_STATS_URL = 'https://api.greynoise.io/v2/experimental/gnql/stats';
 
