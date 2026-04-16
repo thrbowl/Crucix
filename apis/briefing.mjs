@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.5.0: 45 active security sources across 5 domains (+Hybrid-Analysis)
+// v1.5.1: 47 active security sources across 5 domains (+Malpedia +Censys)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -26,6 +26,7 @@ import { briefing as virustotal } from './sources/virustotal.mjs';
 import { briefing as urlhaus } from './sources/urlhaus.mjs';
 import { briefing as circlPdns } from './sources/circl-pdns.mjs';
 import { briefing as hybridAnalysis } from './sources/hybrid-analysis.mjs';
+import { briefing as malpedia } from './sources/malpedia.mjs';
 
 // === Domain 3: Attack Activity & Exposure (4 sources) ===
 import { briefing as greynoise } from './sources/greynoise.mjs';
@@ -35,6 +36,7 @@ import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
 import { briefing as spamhaus } from './sources/spamhaus.mjs';
 import { briefing as openPhish } from './sources/openphish.mjs';
 import { briefing as dshield } from './sources/dshield.mjs';
+import { briefing as censys } from './sources/censys.mjs';
 
 // === Domain 4: Event Tracking & Intel Community (9 sources) ===
 import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
@@ -133,7 +135,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 45; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS; +Hybrid-Analysis
+  const totalSources = 47; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS; +Hybrid-Analysis; +Malpedia; +Censys
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -158,6 +160,7 @@ export async function fullBriefing() {
     runSource('URLhaus', urlhaus),
     runSource('CIRCL-PDNS', circlPdns),
     runSource('Hybrid-Analysis', hybridAnalysis),
+    runSource('Malpedia', malpedia),
 
     // Domain 3: Attack Activity & Exposure
     runSource('GreyNoise', greynoise),
@@ -167,6 +170,7 @@ export async function fullBriefing() {
     runSource('Spamhaus', spamhaus),
     runSource('OpenPhish', openPhish),
     runSource('DShield', dshield),
+    runSource('Censys', censys),
 
     // Domain 4: Event Tracking & Intel Community
     runSource('Ransomware-Live', ransomwareLive),
