@@ -39,16 +39,14 @@ import { briefing as enisa } from './sources/enisa.mjs';
 import { briefing as cisaAlerts } from './sources/cisa-alerts.mjs';
 import { briefing as certsIntl } from './sources/certs-intl.mjs';
 import { briefing as bluesky } from './sources/bluesky.mjs';
-import { briefing as reddit } from './sources/reddit.mjs';
 import { briefing as telegram } from './sources/telegram.mjs';
 
 // === Domain 5: China Intelligence (10 sources) ===
 import { briefing as cncert } from './sources/cncert.mjs';
 import { briefing as cnvd } from './sources/cnvd.mjs';
 import { briefing as cnnvd } from './sources/cnnvd.mjs';
-import { briefing as threatbook } from './sources/threatbook.mjs';
+// import { briefing as threatbook } from './sources/threatbook.mjs'; // API broken — "Invalid Api method", awaiting vendor doc update
 import { briefing as qianxin } from './sources/qianxin.mjs';
-import { briefing as zoomeye } from './sources/zoomeye.mjs';
 import { briefing as fofa } from './sources/fofa.mjs';
 import { briefing as freebuf } from './sources/freebuf-rss.mjs';
 import { briefing as anquanke } from './sources/anquanke-rss.mjs';
@@ -119,16 +117,14 @@ export async function fullBriefing() {
     runSource('CISA-Alerts', cisaAlerts),
     runSource('CERTs-Intl', certsIntl),
     runSource('Bluesky', bluesky),
-    runSource('Reddit', reddit),
     runSource('Telegram', telegram),
 
     // Domain 5: China Intelligence
     runSource('CNCERT', cncert),
     runSource('CNVD', cnvd),
     runSource('CNNVD', cnnvd),
-    runSource('ThreatBook', threatbook),
+    // runSource('ThreatBook', threatbook), // API broken — "Invalid Api method"
     runSource('Qianxin', qianxin),
-    runSource('ZoomEye', zoomeye),
     runSource('FOFA', fofa),
     runSource('FreeBuf', freebuf),
     runSource('Anquanke', anquanke),
