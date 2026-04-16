@@ -1022,13 +1022,71 @@ export async function synthesize(data) {
   const securityNews = buildSecurityNewsList(data);
   const chinaIntel = buildChinaIntel(data);
 
-  // Source health
-  const health = Object.entries(data.sources).map(([name, src]) => ({
-    n: name,
-    err: src.status !== 'active',
-    reason: src.status !== 'active' ? (src.reason || 'unknown') : null,
-    stale: Boolean(src.stale),
-  }));
+  // Source health — grouped by domain
+  const HEALTH_DOMAINS = [
+    { domain: 'domain1', label: 'Vuln Intel',      sources: ['CISA-KEV','NVD','EPSS','GitHub-Advisory','ExploitDB','OSV'] },
+    { domain: 'domain2', label: 'Threat Actors',   sources: ['OTX','MalwareBazaar','ThreatFox','Feodo','ATT&CK-STIX','VirusTotal','URLhaus'] },
+    { domain: 'domain3', label: 'Attack/Exposure', sources: ['GreyNoise','Shodan','AbuseIPDB','Cloudflare-Radar','Shadowserver','Spamhaus','BGP-Ranking','PhishTank'] },
+    { domain: 'domain4', label: 'Event Tracking',  sources: ['Ransomware-Live','ENISA','CISA-Alerts','CERTs-Intl','Bluesky','Telegram'] },
+    { domain: 'domain5', label: 'China Intel',     sources: ['CNCERT','CNVD','CNNVD','Qianxin','FOFA','ZoomEye','FreeBuf','Anquanke','4hou'] },
+  ];
+
+  const SOURCE_HOME_URLS = {
+    'CISA-KEV': 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
+    'NVD': 'https://nvd.nist.gov/',
+    'EPSS': 'https://www.first.org/epss/',
+    'GitHub-Advisory': 'https://github.com/advisories',
+    'ExploitDB': 'https://www.exploit-db.com/',
+    'OSV': 'https://osv.dev/',
+    'OTX': 'https://otx.alienvault.com/',
+    'MalwareBazaar': 'https://bazaar.abuse.ch/',
+    'ThreatFox': 'https://threatfox.abuse.ch/',
+    'Feodo': 'https://feodotracker.abuse.ch/',
+    'ATT&CK-STIX': 'https://attack.mitre.org/',
+    'VirusTotal': 'https://www.virustotal.com/',
+    'URLhaus': 'https://urlhaus.abuse.ch/',
+    'GreyNoise': 'https://www.greynoise.io/',
+    'Shodan': 'https://www.shodan.io/',
+    'AbuseIPDB': 'https://www.abuseipdb.com/',
+    'Cloudflare-Radar': 'https://radar.cloudflare.com/',
+    'Shadowserver': 'https://www.shadowserver.org/',
+    'Spamhaus': 'https://www.spamhaus.org/',
+    'BGP-Ranking': 'https://bgpranking.circl.lu/',
+    'PhishTank': 'https://www.phishtank.com/',
+    'Ransomware-Live': 'https://ransomware.live/',
+    'ENISA': 'https://www.enisa.europa.eu/',
+    'CISA-Alerts': 'https://www.cisa.gov/news-events/alerts',
+    'CERTs-Intl': 'https://www.first.org/members/',
+    'Bluesky': 'https://bsky.app/',
+    'Telegram': 'https://t.me/',
+    'CNCERT': 'https://www.cert.org.cn/',
+    'CNVD': 'https://www.cnvd.org.cn/',
+    'CNNVD': 'https://www.cnnvd.org.cn/',
+    'Qianxin': 'https://ti.qianxin.com/',
+    'FOFA': 'https://fofa.info/',
+    'ZoomEye': 'https://www.zoomeye.org/',
+    'FreeBuf': 'https://www.freebuf.com/',
+    'Anquanke': 'https://www.anquanke.com/',
+    '4hou': 'https://www.4hou.com/',
+  };
+
+  const sourceEntries = Object.fromEntries(
+    Object.entries(data.sources).map(([name, src]) => [name, {
+      n: name,
+      err: src.status !== 'active',
+      reason: src.status !== 'active' ? (src.reason || 'unknown') : null,
+      stale: Boolean(src.stale),
+      url: SOURCE_HOME_URLS[name] || '',
+    }])
+  );
+
+  const health = HEALTH_DOMAINS.map(({ domain, label, sources: domainSourceNames }) => ({
+    domain,
+    label,
+    sources: domainSourceNames
+      .filter(name => name in sourceEntries)
+      .map(name => sourceEntries[name]),
+  })).filter(d => d.sources.length > 0);
 
   // Telegram data for news feed
   const tgData = data.sources.Telegram || {};

@@ -92,6 +92,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* Source health (compact) */
 .health-section{margin-top:auto;padding-top:6px;border-top:1px solid var(--border)}
 .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:2px 0}
+.health-domain{margin-bottom:2px}
+.health-domain-hdr{display:flex;align-items:center;gap:6px;padding:3px 4px;cursor:pointer;border-radius:2px;user-select:none}
+.health-domain-hdr:hover{background:rgba(255,255,255,0.04)}
+.hd-label{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);flex:1}
+.hd-ratio{font-family:var(--mono);font-size:10px}
+.hd-ratio.ok{color:var(--green)}
+.hd-ratio.stale{color:var(--yellow)}
+.hd-ratio.err{color:var(--red)}
+.hd-arrow{font-size:10px;color:var(--dim);transition:transform 0.15s;display:inline-block}
+.health-domain.expanded .hd-arrow{transform:rotate(90deg)}
+.health-domain-body{display:none;padding-left:8px}
+.health-domain.expanded .health-domain-body{display:grid;grid-template-columns:1fr 1fr;gap:1px}
 .health-item{font-family:var(--mono);font-size:8px;padding:2px 3px;display:flex;align-items:center;gap:3px;letter-spacing:0.04em}
 .health-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
 .health-dot.ok{background:var(--green)}
@@ -855,8 +867,9 @@ function runBoot(){
 
   function finishBoot(){
     const h = (D.health||[]);
-    const ok = h.filter(s=>!s.err&&!s.stale).length;
-    lines.innerHTML += `<span class="ok">[${ok}/${h.length||'?'}]</span> ${t('boot.sourcesOnline')}\n`;
+    const allSrc = h.flatMap ? h.flatMap(d => d.sources||[d]) : h;
+    const ok = allSrc.filter(s=>!s.err&&!s.stale).length;
+    lines.innerHTML += `<span class="ok">[${ok}/${allSrc.length||'?'}]</span> ${t('boot.sourcesOnline')}\n`;
     final.style.opacity = '1';
     final.style.transition = 'opacity 0.4s';
     setTimeout(() => {
@@ -1007,15 +1020,59 @@ function renderLayers(){
 
 function renderHealth(){
   const grid = document.getElementById('healthGrid');
-  const items = D.health || [];
+  if(!grid) return;
+  const domains = D.health || [];
   grid.innerHTML = '';
-  items.forEach(h => {
-    const cls = h.err ? 'err' : h.stale ? 'stale' : 'ok';
-    const el = document.createElement('div');
-    el.className = 'health-item';
-    el.innerHTML = `<div class="health-dot ${cls}"></div><span>${esc(h.n)}</span>`;
-    grid.appendChild(el);
+
+  // Flat array fallback (if old data shape before domain grouping)
+  if(domains.length && !domains[0].domain){
+    const allOk = domains.filter(s => !s.err && !s.stale).length;
+    domains.forEach(h => {
+      const cls = h.err ? 'err' : h.stale ? 'stale' : 'ok';
+      const el = document.createElement('div');
+      el.className = 'health-item';
+      el.innerHTML = `<div class="health-dot ${cls}"></div><span>${esc(h.n)}</span>`;
+      grid.appendChild(el);
+    });
+    const badge = document.getElementById('healthBadge');
+    if(badge) badge.textContent = `${allOk}/${domains.length}`;
+    return;
+  }
+
+  let totalOk = 0, totalAll = 0;
+  domains.forEach(domain => {
+    const okCount = domain.sources.filter(s => !s.err && !s.stale).length;
+    const total = domain.sources.length;
+    totalOk += okCount; totalAll += total;
+    const anyErr = domain.sources.some(s => s.err);
+    const ratioClass = anyErr ? 'err' : okCount < total ? 'stale' : 'ok';
+
+    const domainEl = document.createElement('div');
+    domainEl.className = 'health-domain';
+    domainEl.innerHTML = `
+      <div class="health-domain-hdr">
+        <span class="hd-label">${esc(domain.label)}</span>
+        <span class="hd-ratio ${ratioClass}">${okCount}/${total}</span>
+        <span class="hd-arrow">›</span>
+      </div>
+      <div class="health-domain-body">
+        ${domain.sources.map(s => {
+          const cls = s.err ? 'err' : s.stale ? 'stale' : 'ok';
+          const tip = s.err ? (s.reason || 'inactive') : s.stale ? 'stale' : 'ok';
+          return s.url
+            ? `<a class="health-item clickable" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.n)}: ${esc(tip)}"><div class="health-dot ${cls}"></div><span>${esc(s.n)}</span></a>`
+            : `<div class="health-item" title="${esc(s.n)}: ${esc(tip)}"><div class="health-dot ${cls}"></div><span>${esc(s.n)}</span></div>`;
+        }).join('')}
+      </div>`;
+
+    domainEl.querySelector('.health-domain-hdr').addEventListener('click', () => {
+      domainEl.classList.toggle('expanded');
+    });
+    grid.appendChild(domainEl);
   });
+
+  const badge = document.getElementById('healthBadge');
+  if(badge) badge.textContent = `${totalOk}/${totalAll}`;
 }
 
 // === 3D GLOBE ===
@@ -1880,11 +1937,6 @@ function updateAll(){
     if(activeTab.dataset.tab === 'cve') drawCveTimeline();
     if(activeTab.dataset.tab === 'attack') drawAttackHeatmap();
   }
-  // Update health badge
-  const h = D.health || [];
-  const hOk = h.filter(s=>!s.err&&!s.stale).length;
-  const hBadge = document.getElementById('healthBadge');
-  if(hBadge) hBadge.textContent = hOk + '/' + h.length;
 }
 
 // === SSE ===
