@@ -5,7 +5,10 @@
 
 import { safeFetch } from '../utils/fetch.mjs';
 
-const KEV_URL = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json';
+const KEV_URLS = [
+  'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json',
+  'https://www.cisa.gov/known-exploited-vulnerabilities-catalog.json',
+];
 
 function summarizeVulnerabilities(vulns) {
   if (!vulns.length) return {};
@@ -68,8 +71,17 @@ function summarizeVulnerabilities(vulns) {
   };
 }
 
+const KEV_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; security-research-bot/1.0)',
+  'Accept': 'application/json, */*',
+};
+
 export async function briefing() {
-  const data = await safeFetch(KEV_URL, { timeout: 20000 });
+  let data;
+  for (const url of KEV_URLS) {
+    data = await safeFetch(url, { timeout: 20000, headers: KEV_HEADERS });
+    if (!data.error) break;
+  }
 
   if (data.error) {
     return {

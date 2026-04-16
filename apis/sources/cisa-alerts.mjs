@@ -4,6 +4,7 @@
 const RSS_URLS = [
   'https://www.cisa.gov/cybersecurity-advisories/all.xml',
   'https://www.cisa.gov/news-events/cybersecurity-advisories/rss.xml',
+  'https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml',
 ];
 
 function parseRSSItems(xml) {
@@ -37,7 +38,10 @@ export async function briefing() {
     try {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(15000),
-        headers: { 'User-Agent': 'Crucix/1.0' },
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; security-research-bot/1.0)',
+          'Accept': 'application/rss+xml, application/xml, */*',
+        },
       });
       if (res.ok) {
         xml = await res.text();
