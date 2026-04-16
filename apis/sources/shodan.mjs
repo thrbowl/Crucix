@@ -58,12 +58,63 @@ export async function briefing() {
     });
   }
 
+  // Host search — only if query credits are available
+  let hostSearch = null;
+
+  if (accountInfo.credits > 0) {
+    const [criticalRes, rdpRes] = await Promise.all([
+      safeFetch(
+        `${BASE}/shodan/host/search?key=${key}&query=vuln%3Acritical&facets=country%2Cport&page=1`,
+        { timeout: 20000 }
+      ),
+      safeFetch(
+        `${BASE}/shodan/host/search?key=${key}&query=port%3A3389+has_screenshot%3Atrue&facets=country&page=1`,
+        { timeout: 20000 }
+      ),
+    ]);
+
+    const criticalTotal = criticalRes.error ? 0 : (criticalRes.total ?? 0);
+    const criticalCountries = criticalRes.error
+      ? []
+      : (criticalRes.facets?.country?.slice(0, 10) ?? []);
+
+    const rdpTotal = rdpRes.error ? 0 : (rdpRes.total ?? 0);
+    const rdpCountries = rdpRes.error
+      ? []
+      : (rdpRes.facets?.country?.slice(0, 10) ?? []);
+
+    hostSearch = {
+      criticalVulns: { total: criticalTotal, topCountries: criticalCountries },
+      exposedRdp: { total: rdpTotal, topCountries: rdpCountries },
+    };
+
+    if (criticalTotal > 1000) {
+      signals.push({
+        severity: 'high',
+        signal: `${criticalTotal.toLocaleString()} hosts with critical CVEs exposed`,
+      });
+    }
+
+    if (rdpTotal > 100) {
+      signals.push({
+        severity: 'medium',
+        signal: `${rdpTotal.toLocaleString()} RDP services exposed with screenshots`,
+      });
+    }
+  } else {
+    signals.push({
+      severity: 'info',
+      signal: 'Shodan query credits exhausted — skipping host search',
+    });
+  }
+
   return {
     source: 'Shodan',
     timestamp: new Date().toISOString(),
     status: 'connected',
     accountInfo,
     knownPorts: topPorts,
+    hostSearch,
     signals,
   };
 }
