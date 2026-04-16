@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.3: 37 active security sources across 5 domains (+DShield)
+// v1.4.4: 38 active security sources across 5 domains (+Tavily)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -32,7 +32,7 @@ import { briefing as spamhaus } from './sources/spamhaus.mjs';
 import { briefing as openPhish } from './sources/openphish.mjs';
 import { briefing as dshield } from './sources/dshield.mjs';
 
-// === Domain 4: Event Tracking & Intel Community (8 sources) ===
+// === Domain 4: Event Tracking & Intel Community (9 sources) ===
 import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
 import { briefing as enisa } from './sources/enisa.mjs';
 import { briefing as cisaAlerts } from './sources/cisa-alerts.mjs';
@@ -41,6 +41,7 @@ import { briefing as telegram } from './sources/telegram.mjs';
 import { briefing as hackerNewsRss } from './sources/hackernews-rss.mjs';
 import { briefing as bleepingComputer } from './sources/bleepingcomputer-rss.mjs';
 import { briefing as securityWeek } from './sources/securityweek-rss.mjs';
+import { briefing as tavily } from './sources/tavily.mjs';
 
 // === Domain 5: China Intelligence (10 sources) ===
 import { briefing as cncert } from './sources/cncert.mjs';
@@ -125,7 +126,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 37; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield
+  const totalSources = 38; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -165,6 +166,7 @@ export async function fullBriefing() {
     runSource('HackerNews-RSS', hackerNewsRss),
     runSource('BleepingComputer', bleepingComputer),
     runSource('SecurityWeek', securityWeek),
+    runSource('Tavily', tavily),
 
     // Domain 5: China Intelligence
     runSource('CNCERT', cncert),
