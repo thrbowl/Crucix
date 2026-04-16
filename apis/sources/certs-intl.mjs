@@ -2,9 +2,13 @@
 // RSS feeds, no API keys required.
 
 const CERT_FEEDS = [
-  { id: 'US',  name: 'US-CERT',  url: 'https://www.cisa.gov/news-events/alerts/rss.xml' },
-  { id: 'JP',  name: 'JPCERT',   url: 'https://www.jpcert.or.jp/english/rss/jpcert-en.rdf' },
-  { id: 'AU',  name: 'AusCERT',  url: 'https://www.auscert.org.au/rss/bulletins/' },
+  { id: 'US',   name: 'US-CERT', url: 'https://www.cisa.gov/news-events/alerts/rss.xml' },
+  { id: 'JP',   name: 'JPCERT',  url: 'https://www.jpcert.or.jp/english/rss/jpcert-en.rdf' },
+  { id: 'AU',   name: 'AusCERT', url: 'https://www.auscert.org.au/rss/bulletins/' },
+  { id: 'UK',   name: 'NCSC',    url: 'https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml' },
+  { id: 'DE',   name: 'BSI',     url: 'https://www.bsi.bund.de/SiteGlobals/Functions/RSSFeed/RSSNewsfeed/RSSNewsfeed.xml' },
+  { id: 'ACSC', name: 'ACSC',    url: 'https://www.cyber.gov.au/about-us/view-all-content/alerts-and-advisories?field_alert_type=All&type=rss' },
+  { id: 'ANSSI', name: 'ANSSI',  url: 'https://www.cert.ssi.gouv.fr/feed/' },
 ];
 
 function parseRSSItems(xml) {
