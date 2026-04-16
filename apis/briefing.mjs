@@ -23,22 +23,18 @@ import { briefing as attackStix } from './sources/attack-stix.mjs';
 import { briefing as virustotal } from './sources/virustotal.mjs';
 import { briefing as urlhaus } from './sources/urlhaus.mjs';
 
-// === Domain 3: Attack Activity & Exposure (8 sources) ===
+// === Domain 3: Attack Activity & Exposure (4 sources) ===
 import { briefing as greynoise } from './sources/greynoise.mjs';
 import { briefing as shodan } from './sources/shodan.mjs';
 import { briefing as abuseipdb } from './sources/abuseipdb.mjs';
 import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
-import { briefing as shadowserver } from './sources/shadowserver.mjs';
 import { briefing as spamhaus } from './sources/spamhaus.mjs';
-import { briefing as bgpRanking } from './sources/bgp-ranking.mjs';
-import { briefing as phishtank } from './sources/phishtank.mjs';
 
-// === Domain 4: Event Tracking & Intel Community (7 sources) ===
+// === Domain 4: Event Tracking & Intel Community (5 sources) ===
 import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
 import { briefing as enisa } from './sources/enisa.mjs';
 import { briefing as cisaAlerts } from './sources/cisa-alerts.mjs';
 import { briefing as certsIntl } from './sources/certs-intl.mjs';
-import { briefing as bluesky } from './sources/bluesky.mjs';
 import { briefing as telegram } from './sources/telegram.mjs';
 
 // === Domain 5: China Intelligence (10 sources) ===
@@ -124,7 +120,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 36; // ThreatBook disabled (API broken)
+  const totalSources = 32; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -151,17 +147,13 @@ export async function fullBriefing() {
     runSource('Shodan', shodan),
     runSource('AbuseIPDB', abuseipdb),
     runSource('Cloudflare-Radar', cloudflareRadar),
-    runSource('Shadowserver', shadowserver),
     runSource('Spamhaus', spamhaus),
-    runSource('BGP-Ranking', bgpRanking),
-    runSource('PhishTank', phishtank),
 
     // Domain 4: Event Tracking & Intel Community
     runSource('Ransomware-Live', ransomwareLive),
     runSource('ENISA', enisa),
     runSource('CISA-Alerts', cisaAlerts),
     runSource('CERTs-Intl', certsIntl),
-    runSource('Bluesky', bluesky),
     runSource('Telegram', telegram),
 
     // Domain 5: China Intelligence
