@@ -924,6 +924,15 @@ function buildSecurityNewsFeed(rssNews, data, tgUrgent, tgTop) {
     });
   }
 
+  // Baidu search results
+  for (const a of (data.sources['Baidu-Search']?.items || []).slice(0, 5)) {
+    feed.push({
+      headline: (a.title || '').substring(0, 100), source: 'Baidu', type: 'sec-news',
+      timestamp: a.date, region: 'China', urgent: false,
+      url: sanitizeExternalUrl(a.url),
+    });
+  }
+
   // Telegram urgent
   for (const p of (tgUrgent || []).slice(0, 10)) {
     const text = (p.text || '').replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
