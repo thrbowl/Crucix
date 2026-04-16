@@ -6,6 +6,10 @@ import { safeFetch } from '../utils/fetch.mjs';
 
 const BLACKLIST_URL = 'https://api.abuseipdb.com/api/v2/blacklist';
 
+// 24-hour in-memory cache for AbuseIPDB data (free tier: 5 requests/day)
+const _cache = { data: null, ts: 0 };
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 function aggregateByCountry(entries) {
   const counts = {};
   for (const e of entries) {
@@ -50,6 +54,12 @@ export async function briefing() {
     };
   }
 
+  // Check if cached data is still valid (within 24 hours)
+  const now = Date.now();
+  if (_cache.data && now - _cache.ts < CACHE_TTL_MS) {
+    return { ..._cache.data, cached: true };
+  }
+
   const data = await safeFetch(
     `${BLACKLIST_URL}?confidenceMinimum=90&limit=50`,
     {
@@ -82,7 +92,7 @@ export async function briefing() {
 
   const byCountry = aggregateByCountry(entries);
 
-  return {
+  const result = {
     source: 'AbuseIPDB',
     timestamp: new Date().toISOString(),
     totalBlacklisted: meta.totalEntries || totalBlacklisted,
@@ -90,6 +100,12 @@ export async function briefing() {
     byCountry,
     signals: buildSignals(meta.totalEntries || totalBlacklisted, topAbusers),
   };
+
+  // Cache successful result for 24 hours
+  _cache.data = result;
+  _cache.ts = Date.now();
+
+  return result;
 }
 
 if (process.argv[1]?.endsWith('abuseipdb.mjs')) {
