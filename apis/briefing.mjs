@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.5.2: 48 active security sources across 6 domains (+Vendors-Intl)
+// v1.5.3: 49 active security sources across 6 domains (+Vendors-CN)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -66,6 +66,7 @@ import { briefing as fourhou } from './sources/4hou-rss.mjs';
 
 // === Domain 6: Vendor Announcements (2 aggregators) ===
 import { briefing as vendorsIntl } from './sources/vendors-intl.mjs';
+import { briefing as vendorsCn } from './sources/vendors-cn.mjs';
 
 // ACLED removed in v1.0.1 (non-cybersecurity data)
 
@@ -138,7 +139,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 48; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS; +Hybrid-Analysis; +Malpedia; +Censys; +Vendors-Intl
+  const totalSources = 49; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS; +Hybrid-Analysis; +Malpedia; +Censys; +Vendors-Intl; +Vendors-CN
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -203,6 +204,7 @@ export async function fullBriefing() {
 
     // Domain 6: Vendor Announcements
     runSource('Vendors-Intl', vendorsIntl),
+    runSource('Vendors-CN', vendorsCn),
 
   ];
 
