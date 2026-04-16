@@ -773,12 +773,31 @@ function buildSecurityNewsList(data) {
     }
   }
 
-  // Community / OSINT
-  for (const a of (data.sources.Reddit?.posts || data.sources.Reddit?.items || []).slice(0, 5)) {
-    items.push({ title: (a.title || a.text || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.permalink), date: a.date || a.created, source: 'Reddit', type: 'community' });
+  // English security media (THN, BleepingComputer, SecurityWeek)
+  for (const src of ['HackerNews-RSS', 'BleepingComputer', 'SecurityWeek']) {
+    for (const a of (data.sources[src]?.recentArticles || data.sources[src]?.items || []).slice(0, 5)) {
+      items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url || a.link), date: a.date || a.published, source: src, type: 'news' });
+    }
   }
-  for (const a of (data.sources.Bluesky?.posts || data.sources.Bluesky?.items || []).slice(0, 5)) {
-    items.push({ title: (a.text || a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date || a.createdAt, source: 'Bluesky', type: 'community' });
+
+  // International vendor feeds
+  for (const a of (data.sources['Vendors-Intl']?.recentArticles || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date, source: a.vendor || 'Vendor', type: 'advisory' });
+  }
+
+  // Chinese vendor feeds
+  for (const a of (data.sources['Vendors-CN']?.recentArticles || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date, source: a.vendor || 'VendorCN', type: 'advisory' });
+  }
+
+  // Tavily AI sweep results
+  for (const a of (data.sources.Tavily?.items || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date, source: 'Tavily', type: 'news' });
+  }
+
+  // Baidu search results
+  for (const a of (data.sources['Baidu-Search']?.items || []).slice(0, 5)) {
+    items.push({ title: (a.title || '').substring(0, 120), url: sanitizeExternalUrl(a.url), date: a.date, source: 'Baidu', type: 'news' });
   }
 
   items.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -869,19 +888,39 @@ function buildSecurityNewsFeed(rssNews, data, tgUrgent, tgTop) {
     }
   }
 
-  // Reddit / Bluesky community OSINT
-  for (const p of (data.sources.Reddit?.posts || data.sources.Reddit?.items || []).slice(0, 5)) {
+  // English security media
+  for (const src of ['HackerNews-RSS', 'BleepingComputer', 'SecurityWeek']) {
+    for (const a of (data.sources[src]?.recentArticles || []).slice(0, 3)) {
+      feed.push({
+        headline: (a.title || '').substring(0, 100), source: src, type: 'sec-news',
+        timestamp: a.date, region: 'Global', urgent: false,
+        url: sanitizeExternalUrl(a.url),
+      });
+    }
+  }
+
+  // Vendor feeds (intl + CN)
+  for (const a of (data.sources['Vendors-Intl']?.recentArticles || []).slice(0, 5)) {
     feed.push({
-      headline: (p.title || p.text || '').substring(0, 100), source: 'Reddit', type: 'community',
-      timestamp: p.date || p.created, region: 'Global', urgent: false,
-      url: sanitizeExternalUrl(p.url || p.permalink),
+      headline: (a.title || '').substring(0, 100), source: a.vendor || 'Vendor', type: 'advisory',
+      timestamp: a.date, region: 'Global', urgent: false,
+      url: sanitizeExternalUrl(a.url),
     });
   }
-  for (const p of (data.sources.Bluesky?.posts || data.sources.Bluesky?.items || []).slice(0, 5)) {
+  for (const a of (data.sources['Vendors-CN']?.recentArticles || []).slice(0, 3)) {
     feed.push({
-      headline: (p.text || p.title || '').substring(0, 100), source: 'Bluesky', type: 'community',
-      timestamp: p.date || p.createdAt, region: 'Global', urgent: false,
-      url: sanitizeExternalUrl(p.url),
+      headline: (a.title || '').substring(0, 100), source: a.vendor || 'VendorCN', type: 'advisory',
+      timestamp: a.date, region: 'China', urgent: false,
+      url: sanitizeExternalUrl(a.url),
+    });
+  }
+
+  // Tavily AI sweep
+  for (const a of (data.sources.Tavily?.items || []).slice(0, 5)) {
+    feed.push({
+      headline: (a.title || '').substring(0, 100), source: 'Tavily', type: 'ai-search',
+      timestamp: a.date, region: 'Global', urgent: a.level === 'high',
+      url: sanitizeExternalUrl(a.url),
     });
   }
 
@@ -1024,50 +1063,70 @@ export async function synthesize(data) {
 
   // Source health — grouped by domain
   const HEALTH_DOMAINS = [
-    { domain: 'domain1', label: 'Vuln Intel',      sources: ['CISA-KEV','NVD','EPSS','GitHub-Advisory','ExploitDB','OSV'] },
-    { domain: 'domain2', label: 'Threat Actors',   sources: ['OTX','MalwareBazaar','ThreatFox','Feodo','ATT&CK-STIX','VirusTotal','URLhaus'] },
-    { domain: 'domain3', label: 'Attack/Exposure', sources: ['GreyNoise','Shodan','AbuseIPDB','Cloudflare-Radar','Shadowserver','Spamhaus','BGP-Ranking','PhishTank'] },
-    { domain: 'domain4', label: 'Event Tracking',  sources: ['Ransomware-Live','ENISA','CISA-Alerts','CERTs-Intl','Bluesky','Telegram'] },
-    { domain: 'domain5', label: 'China Intel',     sources: ['CNCERT','CNVD','CNNVD','Qianxin','FOFA','ZoomEye','FreeBuf','Anquanke','4hou'] },
+    { domain: 'domain1', label: 'Vuln Intel',      sources: ['CISA-KEV','NVD','EPSS','GitHub-Advisory','ExploitDB','OSV','VulnCheck','CIRCL-CVE'] },
+    { domain: 'domain2', label: 'Threat Actors',   sources: ['OTX','MalwareBazaar','ThreatFox','Feodo','ATT&CK-STIX','VirusTotal','URLhaus','Hybrid-Analysis','CIRCL-PDNS','Malpedia'] },
+    { domain: 'domain3', label: 'Attack/Exposure', sources: ['GreyNoise','Shodan','Censys','AbuseIPDB','Cloudflare-Radar','Spamhaus','DShield','OpenPhish','Qianxin-Hunter','FOFA','ZoomEye'] },
+    { domain: 'domain4', label: 'Event Tracking',  sources: ['Ransomware-Live','ENISA','CISA-Alerts','CERTs-Intl','Telegram','HackerNews-RSS','BleepingComputer','SecurityWeek','Tavily'] },
+    { domain: 'domain5', label: 'China Intel',     sources: ['CNCERT','CNVD','CNNVD','Qianxin','FreeBuf','Anquanke','4hou','Qianxin-TI','Baidu-Search'] },
+    { domain: 'domain6', label: 'Vendor Feeds',    sources: ['Vendors-Intl','Vendors-CN'] },
   ];
 
   const SOURCE_HOME_URLS = {
-    'CISA-KEV': 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
-    'NVD': 'https://nvd.nist.gov/',
-    'EPSS': 'https://www.first.org/epss/',
-    'GitHub-Advisory': 'https://github.com/advisories',
-    'ExploitDB': 'https://www.exploit-db.com/',
-    'OSV': 'https://osv.dev/',
-    'OTX': 'https://otx.alienvault.com/',
-    'MalwareBazaar': 'https://bazaar.abuse.ch/',
-    'ThreatFox': 'https://threatfox.abuse.ch/',
-    'Feodo': 'https://feodotracker.abuse.ch/',
-    'ATT&CK-STIX': 'https://attack.mitre.org/',
-    'VirusTotal': 'https://www.virustotal.com/',
-    'URLhaus': 'https://urlhaus.abuse.ch/',
-    'GreyNoise': 'https://www.greynoise.io/',
-    'Shodan': 'https://www.shodan.io/',
-    'AbuseIPDB': 'https://www.abuseipdb.com/',
+    // D1 - Vuln Intel
+    'CISA-KEV':         'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
+    'NVD':              'https://nvd.nist.gov/',
+    'EPSS':             'https://www.first.org/epss/',
+    'GitHub-Advisory':  'https://github.com/advisories',
+    'ExploitDB':        'https://www.exploit-db.com/',
+    'OSV':              'https://osv.dev/',
+    'VulnCheck':        'https://vulncheck.com/',
+    'CIRCL-CVE':        'https://cve.circl.lu/',
+    // D2 - Threat Actors
+    'OTX':              'https://otx.alienvault.com/',
+    'MalwareBazaar':    'https://bazaar.abuse.ch/',
+    'ThreatFox':        'https://threatfox.abuse.ch/',
+    'Feodo':            'https://feodotracker.abuse.ch/',
+    'ATT&CK-STIX':      'https://attack.mitre.org/',
+    'VirusTotal':       'https://www.virustotal.com/',
+    'URLhaus':          'https://urlhaus.abuse.ch/',
+    'Hybrid-Analysis':  'https://www.hybrid-analysis.com/',
+    'CIRCL-PDNS':       'https://www.circl.lu/services/passive-dns/',
+    'Malpedia':         'https://malpedia.caad.fkie.fraunhofer.de/',
+    // D3 - Attack/Exposure
+    'GreyNoise':        'https://www.greynoise.io/',
+    'Shodan':           'https://www.shodan.io/',
+    'Censys':           'https://search.censys.io/',
+    'AbuseIPDB':        'https://www.abuseipdb.com/',
     'Cloudflare-Radar': 'https://radar.cloudflare.com/',
-    'Shadowserver': 'https://www.shadowserver.org/',
-    'Spamhaus': 'https://www.spamhaus.org/',
-    'BGP-Ranking': 'https://bgpranking.circl.lu/',
-    'PhishTank': 'https://www.phishtank.com/',
-    'Ransomware-Live': 'https://ransomware.live/',
-    'ENISA': 'https://www.enisa.europa.eu/',
-    'CISA-Alerts': 'https://www.cisa.gov/news-events/alerts',
-    'CERTs-Intl': 'https://www.first.org/members/',
-    'Bluesky': 'https://bsky.app/',
-    'Telegram': 'https://t.me/',
-    'CNCERT': 'https://www.cert.org.cn/',
-    'CNVD': 'https://www.cnvd.org.cn/',
-    'CNNVD': 'https://www.cnnvd.org.cn/',
-    'Qianxin': 'https://ti.qianxin.com/',
-    'FOFA': 'https://fofa.info/',
-    'ZoomEye': 'https://www.zoomeye.org/',
-    'FreeBuf': 'https://www.freebuf.com/',
-    'Anquanke': 'https://www.anquanke.com/',
-    '4hou': 'https://www.4hou.com/',
+    'Spamhaus':         'https://www.spamhaus.org/',
+    'DShield':          'https://isc.sans.edu/',
+    'OpenPhish':        'https://openphish.com/',
+    'Qianxin-Hunter':   'https://hunter.how/',
+    'FOFA':             'https://fofa.info/',
+    'ZoomEye':          'https://www.zoomeye.org/',
+    // D4 - Event Tracking
+    'Ransomware-Live':  'https://ransomware.live/',
+    'ENISA':            'https://www.enisa.europa.eu/',
+    'CISA-Alerts':      'https://www.cisa.gov/news-events/alerts',
+    'CERTs-Intl':       'https://www.first.org/members/',
+    'Telegram':         'https://t.me/',
+    'HackerNews-RSS':   'https://thehackernews.com/',
+    'BleepingComputer': 'https://www.bleepingcomputer.com/',
+    'SecurityWeek':     'https://www.securityweek.com/',
+    'Tavily':           'https://tavily.com/',
+    // D5 - China Intel
+    'CNCERT':           'https://www.cert.org.cn/',
+    'CNVD':             'https://www.cnvd.org.cn/',
+    'CNNVD':            'https://www.cnnvd.org.cn/',
+    'Qianxin':          'https://ti.qianxin.com/',
+    'FreeBuf':          'https://www.freebuf.com/',
+    'Anquanke':         'https://www.anquanke.com/',
+    '4hou':             'https://www.4hou.com/',
+    'Qianxin-TI':       'https://ti.qianxin.com/',
+    'Baidu-Search':     'https://qianfan.cloud.baidu.com/',
+    // D6 - Vendor Feeds
+    'Vendors-Intl':     'https://www.crowdstrike.com/blog/',
+    'Vendors-CN':       'https://cert.360.cn/',
   };
 
   const sourceEntries = Object.fromEntries(
