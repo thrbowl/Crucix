@@ -1,11 +1,16 @@
 // BGP Ranking (CIRCL) — ASN reputation. Legacy GET /json/asns was removed; use POST /json/asns_global_ranking.
+// Primary: https://bgpranking-ng.circl.lu/json  Fallback: https://bgpranking.circl.lu/json
+// Both endpoints confirmed live as of 2026-04-16; try both in sequence if the primary fails.
 
 import { daysAgo } from '../utils/fetch.mjs';
 
-const BASE = 'https://bgpranking-ng.circl.lu/json';
+const BASE_URLS = [
+  'https://bgpranking-ng.circl.lu/json',
+  'https://bgpranking.circl.lu/json',
+];
 
-async function postGlobalRanking(dateStr) {
-  const res = await fetch(`${BASE}/asns_global_ranking`, {
+async function postGlobalRanking(dateStr, base) {
+  const res = await fetch(`${base}/asns_global_ranking`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -19,6 +24,18 @@ async function postGlobalRanking(dateStr) {
     throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
   }
   return res.json();
+}
+
+async function postGlobalRankingWithFallback(dateStr) {
+  let lastErr = null;
+  for (const base of BASE_URLS) {
+    try {
+      return await postGlobalRanking(dateStr, base);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw new Error(`BGP Ranking endpoint unreachable — CIRCL service may be down (${lastErr?.message ?? lastErr})`);
 }
 
 function formatTuples(response, dateStr) {
@@ -75,7 +92,7 @@ export async function briefing() {
   for (let i = 0; i < 7; i++) {
     const dateStr = daysAgo(i);
     try {
-      const data = await postGlobalRanking(dateStr);
+      const data = await postGlobalRankingWithFallback(dateStr);
       const rows = data?.response;
       if (Array.isArray(rows) && rows.length > 0) {
         return formatTuples(rows, dateStr);
@@ -89,7 +106,7 @@ export async function briefing() {
   return {
     source: 'BGP-Ranking',
     timestamp: new Date().toISOString(),
-    error: lastError || 'No BGP ranking data for recent dates',
+    error: lastError || 'BGP Ranking endpoint unreachable — CIRCL service may be down',
   };
 }
 
