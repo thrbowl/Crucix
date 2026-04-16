@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.0.1: 41 active security sources across 5 domains (ACLED removed)
+// v1.4.0: 32 active security sources across 5 domains (BGP-Ranking/Bluesky/Shadowserver/PhishTank removed)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
