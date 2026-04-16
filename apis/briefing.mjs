@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.7: 41 active security sources across 5 domains (+Baidu-Search)
+// v1.4.8: 42 active security sources across 5 domains (+VulnCheck)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -13,6 +13,7 @@ import { briefing as epss } from './sources/epss.mjs';
 import { briefing as githubAdvisory } from './sources/github-advisory.mjs';
 import { briefing as exploitdb } from './sources/exploitdb.mjs';
 import { briefing as osv } from './sources/osv.mjs';
+import { briefing as vulncheck } from './sources/vulncheck.mjs';
 
 // === Domain 2: Threat Actors & Malware (7 sources) ===
 import { briefing as otx } from './sources/otx.mjs';
@@ -129,7 +130,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 41; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search
+  const totalSources = 42; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -141,6 +142,7 @@ export async function fullBriefing() {
     runSource('GitHub-Advisory', githubAdvisory),
     runSource('ExploitDB', exploitdb),
     runSource('OSV', osv),
+    runSource('VulnCheck', vulncheck),
 
     // Domain 2: Threat Actors & Malware
     runSource('OTX', otx),
