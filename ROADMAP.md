@@ -1,8 +1,8 @@
 # Crucix Cybersecurity Edition — 版本发布路线图
 
-**更新日期：** 2026-04-06
+**更新日期：** 2026-04-16
 **基于设计文档：** `docs/superpowers/specs/2026-04-05-data-fix-layout-i18n-design.md`
-**当前版本：** v1.2.0
+**当前版本：** v1.2.2
 
 ---
 
@@ -26,6 +26,10 @@ v1.0.1  数据修复 ✅  ── 字段名对齐 / 源 bug 修复 / 安全 RSS /
 v1.1.0  大屏重塑 ✅  ── 地球仪居中放大 / 融合原版布局 / 数据密度提升
   │
 v1.2.0  国际化   ✅  ── zh.json / 前端 i18n / 中英文切换
+  │
+v1.2.1  源健康修复 ✅  ── 失效源修复 / 限流缓存 / 搜索词纠正 / 低效源清理
+  │
+v1.2.2  状态统一 ✅  ── active/inactive 规范化 / 原因分类 / 健康图更新
   │
 v1.3.0  情报增强 ── 域 6-7（43 源）搜索引擎 + 厂商公告 + MISP + RBAC + PDF
   │
@@ -227,6 +231,112 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 
 ---
 
+## v1.2.1 — 源健康修复 ✅
+
+> **目标：** 基于 2026-04-16 数据源健康审计，修复失效源、纠正数据错误、清理低效源，将有效数据源从当前约 25 个提升至 32+ 个。
+
+### 问题清单（审计结论）
+
+| 类别 | 源 | 问题 |
+|------|------|------|
+| **HTTP 403 封锁** | CISA-KEV, CISA-Alerts | cisa.gov CDN 封了服务器 IP，无法拉取 |
+| **API 端点失效** | BGP-Ranking | 旧端点已下线，需换 CIRCL 新 API |
+| **WAF 封锁** | FreeBuf RSS | CDN 全面拦截 fetch 和 curl，需换备用源 |
+| **API 版本不匹配** | ThreatBook | 返回 "Invalid Api method"，端点需更新 |
+| **地区屏蔽** | ZoomEye | "service not available in your area" |
+| **搜索词错误** | Bluesky | 仍在搜 "Iran war" / "market crash"，是旧版遗留，应改为网安关键词 |
+| **数据量极小** | Qianxin (~40B), CNNVD (~226B), Shodan (~344B), CERTs-Intl (~135B) | 解析失败或只返回账户信息 |
+| **限流未缓存** | AbuseIPDB | 每天 5 次免费配额被耗尽，需加 24h 本地缓存 |
+| **缺 API Key** | GreyNoise, Shadowserver, CNVD, Reddit, Cloudflare-Radar, MalwareBazaar, ThreatFox | 静默返回 stub，无数据 |
+
+### 功能清单
+
+| 优先级 | 模块 | 修复内容 |
+|--------|------|---------|
+| **P0** | **Bluesky 搜索词纠正** | 将查询从地缘政治/市场词替换为网安词：`"CVE exploit"` / `"ransomware"` / `"zero-day"` / `"data breach"` / `"malware"` |
+| **P0** | **CISA-KEV / CISA-Alerts 解封** | 加 User-Agent 轮换 + 备用镜像 URL（如 `raw.githubusercontent.com` 镜像），或通过代理拉取 |
+| **P0** | **AbuseIPDB 缓存** | 结果缓存 TTL 24h，防止每天耗尽免费 5 次配额 |
+| **P0** | **补全 ABUSECH_AUTH_KEY** | `.env.example` 补充说明；有 key 后 MalwareBazaar + ThreatFox 同时恢复 |
+| **P1** | **BGP-Ranking 端点更新** | 换用 `https://bgpranking.circl.lu/json/asns_global_ranking`（CIRCL 新 API） |
+| **P1** | **FreeBuf 替换** | 移除失效 freebuf-rss.mjs，改为抓取安全客 RSS（`https://www.anquanke.com/rss.xml`）或嘶吼 RSS |
+| **P1** | **Shodan 补充搜索** | 在账户信息之外增加 `POST /shodan/host/search` 拉取暴露资产（需 query credits > 0 才执行） |
+| **P1** | **CNNVD 解析修复** | 更新字段路径匹配 API 实际返回结构，补充 HTML 抓取兜底 |
+| **P2** | **Reddit 移除** | Public JSON API 已强制要求 OAuth，成本高、数据质量一般，移入 `_archived/` |
+| **P2** | **ZoomEye 移除** | 地区屏蔽且无代理支持，移入 `_archived/`；地区放开后可恢复 |
+| **P2** | **ThreatBook 暂停** | API 端点文档缺失，暂时在 briefing.mjs 中注释掉，等厂商文档更新 |
+| **P2** | **无 Key 源警告优化** | 对 GreyNoise / Shadowserver / CNVD / Cloudflare-Radar 在启动时打印明确提示，而非静默跳过 |
+
+### 验收标准
+
+- [x] Bluesky 搜索结果全部为网安相关内容
+- [x] CISA-KEV 恢复拉取（UA + 备用 URL）
+- [x] CISA-Alerts 恢复拉取（UA + 移除 ICS 子 feed）
+- [x] AbuseIPDB 不再每次运行都触发 429（24h 本地缓存）
+- [x] BGP-Ranking 返回有效 ASN 排名数据（新端点 + fallback）
+- [x] Shodan 补充暴露资产搜索（有 query credits 时执行）
+- [x] Reddit、_archived/ 目录已删除（git 历史保留），ThreatBook 注释停用
+- [x] ZoomEye 恢复为活跃源（geo-block 是部署环境问题，非代码 bug）
+- [x] 启动日志中缺 Key 源有明确提示（GreyNoise/Shadowserver/CNVD/Cloudflare）
+
+### 文件变更
+
+```
+修改:
+  apis/sources/bluesky.mjs           (搜索词替换为网安关键词)
+  apis/sources/cisa-kev.mjs          (User-Agent + 备用 URL)
+  apis/sources/cisa-alerts.mjs       (UA + 移除 ICS 子 feed)
+  apis/sources/abuseipdb.mjs         (24h 本地缓存)
+  apis/sources/bgp-ranking.mjs       (新端点 + fallback base URL)
+  apis/sources/shodan.mjs            (host search + null credits 修复)
+  apis/sources/greynoise.mjs         (缺 Key 启动警告)
+  apis/sources/shadowserver.mjs      (缺 Key 启动警告)
+  apis/sources/cnvd.mjs              (缺 Key 启动警告)
+  apis/sources/cloudflare-radar.mjs  (缺 Key 启动警告)
+  apis/sources/zoomeye.mjs           (从已归档恢复为活跃)
+  apis/briefing.mjs                  (注释掉 ThreatBook；恢复 ZoomEye)
+
+删除:
+  apis/sources/_archived/            (整目录删除，git 历史保留)
+```
+
+---
+
+## v1.2.2 — 源状态统一 ✅
+
+> **目标：** 统一全部 36 个数据源的返回状态值，将 10+ 种不一致状态字符串规范化为两种：`status: 'active'`（有数据）和 `status: 'inactive'`（无数据，附原因码），消除仪表板源健康统计中的假"ok"计数。
+
+### 背景
+
+各源历史上返回不一致状态：`connected`、`no_credentials`、`rss_unavailable`、`partial`、`{ error: '...' }` 等 10+ 种形式。`briefing.mjs` 的 `sourcesOk` 仅统计函数是否抛出异常，不反映实际数据是否存在。
+
+### 功能清单
+
+| 模块 | 功能 |
+|------|------|
+| **`inferReason()`** | 将错误消息/状态字符串启发式映射为 `no_key`/`unreachable`/`api_error`/`rate_limited`/`geo_blocked` |
+| **`normalizeSourceData()`** | 将所有遗留状态值规范化为 `active`/`inactive`，应用于 `runSource` 成功路径 |
+| **`sourcesOk` 修正** | 改为统计 `data.status === 'active'` 的源数，新增 `sourcesInactive` 字段 |
+| **`inject.mjs` 健康图** | `err` 从 `Boolean(src.error)` 改为 `src.status !== 'active'`，新增 `reason` 字段 |
+| **`sourcesInactive` 接入** | 提取并传入 `V2.threats.inactiveSources` |
+
+### 验收标准
+
+- [x] `briefing.mjs` 中所有源输出数据均带 `status: 'active'` 或 `status: 'inactive'`
+- [x] `sourcesOk` 仅计算有真实数据的源（不含返回 `no_credentials` 等的源）
+- [x] `inject.mjs` 健康状态用 `src.status !== 'active'` 判断，非 `Boolean(src.error)`
+- [x] `ACTIVE_STATUSES`/`INACTIVE_STATUSES` 提升为模块级常量
+- [x] `normalizeSourceData` pass-through 使用展开避免引用问题
+
+### 文件变更
+
+```
+修改:
+  apis/briefing.mjs     (inferReason + normalizeSourceData + 计数修正)
+  dashboard/inject.mjs  (健康图 err 逻辑 + reason 字段 + sourcesInactive)
+```
+
+---
+
 ## v1.3.0 — 情报增强（预计 v1.2.0 后 2-3 周）
 
 > **目标：** 全量数据源接入（85 源），高级功能齐备，达到设计文档完整规格。
@@ -357,7 +467,9 @@ v2.0.0  企业版   ── 多租户 / SaaS / 私有化部署 / 合规审计
 | **v1.0.1** | 数据复活 | 30+ 源有效数据，安全 RSS，指标非 0 | ✅ 已完成 |
 | **v1.1.0** | 大屏重塑 | 地球仪居中，融合布局，数据密度达标 | ✅ 已完成 |
 | **v1.2.0** | 国际化 | 中英文切换完整可用 | ✅ 已完成 |
-| **v1.3.0** | 情报增强 | 85 源 + MISP + RBAC + PDF | 待规划（+14-21 天） |
+| **v1.2.1** | 源健康修复 | 32+ 有效源，Bluesky 词纠正，CISA 恢复 | ✅ 已完成 |
+| **v1.2.2** | 状态统一 | active/inactive 规范化，sourcesOk 修正 | ✅ 已完成 |
+| **v1.3.0** | 情报增强 | 85 源 + MISP + RBAC + PDF | 待规划（v1.2.2 后 2-3 周） |
 | **v1.4.0** | 自动化 | Webhook + SOAR + 邮件订阅 | 待规划（+21-28 天） |
 | **v1.5.0** | 智能化 | ML + 知识图谱 + 暗网 | 待规划（+28-42 天） |
 | **v2.0.0** | 企业版 | 多租户 + SaaS + 私有化 | 根据市场需求启动 |
@@ -375,6 +487,10 @@ v1.0.0 (当前版本)
          │                                ├──→ v1.2.0 (国际化)
          └──→ [源修复可独立验证] ─────────┘         │
                                                      ↓
+                                           v1.2.1 (源健康修复) ✅
+                                                     │
+                                           v1.2.2 (状态统一) ✅
+                                                     │
                                            v1.3.0 (情报增强)
                                                      │
                                            v1.4.0 (自动化)
