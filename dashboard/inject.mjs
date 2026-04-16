@@ -996,6 +996,7 @@ export function generateIdeas(V2) {
 // === Synthesize raw sweep data into dashboard format ===
 export async function synthesize(data) {
   const sourcesOk = data.crucix?.sourcesOk || 0;
+  const sourcesInactive = data.crucix?.sourcesInactive || 0;
   const sourcesQueried = data.crucix?.sourcesQueried || 0;
 
   const threatInfo = computeThreatLevel(data);
@@ -1010,7 +1011,10 @@ export async function synthesize(data) {
 
   // Source health
   const health = Object.entries(data.sources).map(([name, src]) => ({
-    n: name, err: Boolean(src.error), stale: Boolean(src.stale)
+    n: name,
+    err: src.status !== 'active',
+    reason: src.status !== 'active' ? (src.reason || 'unknown') : null,
+    stale: Boolean(src.stale),
   }));
 
   // Telegram data for news feed
