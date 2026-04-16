@@ -702,43 +702,56 @@ function buildGeoAttacks(data) {
 
 // === CERT & Advisory Alerts ===
 function buildCertAlerts(data) {
-  const cisa = (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 15).map(a => ({
+  const cisaAlerts = (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 15).map(a => ({
     title: (a.title || '').substring(0, 120),
     date: a.date || a.published,
     url: sanitizeExternalUrl(a.url || a.link),
     severity: a.severity,
   }));
 
-  const enisa = (data.sources.ENISA?.recentReports || []).slice(0, 10).map(r => ({
+  const enisaAlerts = (data.sources.ENISA?.recentReports || []).slice(0, 10).map(r => ({
     title: (r.title || '').substring(0, 120),
     date: r.date || r.published,
     url: sanitizeExternalUrl(r.url || r.link),
   }));
 
-  const certs = (data.sources['CERTs-Intl']?.recentAlerts || []).slice(0, 15).map(a => ({
+  const certsIntlAlerts = (data.sources['CERTs-Intl']?.recentAlerts || []).slice(0, 15).map(a => ({
     title: (a.title || '').substring(0, 120),
     cert: a.cert || a.source,
     date: a.date || a.published,
     url: sanitizeExternalUrl(a.url || a.link),
   }));
 
-  const china = [];
-  for (const a of (data.sources.CNCERT?.recentAlerts || []).slice(0, 10)) {
-    china.push({ title: (a.title || '').substring(0, 120), date: a.date, source: 'CNCERT', url: sanitizeExternalUrl(a.url) });
-  }
-  for (const v of (data.sources.CNVD?.recentVulns || []).slice(0, 10)) {
-    china.push({ title: (v.title || v.name || '').substring(0, 120), date: v.date, source: 'CNVD', url: sanitizeExternalUrl(v.url) });
-  }
-  for (const v of (data.sources.CNNVD?.recentVulns || []).slice(0, 10)) {
-    china.push({ title: (v.title || v.name || '').substring(0, 120), date: v.date, source: 'CNNVD', url: sanitizeExternalUrl(v.url) });
-  }
+  const cncertAlerts = (data.sources.CNCERT?.recentAlerts || []).slice(0, 10).map(a => ({
+    title: (a.title || '').substring(0, 120),
+    date: a.date,
+    url: sanitizeExternalUrl(a.url),
+  }));
+
+  const cnvdAlerts = (data.sources.CNVD?.recentVulns || []).slice(0, 10).map(v => ({
+    title: (v.title || v.name || '').substring(0, 120),
+    date: v.date,
+    url: sanitizeExternalUrl(v.url),
+  }));
+
+  const cnnvdAlerts = (data.sources.CNNVD?.recentVulns || []).slice(0, 10).map(v => ({
+    title: (v.title || v.name || '').substring(0, 120),
+    date: v.date,
+    url: sanitizeExternalUrl(v.url),
+  }));
+
+  const items = [
+    { source: 'CISA',        label: 'CISA',       color: 'var(--red)',    orgUrl: 'https://www.cisa.gov/news-events/alerts',       alerts: cisaAlerts },
+    { source: 'ENISA',       label: 'ENISA',      color: 'var(--orange)', orgUrl: 'https://www.enisa.europa.eu/publications',      alerts: enisaAlerts },
+    { source: 'CERTs-Intl',  label: 'CERTs Intl', color: 'var(--blue)',   orgUrl: '',                                              alerts: certsIntlAlerts },
+    { source: 'CNCERT',      label: 'CNCERT',     color: 'var(--green)',  orgUrl: 'https://www.cert.org.cn',                       alerts: cncertAlerts },
+    { source: 'CNVD',        label: 'CNVD',       color: 'var(--accent)', orgUrl: 'https://www.cnvd.org.cn',                       alerts: cnvdAlerts },
+    { source: 'CNNVD',       label: 'CNNVD',      color: 'var(--accent)', orgUrl: 'https://www.cnnvd.org.cn',                      alerts: cnnvdAlerts },
+  ].map(item => ({ ...item, count: item.alerts.length }));
 
   return {
-    cisa,
-    enisa,
-    certs,
-    china,
-    total: cisa.length + enisa.length + certs.length + china.length,
+    total: items.reduce((s, i) => s + i.count, 0),
+    items,
   };
 }
 
@@ -985,7 +998,7 @@ export function generateIdeas(V2) {
   if (V2.certAlerts.total > 10) {
     ideas.push({
       title: 'Multi-CERT Advisory Activity',
-      text: `${V2.certAlerts.total} advisories across CISA (${V2.certAlerts.cisa.length}), ENISA (${V2.certAlerts.enisa.length}), CERTs (${V2.certAlerts.certs.length}), China (${V2.certAlerts.china.length}). Cross-reference with internal asset inventory.`,
+      text: `${V2.certAlerts.total} advisories across ${V2.certAlerts.items.map(i => `${i.label} (${i.count})`).join(', ')}. Cross-reference with internal asset inventory.`,
       type: 'watch', confidence: 'Medium', horizon: 'tactical'
     });
   }
