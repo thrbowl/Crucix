@@ -1,5 +1,5 @@
 // Bluesky — AT Protocol social intelligence
-// No auth required for public search. Real-time social sentiment on geopolitical/market topics.
+// No auth required for public search. Real-time social sentiment on cybersecurity threat intelligence.
 // Public API: app.bsky.feed.searchPosts (full-text search, sorted by latest)
 
 import { safeFetch } from '../utils/fetch.mjs';
@@ -39,12 +39,12 @@ function categorize(posts, keywords) {
   );
 }
 
-// Briefing — search key geopolitical/market terms and categorize
+// Briefing — search key cybersecurity terms and categorize
 export async function briefing() {
   const searchQueries = [
-    { label: 'conflict', q: 'Iran war OR missile strike OR sanctions' },
-    { label: 'markets', q: 'market crash OR oil prices OR gold OR recession' },
-    { label: 'health', q: 'pandemic OR outbreak OR epidemic' },
+    { label: 'exploits', q: 'CVE exploit OR zero-day OR actively exploited' },
+    { label: 'ransomware', q: 'ransomware attack OR LockBit OR ALPHV OR RansomHub' },
+    { label: 'breaches', q: 'data breach OR hack OR leaked credentials OR threat actor' },
   ];
 
   const allPosts = [];
@@ -63,9 +63,9 @@ export async function briefing() {
     source: 'Bluesky',
     timestamp: new Date().toISOString(),
     topics: {
-      conflict: topicResults.conflict || [],
-      markets: topicResults.markets || [],
-      health: topicResults.health || [],
+      exploits: topicResults.exploits || [],
+      ransomware: topicResults.ransomware || [],
+      breaches: topicResults.breaches || [],
     },
   };
 }
