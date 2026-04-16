@@ -310,6 +310,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .popup-detail{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.6}
 .popup-link{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--accent);margin-top:8px;padding:3px 8px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;text-decoration:none}
 .popup-link:hover{background:rgba(0,229,255,0.1);border-color:var(--accent)}
+.popup-detail-btn{display:inline-block;margin-top:6px;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:2px 6px;border-radius:2px;font-family:var(--mono)}
+.popup-detail-btn:hover{background:rgba(0,229,255,0.08)}
 
 /* Enhanced feed items */
 .feed-src-badge{display:inline-block;font-family:var(--mono);font-size:7px;letter-spacing:0.08em;padding:1px 5px;margin-right:3px;text-transform:uppercase;border-radius:1px}
@@ -1256,8 +1258,9 @@ function renderFeed(){
     const src = item.source || '';
     const srcColor = FEED_SRC_COLORS[src] || '#5a6a7a';
     const el = document.createElement('div');
-    el.className = 'feed-item ' + lvl;
+    el.className = 'feed-item ' + lvl + (item.url ? ' clickable' : '');
     el.innerHTML = `
+      ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer" style="display:contents;text-decoration:none;color:inherit">` : ''}
       <div>
         <span class="feed-level ${lvl}">${esc(lvl)}</span>
         <span class="feed-src-badge" style="background:${srcColor}20;color:${srcColor};border:1px solid ${srcColor}40">${esc(src)}</span>
@@ -1266,13 +1269,10 @@ function renderFeed(){
       <div class="feed-title">${esc(item.headline||item.title||'')}</div>
       <div class="feed-meta">
         <span>${esc(item.type||'')}</span>
-        ${item.url?`<a class="popup-link" href="${esc(item.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">SOURCE →</a>`:''}
+        ${item.url ? `<span class="popup-link" style="cursor:pointer">SOURCE →</span>` : ''}
       </div>
+      ${item.url ? `</a>` : ''}
     `;
-    if(item.url){
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', () => window.open(item.url, '_blank', 'noopener'));
-    }
     list.appendChild(el);
   });
 }
@@ -1304,8 +1304,9 @@ function showMapPopup(pt, pixelX, pixelY){
   if(pt.cveId) drillUrl = `https://nvd.nist.gov/vuln/detail/${pt.cveId}`;
   else if(pt.source==='Shodan') drillUrl = 'https://www.shodan.io';
   else if(pt.source==='GreyNoise') drillUrl = 'https://viz.greynoise.io';
-  else if(pt.source==='AbuseIPDB'&&pt.ip) drillUrl = `https://www.abuseipdb.com/check/${pt.ip}`;
+  else if(pt.ip) drillUrl = `https://www.abuseipdb.com/check/${pt.ip}`;
   else if(pt.source==='OTX') drillUrl = 'https://otx.alienvault.com';
+  const detailUrl = pt.cveId ? `https://nvd.nist.gov/vuln/detail/${pt.cveId}` : (pt.ip ? `https://www.abuseipdb.com/check/${pt.ip}` : '');
   content.innerHTML = `
     <div class="popup-type" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}50">${esc(pt.type||'unknown')}</div>
     <div class="popup-label">${esc(pt.label||'Unknown Marker')}</div>
@@ -1314,7 +1315,8 @@ function showMapPopup(pt, pixelX, pixelY){
       <div>Source: ${esc(pt.source||'--')}</div>
       <div>Lat: ${(pt.lat||0).toFixed(2)} · Lon: ${(pt.lon||0).toFixed(2)}</div>
     </div>
-    ${drillUrl?`<a class="popup-link" href="${drillUrl}" target="_blank" rel="noopener">VIEW SOURCE →</a>`:''}
+    ${drillUrl?`<a class="popup-link" href="${esc(drillUrl)}" target="_blank" rel="noopener noreferrer">VIEW SOURCE →</a>`:''}
+    ${detailUrl?`<a class="popup-detail-btn" href="${esc(detailUrl)}" target="_blank" rel="noopener noreferrer">DETAIL →</a>`:''}
   `;
   const wrapper = document.getElementById('mapContainer');
   const wRect = wrapper.getBoundingClientRect();
@@ -1553,12 +1555,16 @@ function renderActors(){
   }
   const sorted = [...groups].sort((a,b) => (b.victimCount||0) - (a.victimCount||0));
   sorted.forEach(g => {
+    const slug = encodeURIComponent((g.name||'').toLowerCase().replace(/\s+/g,'-'));
+    const href = `https://ransomware.live/group/${slug}`;
     const el = document.createElement('div');
-    el.className = 'actor-card';
+    el.className = 'actor-card clickable';
     el.innerHTML = `
-      <div class="actor-name">${esc(g.name)}</div>
-      <div class="actor-victims">${safe(g.victimCount, 0)}</div>
-      <div class="actor-label">${esc(t('actors.victims'))}</div>
+      <a href="${esc(href)}" target="_blank" rel="noopener noreferrer" style="display:contents;text-decoration:none;color:inherit">
+        <div class="actor-name">${esc(g.name)}</div>
+        <div class="actor-victims">${safe(g.victimCount, 0)}</div>
+        <div class="actor-label">${esc(t('actors.victims'))}</div>
+      </a>
     `;
     grid.appendChild(el);
   });
@@ -1593,7 +1599,14 @@ function renderChinaIntel(){
     chinaAlerts.slice(0,8).forEach(a => {
       const item = document.createElement('div');
       item.className = 'china-item';
-      item.textContent = typeof a === 'string' ? a : (a.title || a.description || JSON.stringify(a));
+      const text = typeof a === 'string' ? a : (a.title || a.description || JSON.stringify(a));
+      const itemUrl = typeof a === 'object' && a.url ? a.url : null;
+      if(itemUrl){
+        item.classList.add('clickable');
+        item.innerHTML = `<a href="${esc(itemUrl)}" target="_blank" rel="noopener noreferrer" style="display:contents;text-decoration:none;color:inherit">${esc(text)}</a>`;
+      } else {
+        item.textContent = text;
+      }
       sec.appendChild(item);
     });
     grid.appendChild(sec);
@@ -1628,17 +1641,17 @@ function renderIOCMonitor(){
   if(!el) return;
   const iocs = D.iocs || {};
   const rows = [
-    { name:t('ioc.malware','Malware Samples'), val:Array.isArray(iocs.malware)?iocs.malware.length:0, color:'var(--red)', key:'malware' },
-    { name:t('ioc.c2','C2 Servers'), val:safe(iocs.c2Count,0), color:'var(--darkred)', key:'c2' },
-    { name:t('ioc.maliciousIPs','Malicious IPs'), val:Array.isArray(iocs.maliciousIPs)?iocs.maliciousIPs.length:0, color:'var(--orange)', key:'maliciousIPs' },
-    { name:t('ioc.phishing','Phishing URLs'), val:safe(iocs.phishCount,0), color:'var(--yellow)', key:'phishing' },
+    { name:t('ioc.malware','Malware Samples'),    val:Array.isArray(iocs.malware)?iocs.malware.length:0,            color:'var(--red)',     key:'malware',     url:'https://bazaar.abuse.ch/browse/' },
+    { name:t('ioc.c2','C2 Servers'),              val:safe(iocs.c2Count,0),                                         color:'var(--darkred)', key:'c2',           url:'https://threatfox.abuse.ch/browse/' },
+    { name:t('ioc.maliciousIPs','Malicious IPs'), val:Array.isArray(iocs.maliciousIPs)?iocs.maliciousIPs.length:0,  color:'var(--orange)',  key:'maliciousIPs', url:'https://www.abuseipdb.com/' },
+    { name:t('ioc.phishing','Phishing URLs'),     val:safe(iocs.phishCount,0),                                      color:'var(--yellow)',  key:'phishing',     url:'https://www.phishtank.com/phish_search.php' },
   ];
   document.getElementById('iocTotalBadge').textContent = safe(iocs.total,0);
   el.innerHTML = rows.map(r => `
-    <div class="ioc-row" data-drill="ioc" data-key="${r.key}">
+    <a class="ioc-row clickable" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" data-drill="ioc" data-key="${r.key}" style="text-decoration:none;color:inherit">
       <div class="ioc-left"><div class="ioc-dot" style="background:${r.color};box-shadow:0 0 4px ${r.color}"></div><span class="ioc-name">${esc(r.name)}</span></div>
       <div class="ioc-val" style="color:${r.color}">${r.val}</div>
-    </div>`).join('');
+    </a>`).join('');
 }
 
 // === CERT ALERTS ===
@@ -1753,9 +1766,11 @@ function renderNewsCards(){
     const src = n.source || 'Unknown';
     const color = srcColors[src] || 'var(--dim)';
     const url = n.url || '';
-    return `<div class="news-card"${url?` onclick="window.open('${esc(url)}','_blank','noopener')"`:''}>
+    return `<div class="news-card${url?' clickable':''}">
+      ${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="display:contents;text-decoration:none;color:inherit">`:''}
       <div><span class="news-src" style="background:${color}20;color:${color};border:1px solid ${color}40">${esc(src)}</span><span class="news-time">${fmtTime(n.date||n.timestamp)}</span></div>
       <div class="news-text">${esc(n.title||n.headline||'')}</div>
+      ${url?`</a>`:''}
     </div>`;
   }).join('');
 }
@@ -1770,14 +1785,18 @@ function renderCveTrends(){
   const withPoc = recent.filter(c=>c.hasPoc).length;
   const withKev = recent.filter(c=>c.inKEV).length;
   const stats = [
-    { val:safe(cves.totalTracked, recent.length), label:t('cveTrend.totalTracked','Total Tracked'), cls:'' },
-    { val:safe(cves.criticalCount,0), label:t('threats.critical','Critical'), cls:'red' },
-    { val:safe(cves.kevCount,0), label:t('cveTimeline.inKev','In KEV'), cls:'red' },
-    { val:withPoc, label:t('cveTimeline.hasPoc','Has PoC'), cls:'orange' },
-    { val:avgCvss, label:t('cveTrend.avgCvss','Avg CVSS'), cls:parseFloat(avgCvss)>=7?'red':parseFloat(avgCvss)>=4?'orange':'green' },
-    { val:recent.length, label:t('cveTrend.recent7d','Recent (7d)'), cls:'' },
+    { val:safe(cves.totalTracked, recent.length), label:t('cveTrend.totalTracked','Total Tracked'), cls:'', url:'' },
+    { val:safe(cves.criticalCount,0), label:t('threats.critical','Critical'), cls:'red', url:'https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&query=&search_type=all&cvss_version=3&cvss_v3_severity=CRITICAL' },
+    { val:safe(cves.kevCount,0), label:t('cveTimeline.inKev','In KEV'), cls:'red', url:'https://www.cisa.gov/known-exploited-vulnerabilities-catalog' },
+    { val:withPoc, label:t('cveTimeline.hasPoc','Has PoC'), cls:'orange', url:'' },
+    { val:avgCvss, label:t('cveTrend.avgCvss','Avg CVSS'), cls:parseFloat(avgCvss)>=7?'red':parseFloat(avgCvss)>=4?'orange':'green', url:'' },
+    { val:recent.length, label:t('cveTrend.recent7d','Recent (7d)'), cls:'', url:'' },
   ];
-  el.innerHTML = stats.map(s => `<div class="trend-stat"><div class="ts-val ${s.cls}">${s.val}</div><div class="ts-label">${s.label}</div></div>`).join('');
+  el.innerHTML = stats.map(s => `<div class="trend-stat${s.url?' clickable':''}">
+    ${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" style="display:contents;text-decoration:none;color:inherit">`:''}
+    <div class="ts-val ${s.cls}">${s.val}</div><div class="ts-label">${s.label}</div>
+    ${s.url?`</a>`:''}
+  </div>`).join('');
 }
 
 // === SENSOR GRID ===
