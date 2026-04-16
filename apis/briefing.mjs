@@ -203,6 +203,18 @@ export async function fullBriefing() {
   };
 
   console.error(`[Crucix] Sweep complete in ${totalMs}ms — ${output.crucix.sourcesOk} active / ${output.crucix.sourcesInactive} inactive / ${output.crucix.sourcesFailed} failed`);
+
+  // Print each non-active source with its reason
+  for (const s of sources) {
+    if (s.status === 'ok' && s.data?.status === 'inactive') {
+      const reason = s.data.reason || 'unknown';
+      const msg = s.data.message ? ` (${s.data.message})` : '';
+      console.error(`  ${s.name}: ${reason}${msg}`);
+    } else if (s.status !== 'ok') {
+      console.error(`  ${s.name}: failed — ${s.error || 'unknown error'}`);
+    }
+  }
+
   return output;
 }
 
