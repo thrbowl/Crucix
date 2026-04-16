@@ -4,7 +4,6 @@
 const RSS_URLS = [
   'https://www.cisa.gov/cybersecurity-advisories/all.xml',
   'https://www.cisa.gov/news-events/cybersecurity-advisories/rss.xml',
-  'https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml',
 ];
 
 function parseRSSItems(xml) {
