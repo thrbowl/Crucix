@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.0: 32 active security sources across 5 domains (BGP-Ranking/Bluesky/Shadowserver/PhishTank removed)
+// v1.4.1: 35 active security sources across 5 domains (BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +THN/BleepingComputer/SecurityWeek RSS)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -30,12 +30,15 @@ import { briefing as abuseipdb } from './sources/abuseipdb.mjs';
 import { briefing as cloudflareRadar } from './sources/cloudflare-radar.mjs';
 import { briefing as spamhaus } from './sources/spamhaus.mjs';
 
-// === Domain 4: Event Tracking & Intel Community (5 sources) ===
+// === Domain 4: Event Tracking & Intel Community (8 sources) ===
 import { briefing as ransomwareLive } from './sources/ransomware-live.mjs';
 import { briefing as enisa } from './sources/enisa.mjs';
 import { briefing as cisaAlerts } from './sources/cisa-alerts.mjs';
 import { briefing as certsIntl } from './sources/certs-intl.mjs';
 import { briefing as telegram } from './sources/telegram.mjs';
+import { briefing as hackerNewsRss } from './sources/hackernews-rss.mjs';
+import { briefing as bleepingComputer } from './sources/bleepingcomputer-rss.mjs';
+import { briefing as securityWeek } from './sources/securityweek-rss.mjs';
 
 // === Domain 5: China Intelligence (10 sources) ===
 import { briefing as cncert } from './sources/cncert.mjs';
@@ -120,7 +123,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 32; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed
+  const totalSources = 35; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -155,6 +158,9 @@ export async function fullBriefing() {
     runSource('CISA-Alerts', cisaAlerts),
     runSource('CERTs-Intl', certsIntl),
     runSource('Telegram', telegram),
+    runSource('HackerNews-RSS', hackerNewsRss),
+    runSource('BleepingComputer', bleepingComputer),
+    runSource('SecurityWeek', securityWeek),
 
     // Domain 5: China Intelligence
     runSource('CNCERT', cncert),
