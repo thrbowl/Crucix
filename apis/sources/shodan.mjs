@@ -101,10 +101,15 @@ export async function briefing() {
         signal: `${rdpTotal.toLocaleString()} RDP services exposed with screenshots`,
       });
     }
-  } else {
+  } else if (accountInfo.credits === 0) {
     signals.push({
       severity: 'info',
       signal: 'Shodan query credits exhausted — skipping host search',
+    });
+  } else {
+    signals.push({
+      severity: 'info',
+      signal: 'Shodan host search skipped — query credits unknown (free tier may not report credits)',
     });
   }
 
