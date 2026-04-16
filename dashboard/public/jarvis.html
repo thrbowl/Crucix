@@ -173,7 +173,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .tab-btn:hover{color:var(--text);background:rgba(14,14,24,1)}
 .tab-btn.active{color:var(--accent);border-color:var(--accent);background:rgba(12,12,20,0.98);box-shadow:0 -2px 12px rgba(0,229,255,0.15)}
 .tab-content{max-height:0;overflow:hidden;transition:max-height 0.35s ease;background:var(--panel);border-top:1px solid var(--border-bright);box-shadow:0 -4px 24px rgba(0,0,0,0.5)}
-.bottom-area .tab-content{max-height:260px}
+.bottom-area.expanded .tab-content{max-height:260px}
 .tab-pane{display:none;overflow:auto;padding:10px;height:240px}
 .tab-pane::-webkit-scrollbar{width:3px;height:3px}
 .tab-pane::-webkit-scrollbar-thumb{background:rgba(0,229,255,0.12);border-radius:2px}
@@ -182,7 +182,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 #attackCanvas{width:100%;height:100%;display:block}
 
 /* Bottom ticker */
-.ticker-bar{grid-column:1/-1;grid-row:3;display:flex;align-items:center;background:var(--panel);border-top:1px solid var(--border);overflow:hidden;padding:0 10px}
+.ticker-bar{grid-column:1/-1;grid-row:4;display:flex;align-items:center;background:var(--panel);border-top:1px solid var(--border);overflow:hidden;padding:0 10px}
 .ticker-label{font-family:var(--mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);padding-right:10px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0}
 .ticker-track{flex:1;overflow:hidden;position:relative;height:100%;display:flex;align-items:center}
 .ticker-content{display:flex;gap:32px;white-space:nowrap;animation:tickerScroll 60s linear infinite;padding-left:100%}
@@ -1646,8 +1646,10 @@ function renderChinaIntel(){
     </div>
   `;
 
-  // Chinese security news from certAlerts.china
-  const chinaAlerts = (D.certAlerts && D.certAlerts.china) || [];
+  // Chinese security news from certAlerts.items filtered by source
+  const chinaAlerts = (D.certAlerts?.items || [])
+    .filter(i => ['CNCERT','CNVD','CNNVD'].includes(i.source))
+    .flatMap(i => i.alerts || []);
   if(chinaAlerts.length){
     const sec = document.createElement('div');
     sec.className = 'china-section';
