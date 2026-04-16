@@ -870,6 +870,26 @@ function runBoot(){
   }
 }
 
+// === STATS ROW ===
+const STATS_CONFIG = [
+  { label: 'KEV',          getValue: d => safe((d.cves||{}).kevCount, 0),                       color: 'var(--red)'     },
+  { label: 'Critical CVE', getValue: d => safe((d.cves||{}).criticalCount, 0),                  color: 'var(--orange)'  },
+  { label: 'IOC',          getValue: d => safe((d.iocs||{}).total, 0),                          color: 'var(--accent)'  },
+  { label: 'C2',           getValue: d => safe((d.iocs||{}).c2Count, 0),                        color: 'var(--darkred)' },
+  { label: 'APT',          getValue: d => safe(((d.actors||{}).ransomwareGroups||[]).length, 0), color: 'var(--purple)'  },
+  { label: 'CERT',         getValue: d => safe((d.certAlerts||{}).total, 0),                    color: 'var(--green)'   },
+  { label: 'Geo',          getValue: d => safe((d.geoAttacks||[]).length, 0),                   color: 'var(--blue)'    },
+];
+
+function renderStatsRow(){
+  const el = document.getElementById('statsRow');
+  if(!el) return;
+  el.innerHTML = STATS_CONFIG.map(cfg => {
+    const val = cfg.getValue(D);
+    return `<div class="stat-chip"><span class="sc-val" style="color:${cfg.color}">${val}</span><span class="sc-label">${esc(cfg.label)}</span></div>`;
+  }).join('');
+}
+
 // === TOP BAR ===
 function updateTopbar(){
   const threats = D.threats || {};
@@ -896,11 +916,6 @@ function updateTopbar(){
     alertBadge.textContent = level;
     alertBadge.className = 'alert-badge ' + level.toLowerCase();
   }
-
-  document.getElementById('kevCount').textContent = safe(cves.kevCount, 0);
-  document.getElementById('aptCount').textContent = safe((actors.ransomwareGroups||[]).length, 0);
-  document.getElementById('critCve').textContent = safe(cves.criticalCount, 0);
-  document.getElementById('iocTotal').textContent = safe(iocs.total, 0);
 
   const srcOk = safe(meta.sourcesOk, 0);
   const srcTotal = safe(meta.sourcesQueried, 0);
@@ -936,6 +951,32 @@ setInterval(()=>{
     sweepText.textContent = `SWEEP ${m}m ${s<10?'0':''}${s}s`;
   }
 }, 1000);
+
+// === MAP FULLSCREEN ===
+(function(){
+  const btn = document.getElementById('mapFsBtn');
+  if(!btn) return;
+  btn.addEventListener('click', () => {
+    const map = document.getElementById('mapContainer');
+    const isFs = map.classList.toggle('map-fullscreen');
+    btn.textContent = isFs ? '✕' : '⛶';
+    btn.title = isFs ? '退出全屏' : '全屏';
+    if(!isFs){
+      setTimeout(() => { if(mapMode==='flat') drawFlatMap(); else plotGlobeMarkers(); }, 50);
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      const map = document.getElementById('mapContainer');
+      if(map && map.classList.contains('map-fullscreen')){
+        map.classList.remove('map-fullscreen');
+        const btn2 = document.getElementById('mapFsBtn');
+        if(btn2){ btn2.textContent = '⛶'; btn2.title = '全屏'; }
+        setTimeout(() => { if(mapMode==='flat') drawFlatMap(); else plotGlobeMarkers(); }, 50);
+      }
+    }
+  });
+})();
 
 // === LEFT SIDEBAR ===
 function renderLayers(){
@@ -1798,7 +1839,7 @@ function renderTicker(){
 // === MASTER UPDATE ===
 function updateAll(){
   updateTopbar();
-  renderSensorGrid();
+  renderStatsRow();
   renderIOCMonitor();
   renderCertAlerts();
   renderLayers();
@@ -1806,7 +1847,6 @@ function updateAll(){
   if (mapMode === 'flat') drawFlatMap(); else plotGlobeMarkers();
   renderFeed();
   renderSignals();
-  renderHotMetrics();
   renderSweepDelta();
   renderNewsCards();
   renderCveTrends();
@@ -1817,7 +1857,7 @@ function updateAll(){
   buildMarkerIndex();
 
   const activeTab = document.querySelector('.tab-btn.active');
-  if(activeTab && document.getElementById('bottomArea').classList.contains('expanded')){
+  if(activeTab && document.getElementById('bottomArea')){
     if(activeTab.dataset.tab === 'cve') drawCveTimeline();
     if(activeTab.dataset.tab === 'attack') drawAttackHeatmap();
   }
