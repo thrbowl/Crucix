@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Crucix Cybersecurity Orchestrator — runs all security intelligence sources in parallel
-// v1.4.4: 38 active security sources across 5 domains (+Tavily)
+// v1.4.5: 39 active security sources across 5 domains (+Qianxin-Hunter)
 
 import './utils/env.mjs';
 import { pathToFileURL } from 'node:url';
@@ -43,12 +43,13 @@ import { briefing as bleepingComputer } from './sources/bleepingcomputer-rss.mjs
 import { briefing as securityWeek } from './sources/securityweek-rss.mjs';
 import { briefing as tavily } from './sources/tavily.mjs';
 
-// === Domain 5: China Intelligence (10 sources) ===
+// === Domain 5: China Intelligence (11 sources) ===
 import { briefing as cncert } from './sources/cncert.mjs';
 import { briefing as cnvd } from './sources/cnvd.mjs';
 import { briefing as cnnvd } from './sources/cnnvd.mjs';
 // import { briefing as threatbook } from './sources/threatbook.mjs'; // API broken — "Invalid Api method", awaiting vendor doc update
 import { briefing as qianxin } from './sources/qianxin.mjs';
+import { briefing as qianxinHunter } from './sources/qianxin-hunter.mjs';
 import { briefing as fofa } from './sources/fofa.mjs';
 import { briefing as zoomeye } from './sources/zoomeye.mjs';
 import { briefing as freebuf } from './sources/freebuf-rss.mjs';
@@ -126,7 +127,7 @@ export async function runSource(name, fn, ...args) {
 }
 
 export async function fullBriefing() {
-  const totalSources = 38; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily
+  const totalSources = 39; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter
   console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
   const start = Date.now();
 
@@ -174,6 +175,7 @@ export async function fullBriefing() {
     runSource('CNNVD', cnnvd),
     // runSource('ThreatBook', threatbook), // API broken — "Invalid Api method"
     runSource('Qianxin', qianxin),
+    runSource('Qianxin-Hunter', qianxinHunter),
     runSource('FOFA', fofa),
     runSource('ZoomEye', zoomeye),
     runSource('FreeBuf', freebuf),
