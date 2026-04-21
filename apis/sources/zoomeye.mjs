@@ -1,7 +1,7 @@
 import '../utils/env.mjs';
 import { safeFetch } from '../utils/fetch.mjs';
 
-const API_BASE = 'https://api.zoomeye.org';
+const API_BASE = 'https://api.zoomeye.ai';
 
 export async function briefing() {
   const timestamp = new Date().toISOString();
@@ -17,11 +17,27 @@ export async function briefing() {
     };
   }
 
+  const headers = { 'API-KEY': key };
+
   try {
     const data = await safeFetch(`${API_BASE}/host/search?query=port:22&page=1`, {
       timeout: 15000,
-      headers: { 'API-KEY': key },
+      headers,
     });
+
+    // Free plan blocks search with credits_insufficent — fall back to account info only
+    if (data.error && (data.error.includes('credits_insufficent') || data.error.includes('402'))) {
+      const info = await safeFetch(`${API_BASE}/resources-info`, { timeout: 10000, headers });
+      return {
+        source: 'ZoomEye',
+        timestamp,
+        status: 'plan_limited',
+        message: 'ZoomEye Free plan does not allow API search. Upgrade at https://www.zoomeye.ai to enable search.',
+        plan: info.plan || 'Free',
+        quota: info.quota_info || null,
+        signals: [],
+      };
+    }
 
     if (data.error) {
       return { source: 'ZoomEye', timestamp, status: 'api_error', error: data.error, signals: [] };

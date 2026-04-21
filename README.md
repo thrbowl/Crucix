@@ -394,6 +394,39 @@ crucix/
 
 ---
 
+## Cybersecurity Edition — Source Status
+
+**Last checked: 2026-04-21 · 49 sources · 35 active / 14 inactive / 0 failed**
+
+### ✅ Active (35)
+
+NVD · EPSS · ExploitDB · OSV · VulnCheck · CIRCL-CVE* · AlienVault OTX · MalwareBazaar · ThreatFox · Feodo · ATT&CK STIX · VirusTotal · URLhaus · Shodan · AbuseIPDB · Cloudflare-Radar · Spamhaus · OpenPhish · FOFA · Ransomware-Live · ENISA · CISA-Alerts* · CERTs-Intl · The Hacker News · BleepingComputer* · SecurityWeek · CNCERT · CNVD* · CNNVD · Qianxin · FreeBuf* · Anquanke · 4hou · Vendors-Intl · Vendors-CN
+
+\* intermittently unreachable depending on network environment
+
+### ⚠️ Inactive (14)
+
+| 数据源 | 状态 | 原因 | 处理方式 |
+|--------|------|------|---------|
+| **CISA-KEV** | 🌐 geo-block | `HTTP 403` — cisa.gov 对部分 IP 地区封锁 | 使用代理或境外节点 |
+| **CISA-Alerts** | 🌐 geo-block | `HTTP 403` — 同上 | 同上 |
+| **BleepingComputer** | 🌐 geo-block | RSS feed 无法访问 | 使用代理 |
+| **FreeBuf** | 🌐 geo-block | RSS 与 HTML 均无法解析 | 使用代理 |
+| **CIRCL-CVE** | 🌐 network | `fetch failed` — 超时或服务不稳定 | 自动重试，通常可恢复 |
+| **DShield** | 🌐 network | API 返回空数据 | 自动重试，通常可恢复 |
+| **Qianxin-Hunter** | 🌐 network | 所有查询失败 — api.hunter.how 访问受阻 | 使用代理 |
+| **GreyNoise** | 🔑 key_expired | `HTTP 401` — Key 已失效 | 在 greynoise.io 重新获取 |
+| **ZoomEye** | 💳 plan_limited | Free plan 不开放 API 搜索 | 升级付费账户 |
+| **Censys** | 🔑 no_key | 缺 `CENSYS_API_ID`（仅填了 `SECRET`） | 补全 `.env` |
+| **Qianxin-TI** | 🔑 no_key | `QIANXIN_TI_API_KEY` 未配置 | 补全 `.env` |
+| **Baidu-Search** | 🔑 no_key | 缺 `BAIDU_QIANFAN_SECRET_KEY` | 补全 `.env` |
+| **CIRCL-PDNS** | ⚙️ config | 需设 `CIRCL_PDNS_DOMAINS=domain1,domain2` | 填入监控域名 |
+| **CNVD** | ⚙️ config + 🌐 | 无 Key 且 HTML feed 也不可达 | 配置 Key 或使用代理 |
+
+> **图例：** 🌐 网络/地区封锁 · 🔑 密钥问题 · 💳 账户等级限制 · ⚙️ 配置缺失
+
+---
+
 ## npm Scripts
 
 | Script | Command | Description |
