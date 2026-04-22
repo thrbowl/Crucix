@@ -178,6 +178,7 @@ app.post('/api/auth/keys', requireAuth, async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { name } = req.body;
+  if (name && name.length > 100) return res.status(400).json({ error: 'Key name must be 100 characters or fewer' });
   const { plaintext, hash } = generateApiKey();
   const key = await storeApiKey(pool, req.user.id, hash, name);
   res.status(201).json({ ...key, key: plaintext, warning: 'Store this key securely — it will not be shown again' });
@@ -404,6 +405,12 @@ app.get('/events', (req, res) => {
   res.write('data: {"type":"connected"}\n\n');
   sseClients.add(res);
   req.on('close', () => sseClients.delete(res));
+});
+
+// Global JSON error handler (Express 5: async route errors forwarded here)
+app.use((err, req, res, _next) => {
+  console.error('[API] Unhandled error:', err.message);
+  res.status(err.status ?? 500).json({ error: err.message ?? 'Internal server error' });
 });
 
 function broadcast(data) {
