@@ -15,11 +15,11 @@ CREATE INDEX IF NOT EXISTS idx_stix_objects_type
   ON stix_objects (type);
 
 CREATE INDEX IF NOT EXISTS idx_stix_objects_priority_score
-  ON stix_objects ((data->>'x_crucix_priority_score') DESC NULLS LAST)
+  ON stix_objects (((data->>'x_crucix_priority_score')::numeric) DESC NULLS LAST)
   WHERE type = 'vulnerability';
 
 CREATE INDEX IF NOT EXISTS idx_stix_objects_confidence
-  ON stix_objects ((data->>'x_crucix_confidence_score') DESC NULLS LAST)
+  ON stix_objects (((data->>'x_crucix_confidence_score')::numeric) DESC NULLS LAST)
   WHERE type = 'indicator';
 
 CREATE INDEX IF NOT EXISTS idx_stix_objects_data_gin
