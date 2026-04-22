@@ -20,20 +20,6 @@ export default {
     baseUrl: process.env.OLLAMA_BASE_URL || null,
   },
 
-  telegram: {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || null,
-    chatId: process.env.TELEGRAM_CHAT_ID || null,
-    botPollingInterval: parseInt(process.env.TELEGRAM_POLL_INTERVAL) || 5000,
-    channels: process.env.TELEGRAM_CHANNELS || null,
-  },
-
-  discord: {
-    botToken: process.env.DISCORD_BOT_TOKEN || null,
-    channelId: process.env.DISCORD_CHANNEL_ID || null,
-    guildId: process.env.DISCORD_GUILD_ID || null,
-    webhookUrl: process.env.DISCORD_WEBHOOK_URL || null,
-  },
-
   // Watchlist — user-defined monitoring targets
   watchlist: {
     vendors: (process.env.WATCHLIST_VENDORS || '').split(',').filter(Boolean),
