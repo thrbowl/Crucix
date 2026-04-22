@@ -18,6 +18,13 @@ export default {
     poolMax: parseInt(process.env.DB_POOL_MAX, 10) > 0 ? parseInt(process.env.DB_POOL_MAX, 10) : 10,
   },
 
+  jwt: {
+    secret: process.env.JWT_SECRET || null,
+    refreshSecret: process.env.JWT_REFRESH_SECRET || null,
+    accessTtl: '15m',
+    refreshTtl: '30d',
+  },
+
   llm: {
     provider: process.env.LLM_PROVIDER || null,
     apiKey: process.env.LLM_API_KEY || null,
