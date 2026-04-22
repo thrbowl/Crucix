@@ -13,6 +13,11 @@ export default {
     accessToken: process.env.AUTH_ACCESS_TOKEN || null,
   },
 
+  database: {
+    url: process.env.DATABASE_URL || null,
+    poolMax: parseInt(process.env.DB_POOL_MAX, 10) > 0 ? parseInt(process.env.DB_POOL_MAX, 10) : 10,
+  },
+
   llm: {
     provider: process.env.LLM_PROVIDER || null,
     apiKey: process.env.LLM_API_KEY || null,
