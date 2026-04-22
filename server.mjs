@@ -16,7 +16,7 @@ import { createLLMProvider } from './lib/llm/index.mjs';
 import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { authMiddleware, isAuthEnabled } from './lib/auth/index.mjs';
 import cookieParser from 'cookie-parser';
-import { registerUser, verifyCredentials, getOrCreateSubscription } from './lib/auth/users.mjs';
+import { registerUser, verifyCredentials, getOrCreateSubscription, getUserById } from './lib/auth/users.mjs';
 import { signAccessToken, generateRefreshToken, storeRefreshToken, validateRefreshToken, revokeRefreshToken } from './lib/auth/tokens.mjs';
 import { generateApiKey, storeApiKey, listApiKeys, revokeApiKey } from './lib/auth/apikeys.mjs';
 import { getCreditBalance } from './lib/credits/index.mjs';
@@ -64,12 +64,14 @@ app.get('/', (_req, res) => {
 });
 
 // === Auth Routes ===
+const requireAuth = authMiddleware(getPool());
 
 app.post('/api/auth/register', async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
+    if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
     const user = await registerUser(pool, email, password);
     await getOrCreateSubscription(pool, user.id);
     res.status(201).json({ id: user.id, email: user.email });
@@ -89,7 +91,8 @@ app.post('/api/auth/login', async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
+    if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
     const user = await verifyCredentials(pool, email, password);
     if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
@@ -130,8 +133,8 @@ app.post('/api/auth/refresh', async (req, res) => {
     await revokeRefreshToken(pool, token);
 
     const sub = await getOrCreateSubscription(pool, userId);
-    const user = { id: userId, plan: sub.plan_name };
-    const accessToken = signAccessToken(user);
+    const userRow = await getUserById(pool, userId);
+    const accessToken = signAccessToken({ id: userId, email: userRow?.email, plan: sub.plan_name });
     const { plaintext, hash, expiresAt } = generateRefreshToken();
     await storeRefreshToken(pool, userId, { hash, expiresAt });
 
@@ -157,7 +160,7 @@ app.post('/api/auth/logout', async (req, res) => {
   res.json({ message: 'Logged out' });
 });
 
-app.get('/api/auth/me', async (req, res) => {
+app.get('/api/auth/me', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const balance = pool ? await getCreditBalance(pool, req.user.id) : null;
@@ -170,7 +173,7 @@ app.get('/api/auth/me', async (req, res) => {
   });
 });
 
-app.post('/api/auth/keys', async (req, res) => {
+app.post('/api/auth/keys', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
@@ -180,7 +183,7 @@ app.post('/api/auth/keys', async (req, res) => {
   res.status(201).json({ ...key, key: plaintext, warning: 'Store this key securely — it will not be shown again' });
 });
 
-app.get('/api/auth/keys', async (req, res) => {
+app.get('/api/auth/keys', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
@@ -188,7 +191,7 @@ app.get('/api/auth/keys', async (req, res) => {
   res.json(keys);
 });
 
-app.delete('/api/auth/keys/:id', async (req, res) => {
+app.delete('/api/auth/keys/:id', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not configured' });
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
