@@ -57,7 +57,7 @@ app.get('/', (_req, res) => {
 });
 
 // Auth middleware for /api/* routes
-app.use('/api', authMiddleware);
+app.use('/api', authMiddleware(getPool()));
 
 // API: current data
 app.get('/api/data', (req, res) => {
