@@ -20,10 +20,13 @@ test('deprecated source files do not exist', () => {
 });
 
 test('alert channel files do not exist', () => {
-  assert.equal(existsSync(join(ROOT, 'lib/alerts/telegram.mjs')), false,
-    'lib/alerts/telegram.mjs should be deleted');
-  assert.equal(existsSync(join(ROOT, 'lib/alerts/discord.mjs')), false,
-    'lib/alerts/discord.mjs should be deleted');
+  const alertFiles = [
+    'lib/alerts/telegram.mjs',
+    'lib/alerts/discord.mjs',
+  ];
+  for (const f of alertFiles) {
+    assert.equal(existsSync(join(ROOT, f)), false, `${f} should be deleted`);
+  }
 });
 
 test('old jarvis dashboard does not exist', () => {
