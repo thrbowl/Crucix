@@ -26,6 +26,7 @@ import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs'
 import { getPool, closePool } from './lib/db/index.mjs';
 import { runMigrations } from './lib/db/migrate.mjs';
 import { runPipeline } from './lib/pipeline/index.mjs';
+import { createV1Router } from './lib/api/v1/router.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -203,6 +204,9 @@ app.delete('/api/auth/keys/:id', requireAuth, async (req, res) => {
 
 // Auth middleware for /api/* routes
 app.use('/api', authMiddleware(getPool()));
+
+// === REST API v1 ===
+app.use('/api/v1', createV1Router({ getPool, getCurrentData: () => currentData }));
 
 // API: current data
 app.get('/api/data', (req, res) => {
