@@ -15,6 +15,11 @@ import { MemoryManager } from './lib/delta/index.mjs';
 import { createLLMProvider } from './lib/llm/index.mjs';
 import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { authMiddleware, isAuthEnabled } from './lib/auth/index.mjs';
+import cookieParser from 'cookie-parser';
+import { registerUser, verifyCredentials, getOrCreateSubscription } from './lib/auth/users.mjs';
+import { signAccessToken, generateRefreshToken, storeRefreshToken, validateRefreshToken, revokeRefreshToken } from './lib/auth/tokens.mjs';
+import { generateApiKey, storeApiKey, listApiKeys, revokeApiKey } from './lib/auth/apikeys.mjs';
+import { getCreditBalance } from './lib/credits/index.mjs';
 import { exportIOCsJSON, exportIOCsCSV, exportIOCsSTIX, exportCVEsJSON, exportCVEsCSV } from './lib/export/index.mjs';
 import { matchIOC, matchCVE, filterByWatchlist } from './lib/watchlist/index.mjs';
 import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs';
@@ -50,10 +55,146 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 // === Express Server ===
 const app = express();
 app.use(express.static(join(ROOT, 'dashboard/public')));
+app.use(express.json());
+app.use(cookieParser());
 
 // Serve placeholder until new dashboard is ready
 app.get('/', (_req, res) => {
   res.sendFile(join(ROOT, 'dashboard/public/index.html'));
+});
+
+// === Auth Routes ===
+
+app.post('/api/auth/register', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  try {
+    const { email, password } = req.body;
+    const user = await registerUser(pool, email, password);
+    await getOrCreateSubscription(pool, user.id);
+    res.status(201).json({ id: user.id, email: user.email });
+  } catch (err) {
+    if (err.message.includes('duplicate key') || err.code === '23505') {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    if (err.message.startsWith('Invalid') || err.message.startsWith('Password')) {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error('[Auth] Register error:', err.message);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  try {
+    const { email, password } = req.body;
+    const user = await verifyCredentials(pool, email, password);
+    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+
+    const sub = await getOrCreateSubscription(pool, user.id);
+    const accessToken = signAccessToken({ id: user.id, email: user.email, plan: sub.plan_name });
+    const { plaintext, hash, expiresAt } = generateRefreshToken();
+    await storeRefreshToken(pool, user.id, { hash, expiresAt });
+
+    res.cookie('refresh_token', plaintext, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresAt,
+    });
+
+    res.json({
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: 900,
+      user: { id: user.id, email: user.email, plan: sub.plan_name, credits: sub.current_credits },
+    });
+  } catch (err) {
+    console.error('[Auth] Login error:', err.message);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  const token = req.cookies?.refresh_token;
+  if (!token) return res.status(401).json({ error: 'Refresh token missing' });
+
+  try {
+    const userId = await validateRefreshToken(pool, token);
+    if (!userId) return res.status(401).json({ error: 'Invalid or expired refresh token' });
+
+    await revokeRefreshToken(pool, token);
+
+    const sub = await getOrCreateSubscription(pool, userId);
+    const user = { id: userId, plan: sub.plan_name };
+    const accessToken = signAccessToken(user);
+    const { plaintext, hash, expiresAt } = generateRefreshToken();
+    await storeRefreshToken(pool, userId, { hash, expiresAt });
+
+    res.cookie('refresh_token', plaintext, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresAt,
+    });
+
+    res.json({ access_token: accessToken, token_type: 'Bearer', expires_in: 900 });
+  } catch (err) {
+    console.error('[Auth] Refresh error:', err.message);
+    res.status(500).json({ error: 'Token refresh failed' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  const pool = getPool();
+  const token = req.cookies?.refresh_token;
+  if (pool && token) await revokeRefreshToken(pool, token).catch(() => {});
+  res.clearCookie('refresh_token');
+  res.json({ message: 'Logged out' });
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  const pool = getPool();
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const balance = pool ? await getCreditBalance(pool, req.user.id) : null;
+  res.json({
+    id: req.user.id,
+    email: req.user.email,
+    plan: req.user.plan,
+    credits: balance?.current_credits ?? null,
+    period_end: balance?.period_end ?? null,
+  });
+});
+
+app.post('/api/auth/keys', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { name } = req.body;
+  const { plaintext, hash } = generateApiKey();
+  const key = await storeApiKey(pool, req.user.id, hash, name);
+  res.status(201).json({ ...key, key: plaintext, warning: 'Store this key securely — it will not be shown again' });
+});
+
+app.get('/api/auth/keys', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const keys = await listApiKeys(pool, req.user.id);
+  res.json(keys);
+});
+
+app.delete('/api/auth/keys/:id', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not configured' });
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const revoked = await revokeApiKey(pool, req.user.id, req.params.id);
+  if (!revoked) return res.status(404).json({ error: 'Key not found or already revoked' });
+  res.json({ message: 'API key revoked' });
 });
 
 // Auth middleware for /api/* routes
