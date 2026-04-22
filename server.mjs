@@ -48,20 +48,9 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 const app = express();
 app.use(express.static(join(ROOT, 'dashboard/public')));
 
-// Serve loading page until first sweep completes, then the dashboard with injected locale
-app.get('/', (req, res) => {
-  if (!currentData) {
-    res.sendFile(join(ROOT, 'dashboard/public/loading.html'));
-  } else {
-    const htmlPath = join(ROOT, 'dashboard/public/jarvis.html');
-    let html = readFileSync(htmlPath, 'utf-8');
-    
-    const locale = getLocale();
-    const localeScript = `<script>window.__CRUCIX_LOCALE__=${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script>')};window.__CRUCIX_LANG__="${currentLanguage}";</script>`;
-    html = html.replace('</head>', `${localeScript}\n</head>`);
-    
-    res.type('html').send(html);
-  }
+// Serve placeholder until new dashboard is ready
+app.get('/', (_req, res) => {
+  res.sendFile(join(ROOT, 'dashboard/public/index.html'));
 });
 
 // Auth middleware for /api/* routes
