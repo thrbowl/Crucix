@@ -96,3 +96,9 @@ test('CREDIT_COSTS: simple lookups cost 1', () => {
   assert.equal(CREDIT_COSTS.ioc_lookup, 1);
   assert.equal(CREDIT_COSTS.cve_query, 1);
 });
+
+test('CREDIT_COSTS: search and analysis operations follow expected tiers', () => {
+  assert.equal(CREDIT_COSTS.search, 2);
+  assert.equal(CREDIT_COSTS.trend_analysis, 10);
+  assert.equal(CREDIT_COSTS.entity_profile, 5);
+});
