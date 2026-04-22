@@ -18,6 +18,9 @@ import { authMiddleware, isAuthEnabled } from './lib/auth/index.mjs';
 import { exportIOCsJSON, exportIOCsCSV, exportIOCsSTIX, exportCVEsJSON, exportCVEsCSV } from './lib/export/index.mjs';
 import { matchIOC, matchCVE, filterByWatchlist } from './lib/watchlist/index.mjs';
 import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs';
+import { getPool, closePool } from './lib/db/index.mjs';
+import { runMigrations } from './lib/db/migrate.mjs';
+import { runPipeline } from './lib/pipeline/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -223,6 +226,7 @@ app.get('/api/health', (req, res) => {
     llmProvider: config.llm.provider,
     refreshIntervalMinutes: config.refreshIntervalMinutes,
     language: currentLanguage,
+    db: getPool() ? 'connected' : 'not-configured',
   });
 });
 
@@ -324,6 +328,11 @@ async function runSweepCycle() {
 
     currentData = synthesized;
 
+    // Run STIX pipeline (non-blocking — failures don't kill sweep)
+    runPipeline(getPool(), synthesized).catch(err =>
+      console.error('[Pipeline] Unhandled error:', err.message)
+    );
+
     // 6. Push to all connected browsers
     broadcast({ type: 'update', data: currentData });
 
@@ -356,6 +365,15 @@ async function start() {
   ║  LLM:        ${(config.llm.provider || 'disabled').padEnd(31)}║
   ╚══════════════════════════════════════════════╝
   `);
+
+  // Initialize database (graceful: skipped if DATABASE_URL not set)
+  const pool = getPool();
+  if (pool) {
+    await runMigrations();
+    console.log('[DB] Ready');
+  } else {
+    console.warn('[DB] DATABASE_URL not set — STIX entity layer disabled');
+  }
 
   const server = app.listen(port);
 
@@ -413,6 +431,15 @@ process.on('unhandledRejection', (err) => {
 process.on('uncaughtException', (err) => {
   console.error('[Crucix] Uncaught exception:', err?.stack || err?.message || err);
 });
+
+// Graceful shutdown — close DB pool on process exit
+async function shutdown() {
+  console.log('[Crucix] Shutting down...');
+  await closePool();
+  process.exit(0);
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 start().catch(err => {
   console.error('[Crucix] FATAL — Server failed to start:', err?.stack || err?.message || err);
