@@ -456,7 +456,12 @@
     if (!confirm('确认撤销此 API Key？操作不可撤销。')) return;
     try {
       const res = await apiFetch(`/api/auth/keys/${id}`, { method: 'DELETE' });
-      if (res?.ok) loadApiKeys();
+      if (res?.ok) {
+        loadApiKeys();
+      } else {
+        const d = await res?.json().catch(() => null);
+        alert(d?.error ?? '撤销失败');
+      }
     } catch { alert('撤销失败'); }
   }
 
