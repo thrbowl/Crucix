@@ -59,7 +59,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 const PROTECTED_PAGES = [
-  '/index.html', '/briefing.html', '/search.html',
+  '/', '/index.html', '/briefing.html', '/search.html',
   '/workbench.html', '/watchlist.html', '/sources.html', '/account.html',
 ];
 app.use((req, res, next) => {
