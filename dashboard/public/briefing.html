@@ -82,90 +82,8 @@
     </script>
 </head>
 <body class="bg-background text-on-background font-body-md selection:bg-cyan-500/30">
-<!-- TopAppBar -->
-<header class="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-lg border-b border-white/10 flex justify-between items-center px-6 h-16">
-<div class="flex items-center gap-8">
-<div class="text-2xl font-black text-cyan-400 tracking-widest uppercase font-['Space_Grotesk']">CRUCIX</div>
-<nav class="hidden md:flex items-center gap-6">
-<a class="text-cyan-400 border-b-2 border-cyan-400 font-['Space_Grotesk'] tracking-tight h-16 flex items-center px-2" href="#">主控制台</a>
-<a class="text-slate-400 hover:text-cyan-300 transition-colors font-['Space_Grotesk'] tracking-tight h-16 flex items-center px-2" href="#">情报网眼</a>
-<a class="text-slate-400 hover:text-cyan-300 transition-colors font-['Space_Grotesk'] tracking-tight h-16 flex items-center px-2" href="#">资产矩阵</a>
-</nav>
-</div>
-<div class="flex items-center gap-6">
-<!-- Points Display -->
-<div class="flex items-center gap-3 bg-cyan-400/10 border border-cyan-400/30 rounded-lg px-4 py-1.5 neon-glow">
-<span class="material-symbols-outlined text-cyan-400 text-sm" style="font-variation-settings: 'FILL' 1;">toll</span>
-<span id="nav-credits" class="font-mono-data text-cyan-400 font-bold tracking-wider">8,420</span>
-<span class="text-[10px] text-cyan-400/60 font-bold uppercase">CREDITS</span>
-</div>
-<div class="flex items-center gap-4 text-slate-400">
-<button class="cursor-pointer active:scale-95 transition-transform hover:text-cyan-300">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="cursor-pointer active:scale-95 transition-transform hover:text-cyan-300">
-<span class="material-symbols-outlined">settings</span>
-</button>
-<div class="h-8 w-8 rounded-full border border-cyan-400/50 p-0.5 overflow-hidden">
-<img class="w-full h-full object-cover rounded-full" data-alt="Cyberpunk style male avatar with neon accent lighting and tactical gear background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_EM5eeIFOedIQK09E2XNsTB1QU0u6Sn3jznx3f0JZupcfUEMRgQJvxR73E53mV8MDHOkW5VTIP3DqOlz8_XsmS_ytbbgin1g9D5gEq3CnBi-w17VEGoOLAnShlZW6XzwxPA-lDVWjC1ixzBjAZyLr0SpaZwarvY3o7p0jYm3g0mhPnrJNNkTeshdwApk8io8Hk5wN1jwK-TgJwygRMHP2XPKn5k4D32dTlCj8YKGQQsHOwHmZyE9UeWZXlqSgvo4eLSZnFLCWWnwR"/>
-</div>
-</div>
-</div>
-</header>
-<!-- SideNavBar -->
-<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-slate-950/60 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 gap-2 z-40">
-<div class="mb-6 px-4">
-<div class="text-cyan-400 font-bold font-['Space_Grotesk'] text-sm font-bold uppercase">INTEL_CORE</div>
-<div id="nav-username" class="text-slate-500 text-[10px] tracking-widest uppercase">OPERATOR</div>
-</div>
-<nav class="flex flex-col gap-1">
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/index.html">
-  <span class="material-symbols-outlined">newspaper</span>
-  <span>简报中心</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg bg-cyan-400/10 text-cyan-400 border-r-4 border-cyan-400 transition-all duration-300 font-['Space_Grotesk'] text-sm font-bold uppercase" href="/briefing.html">
-  <span class="material-symbols-outlined">biotech</span>
-  <span>威胁态势</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/search.html">
-  <span class="material-symbols-outlined">manage_search</span>
-  <span>实体搜索</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/workbench.html">
-  <span class="material-symbols-outlined">terminal</span>
-  <span>工作台</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/watchlist.html">
-  <span class="material-symbols-outlined">visibility</span>
-  <span>监视列表</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/sources.html">
-  <span class="material-symbols-outlined">analytics</span>
-  <span>源健康状态</span>
-</a>
-<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all font-['Space_Grotesk'] text-sm font-bold uppercase" href="/account.html">
-  <span class="material-symbols-outlined">account_circle</span>
-  <span>账户管理</span>
-</a>
-</nav>
-<div class="mt-auto">
-<button id="btn-logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-colors font-['Space_Grotesk'] text-sm w-full text-left rounded-lg">
-  <span class="material-symbols-outlined">logout</span>注销登录
-</button>
-</div>
-<div class="p-4 glass-panel rounded-lg border-cyan-500/20">
-<div class="flex items-center justify-between mb-2">
-<span class="text-[10px] text-slate-400 uppercase font-bold">系统状态</span>
-<span class="h-1.5 w-1.5 rounded-full bg-cyan-400 neon-glow"></span>
-</div>
-<div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-<div class="h-full bg-cyan-400 w-3/4 shadow-[0_0_8px_#00e5ff]"></div>
-</div>
-<div class="mt-2 text-[10px] text-cyan-400/70 font-mono">ENCRYPTION: OPTIMAL</div>
-</div>
-</aside>
 <!-- Main Content Canvas -->
-<main class="ml-64 pt-24 px-8 pb-12 min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(0,229,255,0.05),transparent_40%)]">
+<main id="page-content" style="visibility:hidden" class="ml-64 pt-24 px-8 pb-12 min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(0,229,255,0.05),transparent_40%)]">
 <!-- Welcome Section -->
 <div class="mb-10 flex justify-between items-end">
 <div>
@@ -402,13 +320,9 @@
 </button>
 </div>
 <script type="module">
-  import { authGuard, populateNav, apiFetch, logout } from './auth.js';
-
-  const user = await authGuard();
-  if (!user) return;
-  populateNav(user);
-
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
+  import { initShell } from './shell.js';
+  import { apiFetch } from './auth.js';
+  await initShell('briefing');
 
   // 加载最新简报
   try {
