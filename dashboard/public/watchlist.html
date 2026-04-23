@@ -441,16 +441,17 @@
   const cardsGrid = document.getElementById('watchlist-cards');
   const totalEl   = document.getElementById('stat-total');
 
-  const iconMap  = { ip:'public', domain:'dns', cve:'bug_report', actor:'person_search', keyword:'sell' };
-  const labelMap = { ip:'IP 监控', domain:'域名监控', cve:'CVE 监控', actor:'Actor 追踪', keyword:'关键词' };
+  const iconMap  = { vendor:'factory', actor:'person_search', keyword:'sell', cve:'bug_report', ip_range:'public', industry:'domain' };
+  const labelMap = { vendor:'厂商监控', actor:'Actor 追踪', keyword:'关键词', cve:'CVE 监控', ip_range:'IP 段监控', industry:'行业监控' };
 
   async function loadWatchlist() {
     try {
       const res = await apiFetch('/api/v1/watchlist');
       if (!res?.ok) return;
-      const { data } = await res.json();
-      renderCards(data ?? []);
-      if (totalEl) totalEl.textContent = `${(data ?? []).length}/03`;
+      const body = await res.json();
+      const items = body?.data?.items ?? [];
+      renderCards(items);
+      if (totalEl) totalEl.textContent = `${items.length}/03`;
     } catch { /* 失败保留静态卡片 */ }
   }
 
@@ -523,9 +524,9 @@
   }
 
   document.getElementById('btn-add-watch')?.addEventListener('click', async () => {
-    const value = prompt('输入监控目标（IP/域名/CVE/关键词）：');
+    const value = prompt('输入监控目标（IP段/CVE编号/关键词/厂商名称等）：');
     if (!value?.trim()) return;
-    const type = prompt('监控类型（ip/domain/cve/actor/keyword）：') ?? 'keyword';
+    const type = prompt('监控类型（vendor/actor/keyword/cve/ip_range/industry）：') ?? 'keyword';
     try {
       const res = await apiFetch('/api/v1/watchlist', {
         method: 'POST',
