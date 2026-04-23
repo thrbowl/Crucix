@@ -55,9 +55,21 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 
 // === Express Server ===
 const app = express();
-app.use(express.static(join(ROOT, 'dashboard/public')));
 app.use(express.json());
 app.use(cookieParser());
+
+const PROTECTED_PAGES = [
+  '/index.html', '/briefing.html', '/search.html',
+  '/workbench.html', '/watchlist.html', '/sources.html', '/account.html',
+];
+app.use((req, res, next) => {
+  if (PROTECTED_PAGES.includes(req.path) && !req.cookies?.refresh_token) {
+    return res.redirect('/login.html');
+  }
+  next();
+});
+
+app.use(express.static(join(ROOT, 'dashboard/public')));
 
 // Serve placeholder until new dashboard is ready
 app.get('/', (_req, res) => {
