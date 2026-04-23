@@ -493,7 +493,7 @@
         contentDiv.append(metaDiv, msgDiv);
         item.append(iconDiv, contentDiv);
         logList.prepend(item);
-        while (logList.children.length > 10) logList.lastChild.remove();
+        while (logList.children.length > 10) logList.lastElementChild.remove();
       }
     } catch { /* ignore parse errors */ }
   });
