@@ -92,73 +92,8 @@
     </script>
 </head>
 <body class="bg-background text-on-surface font-body-md selection:bg-cyan-500/30">
-<!-- TopNavBar -->
-<header class="fixed top-0 z-50 flex justify-between items-center w-full px-6 h-16 bg-slate-950/80 backdrop-blur-lg border-b border-white/10">
-<div class="flex items-center gap-8">
-<span class="text-2xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)] font-['Space_Grotesk'] tracking-wider uppercase">CRUCIX</span>
-<div class="hidden md:flex gap-6">
-<nav class="flex items-center space-x-6 text-sm font-label-caps">
-<a class="text-cyan-400 border-b-2 border-cyan-400 transition-all" href="#">监视列表</a>
-<a class="text-slate-400 hover:text-cyan-300 transition-all" href="#">概览</a>
-<a class="text-slate-400 hover:text-cyan-300 transition-all" href="#">情报</a>
-</nav>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full flex items-center gap-2">
-<span class="material-symbols-outlined text-sm text-cyan-400">database</span>
-<span id="nav-credits" class="text-cyan-400 font-mono-data text-xs">1,250 积分</span>
-</div>
-<div class="flex gap-2">
-<button class="p-2 text-slate-400 hover:text-cyan-400 transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-2 text-slate-400 hover:text-cyan-400 transition-colors">
-<span class="material-symbols-outlined">settings</span>
-</button>
-</div>
-<div class="h-8 w-8 rounded-full overflow-hidden border border-cyan-400/30">
-<img class="w-full h-full object-cover" alt="System operator portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8KYM2yngXG6ynG5j1UNemk8IBYHYn2ARfi8bGa--TzAbTj69DNHDoNH2gMnrG3bJVdm8xajTg5IVzQrXEFT0zaR_kDHU3sgzcfzAP2sPtGK6VXelMAz77JFEvNIN5mdrbJlIcBkPNW7CLfLheyszomxjuE_TIeIzASqjEXAFLEOygxqVJViOrvEDTm7DHkR-v0vSmlKnE1gAj8hZF-j0M8o1rMb3-dje9r26kOUEYbyVw1vrP1yX4vnRMpMu1KQdM0_tZlF6UipJ7"/>
-</div>
-</div>
-</header>
-<!-- SideNavBar -->
-<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-slate-950/40 backdrop-blur-2xl border-r border-white/5 flex flex-col py-8 space-y-2 z-40">
-<div class="px-6 mb-8 flex flex-col">
-<span id="nav-username" class="text-cyan-500 font-bold font-mono-data text-xs tracking-tighter">OPERATOR_01</span>
-<span class="text-slate-500 text-[10px] uppercase font-label-caps">Level 4 Access</span>
-</div>
-<nav class="flex-1 px-4 space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/index.html">
-  <span class="material-symbols-outlined">newspaper</span>简报中心
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/briefing.html">
-  <span class="material-symbols-outlined">biotech</span>威胁态势
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/search.html">
-  <span class="material-symbols-outlined">manage_search</span>实体搜索
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/workbench.html">
-  <span class="material-symbols-outlined">terminal</span>工作台
-</a>
-<a class="flex items-center gap-3 px-4 py-3 bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)] font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/watchlist.html">
-  <span class="material-symbols-outlined">visibility</span>监视列表
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/sources.html">
-  <span class="material-symbols-outlined">analytics</span>源健康状态
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/account.html">
-  <span class="material-symbols-outlined">account_circle</span>账户管理
-</a>
-</nav>
-<div class="px-4 py-4 border-t border-white/5 space-y-1">
-<button id="btn-logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-colors font-['Space_Grotesk'] text-sm w-full text-left rounded-lg">
-  <span class="material-symbols-outlined">logout</span>注销登录
-</button>
-</div>
-</aside>
 <!-- Main Content -->
-<main class="ml-64 mt-16 p-8 min-h-screen">
+<main id="page-content" style="visibility:hidden" class="ml-64 mt-16 p-8 min-h-screen">
 <div class="max-w-7xl mx-auto">
 <!-- Header Section -->
 <div class="flex justify-between items-end mb-8">
@@ -430,13 +365,9 @@
 </svg>
 </div>
 <script type="module">
-  import { authGuard, populateNav, apiFetch, logout } from './auth.js';
-
-  const user = await authGuard();
-  if (!user) return;
-  populateNav(user);
-
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
+  import { initShell } from './shell.js';
+  import { apiFetch } from './auth.js';
+  await initShell('watchlist');
 
   const cardsGrid = document.getElementById('watchlist-cards');
   const totalEl   = document.getElementById('stat-total');
