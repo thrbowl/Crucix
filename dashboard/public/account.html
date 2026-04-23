@@ -327,7 +327,7 @@
   import { initShell } from './shell.js';
   import { apiFetch } from './auth.js';
   const user = await initShell('account');
-  if (!user) return;
+  if (!user) throw undefined;
 
   // Fill credits and plan
   const creditsLargeEl = document.getElementById('credits-large');
