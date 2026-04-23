@@ -60,7 +60,7 @@ export async function apiFetch(url, opts = {}) {
 
 /**
  * 检查登录状态。未登录则跳转到 login.html。
- * 返回用户信息对象（{ id, email, plan, credits_remaining }）。
+ * 返回用户信息对象（{ id, email, plan, credits, period_end }）。
  */
 export async function authGuard() {
   if (!getToken()) {
@@ -87,6 +87,6 @@ export async function authGuard() {
 export function populateNav(user) {
   const creditsEl = document.getElementById('nav-credits');
   const userEl = document.getElementById('nav-username');
-  if (creditsEl && user) creditsEl.textContent = (user.credits_remaining ?? 0).toLocaleString() + ' 积分';
+  if (creditsEl && user) creditsEl.textContent = (user.credits ?? 0).toLocaleString() + ' 积分';
   if (userEl && user) userEl.textContent = user.email?.split('@')[0]?.toUpperCase() ?? 'OPERATOR';
 }
