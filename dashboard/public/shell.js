@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { id: 'account',         href: '/account.html',   icon: 'account_circle', label: '账户管理' },
 ];
 
+// NOTE: item.href and item.icon must be static/trusted strings — no escaping is applied.
 function buildNavItem(item, currentPage) {
   const isActive = item.id === currentPage;
   const activeClass = 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)]';
@@ -61,6 +62,11 @@ function injectShell(currentPage) {
   document.body.prepend(...wrapper.children);
 }
 
+/**
+ * Inject the shared topbar/sidebar into the DOM, run auth guard,
+ * and reveal #page-content on success.
+ * @param {string} currentPage - Must match an id in NAV_ITEMS (e.g. 'briefing-center')
+ */
 export async function initShell(currentPage) {
   injectShell(currentPage);
 
