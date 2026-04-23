@@ -437,10 +437,20 @@
         const time = new Date(alert.created_at ?? Date.now()).toLocaleTimeString('zh-CN', { hour12: false });
         const item = document.createElement('div');
         item.className = `flex items-center gap-4 p-3 border-l-2 ${border} ${bg} hover:opacity-90 transition-colors`;
-        item.innerHTML = `
-          <span class="text-slate-500 shrink-0">${time}</span>
-          <span class="px-2 py-0.5 ${badge} rounded text-[10px] font-bold">${label}</span>
-          <span class="text-on-surface flex-1">${alert.title ?? alert.message ?? '新预警'}</span>`;
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-slate-500 shrink-0';
+        timeSpan.textContent = time;
+
+        const badgeSpan = document.createElement('span');
+        badgeSpan.className = `px-2 py-0.5 ${badge} rounded text-[10px] font-bold`;
+        badgeSpan.textContent = label;
+
+        const msgSpan = document.createElement('span');
+        msgSpan.className = 'text-on-surface flex-1';
+        msgSpan.textContent = alert.title ?? alert.message ?? '新预警';
+
+        item.append(timeSpan, badgeSpan, msgSpan);
         alertStream.prepend(item);
         while (alertStream.children.length > 20) alertStream.lastChild.remove();
       } catch { /* 忽略解析错误 */ }
