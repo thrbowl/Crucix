@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRUCIX | 安全登录</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#bac9cc",
+                        "text-secondary": "#94A3B8",
+                        "border-subtle": "rgba(255, 255, 255, 0.08)",
+                        "on-error": "#690005",
+                        "primary": "#c3f5ff",
+                        "secondary-container": "#b50036",
+                        "on-tertiary": "#3e2e00",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#40000d",
+                        "primary-container": "#00e5ff",
+                        "surface": "rgba(20, 25, 35, 0.6)",
+                        "on-secondary-fixed-variant": "#92002a",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#242b2d",
+                        "primary-fixed-dim": "#00daf3",
+                        "tertiary-fixed": "#ffdf96",
+                        "surface-container-highest": "#2e3638",
+                        "secondary": "#ffb2b7",
+                        "primary-fixed": "#9cf0ff",
+                        "surface-variant": "#2e3638",
+                        "inverse-on-surface": "#2a3233",
+                        "neon-glow": "rgba(0, 229, 255, 0.3)",
+                        "surface-container-low": "#151d1e",
+                        "surface-container": "#192122",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "surface-container-lowest": "#080f11",
+                        "outline-variant": "#3b494c",
+                        "on-tertiary-container": "#6f5500",
+                        "on-surface": "#dce4e5",
+                        "on-secondary": "#67001b",
+                        "tertiary-fixed-dim": "#f3bf26",
+                        "on-background": "#dce4e5",
+                        "outline": "#849396",
+                        "on-tertiary-fixed": "#251a00",
+                        "on-primary": "#00363d",
+                        "inverse-primary": "#006875",
+                        "surface-tint": "#00daf3",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#004f58",
+                        "inverse-surface": "#dce4e5",
+                        "tertiary-container": "#fec931",
+                        "on-primary-container": "#00626e",
+                        "text-primary": "#E2E8F0",
+                        "surface-bright": "#333a3c",
+                        "background": "#0B0E14",
+                        "secondary-fixed": "#ffdadb",
+                        "on-primary-fixed": "#001f24",
+                        "tertiary": "#ffeac0",
+                        "surface-dim": "#0d1516",
+                        "on-secondary-container": "#ffc2c4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Space Grotesk"],
+                        "label-caps": ["Space Grotesk"],
+                        "h2": ["Space Grotesk"],
+                        "body-lg": ["Inter"],
+                        "h1": ["Space Grotesk"],
+                        "body-md": ["Inter", "system-ui", "sans-serif"],
+                        "mono-data": ["Space Grotesk", "monospace"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background: radial-gradient(circle at center, #002b36 0%, #0B0E14 100%);
+        }
+        .tactical-blur {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .specular-edge {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-border-focus:focus-within {
+            border-color: #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center font-body-md text-on-surface selection:bg-primary-container selection:text-on-primary-container p-6 overflow-hidden">
+<!-- Background Decorative Elements -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-secondary-container/5 rounded-full blur-[100px]"></div>
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJJQGRmruM7Eo4nbg00tIVRYYHU35BRgycnuxvoVYp_JTEtzcXTo6vvOF4bc2WDxbWEvtet3ZrtFrHLYMnG1ph363brtKk2RtkEhOe73obZM_oFBWUIOdBARxKphVmp_pCK3LiK6J0dmkUON4NI5Aw0h1WiUaCQRcZVgC9UOj1H9kQdpxbhkCenafUxjX6ji7Mhrhe0YYwWYiyySQQEcle8QU66JA38w3XlflTU9z5CM9E8hy2FVJYd-P6kuG6CyhHg61AUza1q4bu");'></div>
+</div>
+<!-- Login Modal Card -->
+<main class="relative z-10 w-full max-w-[400px]">
+<div class="tactical-blur bg-surface specular-edge rounded-xl p-8 flex flex-col items-center">
+<!-- Logo Section -->
+<div class="mb-8 flex flex-col items-center gap-2">
+<div class="relative">
+<svg class="drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" fill="none" height="48" viewbox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 4L4 14V34L24 44L44 34V14L24 4Z" stroke="#00e5ff" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M24 12L12 18V30L24 36L36 30V18L24 12Z" fill="#00e5ff" fill-opacity="0.2" stroke="#00e5ff" stroke-width="1"></path>
+<circle class="animate-pulse" cx="24" cy="24" fill="#00e5ff" r="3"></circle>
+</svg>
+</div>
+<h1 class="font-h2 text-h2 tracking-tighter text-primary-container italic font-black uppercase" style="">
+                    CRUCIX
+                </h1>
+<p class="font-label-caps text-[12px] text-text-secondary tracking-[0.2em]" style="">天眼洞察系统</p>
+</div>
+<!-- Login Form -->
+<form class="w-full space-y-5">
+<div class="space-y-1.5">
+<label class="font-medium text-[11px] text-text-secondary ml-1" style="">邮箱地址</label>
+<div class="relative neon-border-focus transition-all duration-300 rounded-lg bg-surface-container-low specular-edge group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-primary-container transition-colors" style="">mail</span>
+<input class="w-full h-10 bg-transparent border-none focus:ring-0 text-sm pl-10 pr-4 placeholder:text-slate-600 font-mono-data" placeholder="example@crucix.com" type="email"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-end">
+<label class="font-medium text-[11px] text-text-secondary ml-1" style="">登录密码</label>
+</div>
+<div class="relative neon-border-focus transition-all duration-300 rounded-lg bg-surface-container-low specular-edge group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-primary-container transition-colors" style="">lock</span>
+<input class="w-full h-10 bg-transparent border-none focus:ring-0 text-sm pl-10 pr-4 placeholder:text-slate-600 font-mono-data" placeholder="请输入您的密码" type="password"/>
+</div>
+</div>
+<div class="flex items-center justify-between py-1">
+<label class="flex items-center gap-2 cursor-pointer group" style="">
+<input class="w-4 h-4 rounded border-border-subtle bg-surface-container text-primary-container focus:ring-primary-container/20 focus:ring-offset-0 transition-all" type="checkbox"/>
+<span class="text-[12px] text-text-secondary group-hover:text-on-surface transition-colors" style="">保持登录</span>
+</label>
+<a class="text-[12px] text-primary-container hover:brightness-125 transition-all" href="#" style="">找回密码  </a>
+</div>
+<button class="w-full h-11 bg-primary-container text-on-primary-container font-semibold rounded-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(0,229,255,0.2)]" style="" type="submit">
+<span class="material-symbols-outlined text-lg" data-weight="fill" style="">login</span>
+<span class="" style="">立即登录</span>
+</button>
+</form>
+<!-- Footer Links -->
+<div class="mt-8 flex flex-col items-center gap-4 w-full">
+<div class="w-full flex items-center gap-3">
+<div class="h-[1px] flex-1 bg-border-subtle"></div>
+<span class="text-[10px] font-label-caps text-slate-600" style="">或</span>
+<div class="h-[1px] flex-1 bg-border-subtle"></div>
+</div>
+<p class="text-[12px] text-text-secondary" style="">
+                    没有账号？<a class="text-primary-container hover:underline ml-1" href="#" style="">立即注册</a>
+</p>
+</div>
+</div>
+<!-- System Status Decorative Badges -->
+<div class="mt-6 flex justify-between px-2">
+<div class="flex items-center gap-2">
+<span class="relative flex h-1.5 w-1.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500"></span>
+</span>
+<span class="text-[10px] font-mono-data text-cyan-400/60 uppercase tracking-widest" style="">系统链路: 稳定</span>
+</div>
+<div class="text-[10px] font-mono-data text-slate-600 uppercase tracking-widest" style="">
+                v2.4.0-Stable // ENC-AES256
+            </div>
+</div>
+</main>
+<!-- UI Tactical Overlays (Corners) -->
+<div class="fixed top-8 left-8 w-12 h-12 border-t border-l border-primary/20 pointer-events-none"></div>
+<div class="fixed top-8 right-8 w-12 h-12 border-t border-r border-primary/20 pointer-events-none"></div>
+<div class="fixed bottom-8 left-8 w-12 h-12 border-b border-l border-primary/20 pointer-events-none"></div>
+<div class="fixed bottom-8 right-8 w-12 h-12 border-b border-r border-primary/20 pointer-events-none"></div>
+</body></html>

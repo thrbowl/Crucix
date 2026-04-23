@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#40000d",
+                        "on-secondary-container": "#ffc2c4",
+                        "surface-tint": "#00daf3",
+                        "neon-glow": "rgba(0, 229, 255, 0.3)",
+                        "on-surface": "#dce4e5",
+                        "on-secondary": "#67001b",
+                        "tertiary-fixed-dim": "#f3bf26",
+                        "tertiary": "#ffeac0",
+                        "secondary": "#ffb2b7",
+                        "on-surface-variant": "#bac9cc",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "primary-container": "#00e5ff",
+                        "outline": "#849396",
+                        "on-tertiary-fixed": "#251a00",
+                        "on-tertiary": "#3e2e00",
+                        "primary": "#c3f5ff",
+                        "surface-container-highest": "#2e3638",
+                        "surface-container": "#192122",
+                        "text-secondary": "#94A3B8",
+                        "tertiary-fixed": "#ffdf96",
+                        "surface-variant": "#2e3638",
+                        "inverse-on-surface": "#2a3233",
+                        "background": "#0B0E14",
+                        "surface-container-lowest": "#080f11",
+                        "surface-bright": "#333a3c",
+                        "on-primary": "#00363d",
+                        "on-background": "#dce4e5",
+                        "primary-fixed-dim": "#00daf3",
+                        "on-primary-container": "#00626e",
+                        "tertiary-container": "#fec931",
+                        "border-subtle": "rgba(255, 255, 255, 0.08)",
+                        "on-primary-fixed-variant": "#004f58",
+                        "on-secondary-fixed-variant": "#92002a",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#9cf0ff",
+                        "surface-container-low": "#151d1e",
+                        "text-primary": "#E2E8F0",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#b50036",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "secondary-fixed": "#ffdadb",
+                        "on-primary-fixed": "#001f24",
+                        "surface": "rgba(20, 25, 35, 0.6)",
+                        "on-tertiary-container": "#6f5500",
+                        "surface-container-high": "#242b2d",
+                        "outline-variant": "#3b494c",
+                        "inverse-surface": "#dce4e5",
+                        "surface-dim": "#0d1516",
+                        "on-error": "#690005",
+                        "inverse-primary": "#006875"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "40px",
+                        "margin": "24px",
+                        "gutter": "16px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "mono-data": ["Space Grotesk"],
+                        "label-caps": ["Space Grotesk"],
+                        "h2": ["Space Grotesk"],
+                        "h3": ["Space Grotesk"],
+                        "h1": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-data": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "h1": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(20, 25, 35, 0.6);
+        }
+        .neon-border-glow:hover {
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            border-color: rgba(0, 229, 255, 0.4);
+        }
+        .status-dot-ok {
+            background-color: #00e5ff;
+            box-shadow: 0 0 8px #00e5ff;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        .status-dot-fail {
+            background-color: #ffb4ab;
+            box-shadow: 0 0 8px #ffb4ab;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .status-dot-skip {
+            background-color: #849396;
+            box-shadow: 0 0 4px #849396;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 z-50 flex justify-between items-center w-full px-6 h-16 bg-slate-950/80 backdrop-blur-lg border-b border-white/10">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)] font-['Space_Grotesk'] tracking-wider uppercase">CRUCIX</span>
+<div class="hidden md:flex gap-6">
+<a class="text-cyan-400 border-b-2 border-cyan-400 font-['Space_Grotesk'] tracking-wider uppercase text-sm h-16 flex items-center px-2" href="#">Monitor</a>
+<a class="text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all font-['Space_Grotesk'] tracking-wider uppercase text-sm h-16 flex items-center px-2" href="#">Operations</a>
+<a class="text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all font-['Space_Grotesk'] tracking-wider uppercase text-sm h-16 flex items-center px-2" href="#">Network</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center px-3 py-1 glass-panel rounded-full border-white/5">
+<span class="material-symbols-outlined text-cyan-400 text-sm mr-2">token</span>
+<span class="font-mono-data text-mono-data text-cyan-400">1,250 Credits</span>
+</div>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-slate-400 hover:text-cyan-400 cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-cyan-400 cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="minimalist professional avatar of a tech operator with clean lines and cybernetic highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBPlQf2FelS7LxStS1NEgxhhdj7GIQBM1x7FstEUIB_dVwe-PvB9FPOTLtQ9wIyIjPl_qB8VD7K7Hib4-7CVZsouWnht_SMaARft81QCx_fValrehmkvlcE3LPTzmcgRby_QKETQKXZFTbyffoivf8rFUWNk5UkrbJGJBNIKk0AVXNrI34UlefSsnvdgd5-8MbWPXowAI-PvBrGdgvh4bow2ZoGpctia6zKh5VSrEwm0zSVdvTR1ne2LNtcgEo8-MlJUJNOk2LvdzB"/>
+</div>
+</div>
+</div>
+</nav>
+<div class="flex h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 bg-slate-950/40 backdrop-blur-2xl border-r border-white/5 py-8 space-y-2">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-cyan-400">shield_person</span>
+</div>
+<div>
+<div class="text-cyan-500 font-bold font-['Space_Grotesk'] text-sm">OPERATOR_01</div>
+<div class="text-slate-500 text-[10px] font-mono-data uppercase tracking-widest">Level 4 Access</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">newspaper</span> Briefing Center
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">biotech</span> Threat Pulse
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">manage_search</span> Entity Search
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">terminal</span> Workbench
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">visibility</span> Watchlist
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)] font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">analytics</span> Source Health
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">account_circle</span> Account
+                </a>
+</nav>
+<div class="px-4 mt-auto border-t border-white/5 pt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:text-slate-300 font-['Space_Grotesk'] text-sm" href="#">
+<span class="material-symbols-outlined text-xs">help</span> Support
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-error/80 hover:text-error font-['Space_Grotesk'] text-sm" href="#">
+<span class="material-symbols-outlined text-xs">logout</span> Logout
+                </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-background p-6 lg:p-10 relative">
+<!-- Atmospheric BG Elements -->
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="relative z-10 max-w-7xl mx-auto space-y-8">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+<div>
+<h1 class="font-h1 text-h2 text-on-surface uppercase tracking-tight">源健康状态 <span class="text-primary/40 font-light">/ HEALTH_MATRIX</span></h1>
+<p class="text-text-secondary font-body-md mt-2">实时监控 49 个核心数据源的连通性与响应效能</p>
+</div>
+<div class="flex gap-3">
+<div class="flex items-center px-4 py-2 glass-panel rounded border-white/10 gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full status-dot-ok"></span>
+<span class="text-[10px] font-label-caps text-on-surface/60 uppercase">Normal</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full status-dot-fail"></span>
+<span class="text-[10px] font-label-caps text-on-surface/60 uppercase">Fault</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left: Health Matrix (49 items) -->
+<div class="lg:col-span-8 glass-panel rounded-xl p-6 border-white/10">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-h3 text-h3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">grid_view</span>
+                                数据源矩阵
+                            </h3>
+<div class="text-mono-data text-primary/60 text-xs tracking-widest">AUTO_REFRESH: 5S</div>
+</div>
+<div class="grid grid-cols-4 sm:grid-cols-7 gap-3">
+<!-- Matrix Loop -->
+<!-- Item 1 (OK) -->
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-mono-data text-on-surface/40">SR-01</span>
+<span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span>
+</div>
+<div>
+<div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">GALAXY_API</div>
+<div class="text-[9px] font-mono-data text-primary/60">24ms</div>
+</div>
+</div>
+<!-- Item 2 (FAIL) -->
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-error/20 hover:border-error/50 transition-all cursor-crosshair group bg-error/5">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-mono-data text-on-surface/40">SR-02</span>
+<span class="w-1.5 h-1.5 rounded-full status-dot-fail"></span>
+</div>
+<div>
+<div class="text-[11px] font-bold font-mono-data text-error/90 truncate">LUNAR_DB</div>
+<div class="text-[9px] font-mono-data text-error/60">TIMED_OUT</div>
+</div>
+</div>
+<!-- Repetitive Items for Density (using a few variations) -->
+<!-- OK States -->
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-mono-data text-on-surface/40">SR-03</span>
+<span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span>
+</div>
+<div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">VECTOR_X</div><div class="text-[9px] font-mono-data text-primary/60">12ms</div></div>
+</div>
+<!-- Skip State -->
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-white/20 opacity-50 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-mono-data text-on-surface/40">SR-04</span>
+<span class="w-1.5 h-1.5 rounded-full status-dot-skip"></span>
+</div>
+<div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">NEBUL_ARC</div><div class="text-[9px] font-mono-data text-on-surface/40">SUSPENDED</div></div>
+</div>
+<!-- Generate more to fill 49 (Simulated placeholder for visual density) -->
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-05</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
+<div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">TITAN_V3</div><div class="text-[9px] font-mono-data text-primary/60">45ms</div></div>
+</div>
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-06</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
+<div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">ORBIT_CORE</div><div class="text-[9px] font-mono-data text-primary/60">18ms</div></div>
+</div>
+<div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
+<div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-07</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
+<div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">PHASE_DR</div><div class="text-[9px] font-mono-data text-primary/60">31ms</div></div>
+</div>
+<!-- Row 2-7 simplified placeholders -->
+<script>
+                                const matrix = document.querySelector('.grid.grid-cols-4.sm\\:grid-cols-7');
+                                for(let i=8; i<=49; i++) {
+                                    const isFail = Math.random() > 0.95;
+                                    const isSkip = !isFail && Math.random() > 0.9;
+                                    const id = i < 10 ? '0'+i : i;
+                                    const names = ["SOLAR_W", "QUARK_Q", "VOID_S", "ZENITH", "PULSE", "FLUX", "STORM"];
+                                    const name = names[i % names.length] + "_" + (100 + i);
+                                    
+                                    const div = document.createElement('div');
+                                    div.className = `aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 transition-all cursor-crosshair group ${isFail ? 'border-error/20 bg-error/5' : isSkip ? 'opacity-50 border-white/5' : 'border-white/5 hover:border-primary/40'}`;
+                                    div.innerHTML = `
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono-data text-on-surface/40">SR-${id}</span>
+                                            <span class="w-1.5 h-1.5 rounded-full ${isFail ? 'status-dot-fail' : isSkip ? 'status-dot-skip' : 'status-dot-ok'}"></span>
+                                        </div>
+                                        <div>
+                                            <div class="text-[11px] font-bold font-mono-data ${isFail ? 'text-error/90' : 'text-on-surface/90'} truncate">${name}</div>
+                                            <div class="text-[9px] font-mono-data ${isFail ? 'text-error/60' : 'text-primary/60'}">${isFail ? 'ERR_403' : isSkip ? 'INACTIVE' : Math.floor(Math.random()*60+10)+'ms'}</div>
+                                        </div>
+                                    `;
+                                    matrix.appendChild(div);
+                                }
+                            </script>
+</div>
+</div>
+<!-- Right Column: Chart & Logs -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Overall Success Rate -->
+<div class="glass-panel rounded-xl p-6 border-white/10 flex flex-col items-center text-center">
+<h3 class="font-label-caps text-on-surface/60 uppercase mb-6 tracking-widest w-full text-left">总运行成功率</h3>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- SVG Circular Chart -->
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-white/5" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-cyan-400 drop-shadow-[0_0_12px_rgba(0,229,255,0.6)]" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502.4" stroke-dashoffset="30.1" stroke-width="12"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-h1 text-h1 text-cyan-400 leading-none">94.8</span>
+<span class="text-xs font-mono-data text-cyan-400/60 uppercase mt-1">PERCENT</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 mt-8 w-full border-t border-white/5 pt-6">
+<div>
+<div class="text-[10px] font-label-caps text-on-surface/40 uppercase">Active</div>
+<div class="text-lg font-mono-data text-on-surface">42</div>
+</div>
+<div>
+<div class="text-[10px] font-label-caps text-on-surface/40 uppercase">Failed</div>
+<div class="text-lg font-mono-data text-error">03</div>
+</div>
+<div>
+<div class="text-[10px] font-label-caps text-on-surface/40 uppercase">Skipped</div>
+<div class="text-lg font-mono-data text-slate-400">04</div>
+</div>
+</div>
+</div>
+<!-- Failure Logs -->
+<div class="glass-panel rounded-xl p-6 border-white/10 flex-1">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-caps text-on-surface/60 uppercase tracking-widest">最近故障日志</h3>
+<span class="material-symbols-outlined text-xs text-primary cursor-pointer hover:rotate-180 transition-transform">refresh</span>
+</div>
+<div class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+<!-- Log Item -->
+<div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
+<div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
+<span>LUNAR_DB</span>
+<span>14:02:11</span>
+</div>
+<div class="text-[12px] text-on-surface-variant font-medium mt-1">Socket timeout: Connection refused by target cluster.</div>
+</div>
+</div>
+<!-- Log Item -->
+<div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
+<div class="text-error mt-1"><span class="material-symbols-outlined text-sm">error</span></div>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
+<span>SOLAR_W_108</span>
+<span>13:58:45</span>
+</div>
+<div class="text-[12px] text-on-surface-variant font-medium mt-1">Invalid API Key: Access revoked for endpoint v3.</div>
+</div>
+</div>
+<!-- Log Item -->
+<div class="p-3 bg-tertiary-container/5 border-l-2 border-tertiary-container/50 rounded flex gap-4">
+<div class="text-tertiary-container mt-1"><span class="material-symbols-outlined text-sm">notification_important</span></div>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] font-mono-data text-tertiary-container uppercase">
+<span>VOID_S_110</span>
+<span>13:45:00</span>
+</div>
+<div class="text-[12px] text-on-surface-variant font-medium mt-1">Rate limit approaching: 89% threshold reached.</div>
+</div>
+</div>
+<!-- Log Item -->
+<div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
+<div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
+<span>QUARK_Q_109</span>
+<span>13:12:22</span>
+</div>
+<div class="text-[12px] text-on-surface-variant font-medium mt-1">DNS Resolution failed: No record for host.local</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative UI Elements (Scanning lines) -->
+<div class="fixed bottom-10 right-10 flex gap-4 opacity-40">
+<div class="flex flex-col items-end">
+<div class="text-[10px] font-mono-data tracking-tighter text-cyan-400">SYSTEM_UPTIME</div>
+<div class="text-sm font-mono-data">428:12:09:55</div>
+</div>
+<div class="w-px h-10 bg-gradient-to-t from-transparent via-cyan-400 to-transparent"></div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
