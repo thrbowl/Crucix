@@ -112,88 +112,9 @@
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex flex-col">
-<!-- TopNavBar -->
-<header class="fixed top-0 z-50 bg-slate-950/80 backdrop-blur-lg flex justify-between items-center w-full px-6 h-16 border-b border-white/10">
-<div class="flex items-center gap-8">
-<div class="text-2xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)] font-['Space_Grotesk'] tracking-wider uppercase">
-                CRUCIX
-            </div>
-<div class="hidden md:flex gap-6">
-<nav class="flex gap-4">
-<a class="text-cyan-400 border-b-2 border-cyan-400 font-['Space_Grotesk'] tracking-wider uppercase px-2 py-1" href="#">情报</a>
-<a class="text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all font-['Space_Grotesk'] tracking-wider uppercase px-2 py-1" href="#">作战部</a>
-<a class="text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all font-['Space_Grotesk'] tracking-wider uppercase px-2 py-1" href="#">档案库</a>
-</nav>
-</div>
-</div>
-<div class="flex items-center gap-6">
-<span id="nav-credits" class="text-cyan-400 font-mono-data text-mono-data">1,250 积分</span>
-<div class="flex gap-4">
-<button class="text-slate-400 hover:text-cyan-300 transition-all"><span class="material-symbols-outlined">notifications</span></button>
-<button class="text-slate-400 hover:text-cyan-300 transition-all"><span class="material-symbols-outlined">settings</span></button>
-</div>
-<div class="w-8 h-8 rounded-full bg-surface-container border border-white/10 overflow-hidden">
-<img alt="用户个人资料" class="w-full h-full object-cover" data-alt="Close up portrait of a serious cyber security professional in a dimly lit server room environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeneIGWzNOVRzfapYtQdtCDUmR6SwO09A0AVj79_-YCDQwv8NtNRbeRUUPbUcNDCc17N4XEuSLXDPXq9cqD6fpmg5BMlmmbFtyT2s5ZjuVsF1GELPgfO2R2r7OGCYqhEagZubDk04-AEroaLHDgf1GUqvnxyeOvA_zki8i_bSxb6yOfQb-RbMhOaC8EOPEgd7K8swsOpSC55ks9xks9JejereqKrx8No-mX0WmzlfUNuyZXvIgvdN9K6i7YImYRnzo22Dv6HRYuGQM"/>
-</div>
-</div>
-</header>
-<div class="flex flex-1 pt-16 overflow-hidden">
-<!-- SideNavBar -->
-<aside class="hidden md:flex flex-col h-full w-64 bg-slate-950/40 backdrop-blur-2xl border-r border-white/5 py-8 space-y-2 shrink-0">
-<div class="px-6 mb-8">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-sm bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-<span class="material-symbols-outlined text-cyan-400">admin_panel_settings</span>
-</div>
-<div>
-<div id="nav-username" class="text-cyan-500 font-bold font-['Space_Grotesk'] text-sm">操作员_01</div>
-<div class="text-slate-500 text-[10px] uppercase tracking-widest">4级 访问权限</div>
-</div>
-</div>
-</div>
-<nav class="flex-1 space-y-1">
-<a class="flex items-center gap-3 px-6 py-3 bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)] transition-colors" href="/index.html">
-  <span class="material-symbols-outlined">newspaper</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">简报中心</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/briefing.html">
-  <span class="material-symbols-outlined">biotech</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">威胁态势</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/search.html">
-  <span class="material-symbols-outlined">manage_search</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">实体搜索</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/workbench.html">
-  <span class="material-symbols-outlined">terminal</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">工作台</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/watchlist.html">
-  <span class="material-symbols-outlined">visibility</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">监视列表</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/sources.html">
-  <span class="material-symbols-outlined">analytics</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">源健康状态</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors" href="/account.html">
-  <span class="material-symbols-outlined">account_circle</span>
-  <span class="font-['Space_Grotesk'] text-sm font-medium">账户管理</span>
-</a>
-</nav>
-<div class="px-4 mt-auto border-t border-white/5 pt-4">
-<a class="flex items-center gap-3 px-6 py-2 text-slate-500 hover:text-slate-300 transition-colors" href="#">
-  <span class="material-symbols-outlined">help</span>
-  <span class="font-['Space_Grotesk'] text-sm">技术支持</span>
-</a>
-<button id="btn-logout" class="flex items-center gap-3 px-6 py-2 text-slate-500 hover:text-error transition-colors w-full text-left">
-  <span class="material-symbols-outlined">logout</span>
-  <span class="font-['Space_Grotesk'] text-sm">注销登录</span>
-</button>
-</div>
-</aside>
+<div id="page-content" style="visibility:hidden" class="flex flex-1 pt-16 overflow-hidden">
 <!-- Main Content -->
-<main class="flex-1 overflow-y-auto relative p-6 scanline">
+<main class="flex-1 ml-64 overflow-y-auto relative p-6 scanline">
 <!-- Background Map Visual -->
 <div class="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
 <div class="w-full h-full" style="background-image: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.1) 0%, transparent 70%);"></div>
@@ -410,13 +331,8 @@
 </main>
 </div>
 <script type="module">
-  import { authGuard, populateNav, logout } from './auth.js';
-
-  const user = await authGuard();
-  if (!user) return;
-  populateNav(user);
-
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
+  import { initShell } from './shell.js';
+  await initShell('briefing-center');
 
   // SSE 实时预警流
   const alertStream = document.getElementById('alert-stream');
