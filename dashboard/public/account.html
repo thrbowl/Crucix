@@ -117,66 +117,7 @@
     </style>
 </head>
 <body class="font-body-md">
-<!-- TopNavBar -->
-<header class="fixed top-0 z-50 flex justify-between items-center w-full px-6 h-16 bg-slate-950/80 backdrop-blur-lg border-b border-white/10">
-  <div class="flex items-center gap-8">
-    <span class="text-2xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)] font-['Space_Grotesk'] tracking-wider uppercase">CRUCIX</span>
-    <div class="hidden md:flex gap-6 items-center">
-      <nav class="flex gap-6">
-        <a class="text-slate-400 font-['Space_Grotesk'] tracking-wider uppercase hover:text-cyan-300 hover:bg-white/5 transition-all px-2 py-1" href="/index.html">主控台</a>
-        <a class="text-slate-400 font-['Space_Grotesk'] tracking-wider uppercase hover:text-cyan-300 hover:bg-white/5 transition-all px-2 py-1" href="/briefing.html">数据网格</a>
-        <a class="text-cyan-400 border-b-2 border-cyan-400 font-['Space_Grotesk'] tracking-wider uppercase px-2 py-1" href="/account.html">账户管理</a>
-      </nav>
-    </div>
-  </div>
-  <div class="flex items-center gap-4">
-    <div class="hidden sm:flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-      <span class="material-symbols-outlined text-sm text-cyan-400">database</span>
-      <span id="nav-credits" class="font-mono-data text-mono-data text-cyan-400">-- Credits</span>
-    </div>
-    <button class="material-symbols-outlined text-slate-400 hover:text-cyan-300 transition-colors">notifications</button>
-    <button class="material-symbols-outlined text-slate-400 hover:text-cyan-300 transition-colors">settings</button>
-    <div class="h-8 w-8 rounded-full border border-cyan-500/50 overflow-hidden bg-slate-800 flex items-center justify-center">
-      <span class="material-symbols-outlined text-slate-400 text-sm">account_circle</span>
-    </div>
-  </div>
-</header>
-<div class="flex min-h-screen pt-16">
-  <!-- SideNavBar -->
-  <aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-slate-950/40 backdrop-blur-2xl border-r border-white/5 flex flex-col py-8 space-y-2 z-40">
-    <div class="px-6 mb-8 flex flex-col">
-      <span id="nav-username" class="text-cyan-500 font-bold font-mono-data text-xs tracking-tighter">OPERATOR_01</span>
-      <span class="text-slate-500 text-[10px] uppercase font-label-caps">Level 4 Access</span>
-    </div>
-    <nav class="flex-1 px-4 space-y-1">
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/index.html">
-        <span class="material-symbols-outlined">newspaper</span>简报中心
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/briefing.html">
-        <span class="material-symbols-outlined">biotech</span>威胁态势
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/search.html">
-        <span class="material-symbols-outlined">manage_search</span>实体搜索
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/workbench.html">
-        <span class="material-symbols-outlined">terminal</span>工作台
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/watchlist.html">
-        <span class="material-symbols-outlined">visibility</span>监视列表
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/sources.html">
-        <span class="material-symbols-outlined">analytics</span>源健康状态
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)] font-['Space_Grotesk'] text-sm font-medium tracking-tight rounded-lg" href="/account.html">
-        <span class="material-symbols-outlined">account_circle</span>账户管理
-      </a>
-    </nav>
-    <div class="px-4 py-4 border-t border-white/5 space-y-1">
-      <button id="btn-logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-colors font-['Space_Grotesk'] text-sm w-full text-left rounded-lg">
-        <span class="material-symbols-outlined">logout</span>注销登录
-      </button>
-    </div>
-  </aside>
+<div id="page-content" style="visibility:hidden" class="flex min-h-screen pt-16">
   <!-- Main Content -->
   <main class="flex-1 md:ml-64 p-8 overflow-y-auto scanline">
     <div class="max-w-6xl mx-auto space-y-8">
@@ -383,12 +324,10 @@
 </div>
 
 <script type="module">
-  import { authGuard, populateNav, apiFetch, logout } from './auth.js';
-
-  const user = await authGuard();
+  import { initShell } from './shell.js';
+  import { apiFetch } from './auth.js';
+  const user = await initShell('account');
   if (!user) return;
-  populateNav(user);
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
 
   // Fill credits and plan
   const creditsLargeEl = document.getElementById('credits-large');

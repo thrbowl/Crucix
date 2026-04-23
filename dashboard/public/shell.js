@@ -71,11 +71,13 @@ export async function initShell(currentPage) {
   injectShell(currentPage);
 
   const user = await authGuard();
-  if (!user) return;
+  if (!user) return null;
 
   populateNav(user);
   document.getElementById('btn-logout')?.addEventListener('click', logout);
 
   const content = document.getElementById('page-content');
   if (content) content.style.visibility = 'visible';
+
+  return user;
 }
