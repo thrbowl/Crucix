@@ -106,61 +106,7 @@
     </script>
 </head>
 <body class="bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
-<!-- TopNavBar -->
-<header class="fixed top-0 z-50 w-full h-16 flex justify-between items-center px-6 bg-slate-950/80 backdrop-blur-lg border-b border-white/10">
-<div class="flex items-center space-x-8">
-<span class="text-2xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)] font-['Space_Grotesk'] tracking-wider uppercase">CRUCIX</span>
-</div>
-<div class="flex items-center space-x-6">
-<div class="flex items-center space-x-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-<span class="material-symbols-outlined text-sm text-cyan-400">database</span>
-<span id="nav-credits" class="text-mono-data font-mono-data text-xs text-cyan-400">-- Credits</span>
-</div>
-<div class="flex space-x-4">
-<button class="material-symbols-outlined text-slate-400 hover:text-cyan-400 transition-colors">notifications</button>
-<button class="material-symbols-outlined text-slate-400 hover:text-cyan-400 transition-colors">settings</button>
-</div>
-</div>
-</header>
-<div class="flex pt-16 min-h-screen">
-<!-- SideNavBar -->
-<aside class="fixed left-0 h-[calc(100vh-64px)] w-64 bg-slate-950/40 backdrop-blur-2xl border-r border-white/5 flex flex-col py-8 space-y-2">
-<div class="px-6 mb-8">
-<div class="flex items-center space-x-3 mb-1">
-<div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
-<span id="nav-username" class="text-cyan-500 font-bold font-mono-data tracking-tight text-sm">OPERATOR_01</span>
-</div>
-<span class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-label-caps">Level 4 Access</span>
-</div>
-<nav class="flex-1 px-4 space-y-1">
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/index.html">
-  <span class="material-symbols-outlined">newspaper</span><span>简报中心</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/briefing.html">
-  <span class="material-symbols-outlined">biotech</span><span>威胁态势</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,229,255,0.1)] font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/search.html">
-  <span class="material-symbols-outlined">manage_search</span><span>实体搜索</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/workbench.html">
-  <span class="material-symbols-outlined">terminal</span><span>工作台</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/watchlist.html">
-  <span class="material-symbols-outlined">visibility</span><span>监视列表</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/sources.html">
-  <span class="material-symbols-outlined">analytics</span><span>源健康状态</span>
-</a>
-<a class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-colors duration-300 font-['Space_Grotesk'] text-sm font-medium tracking-tight" href="/account.html">
-  <span class="material-symbols-outlined">account_circle</span><span>账户管理</span>
-</a>
-</nav>
-<div class="px-4 pt-4 mt-4 border-t border-white/5 space-y-1">
-<button id="btn-logout" class="flex items-center space-x-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 w-full text-left font-['Space_Grotesk'] text-sm font-medium tracking-tight">
-  <span class="material-symbols-outlined">logout</span><span>注销登录</span>
-</button>
-</div>
-</aside>
+<div id="page-content" style="visibility:hidden" class="flex pt-16 min-h-screen">
 <!-- Main Content -->
 <main class="flex-1 ml-64 p-8">
 <div class="max-w-6xl mx-auto space-y-8">
@@ -393,13 +339,9 @@
 </button>
 </div>
 <script type="module">
-  import { authGuard, populateNav, apiFetch, logout } from './auth.js';
-
-  const user = await authGuard();
-  if (!user) return;
-  populateNav(user);
-
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
+  import { initShell } from './shell.js';
+  import { apiFetch } from './auth.js';
+  await initShell('search');
 
   let activeType = '';
 
