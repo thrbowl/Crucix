@@ -34,14 +34,22 @@ export async function apiFetch(url, opts = {}) {
   let res = await fetch(url, { ...opts, headers });
 
   if (res.status === 401) {
-    // 尝试刷新
-    const refreshRes = await fetch('/api/auth/refresh', { method: 'POST' });
-    if (refreshRes.ok) {
-      const { access_token } = await refreshRes.json();
-      setToken(access_token);
-      headers.Authorization = `Bearer ${access_token}`;
-      res = await fetch(url, { ...opts, headers });
-    } else {
+    try {
+      const refreshRes = await fetch('/api/auth/refresh', { method: 'POST' });
+      if (refreshRes.ok) {
+        const data = await refreshRes.json();
+        if (!data.access_token || typeof data.access_token !== 'string') {
+          logout();
+          return;
+        }
+        setToken(data.access_token);
+        headers.Authorization = `Bearer ${data.access_token}`;
+        res = await fetch(url, { ...opts, headers });
+      } else {
+        logout();
+        return;
+      }
+    } catch {
       logout();
       return;
     }
