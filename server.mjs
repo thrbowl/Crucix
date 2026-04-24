@@ -539,9 +539,9 @@ async function start() {
   ║      CRUCIX CYBERSECURITY INTELLIGENCE       ║
   ║         Threat Intel · v1.0.0                ║
   ╠══════════════════════════════════════════════╣
-  ║  Dashboard:  http://localhost:${port}${' '.repeat(14 - String(port).length)}║
-  ║  Health:     http://localhost:${port}/api/health${' '.repeat(4 - String(port).length)}║
-  ║  Refresh:    Every ${config.refreshIntervalMinutes} min${' '.repeat(20 - String(config.refreshIntervalMinutes).length)}║
+  ║  Dashboard:  http://localhost:${port}${' '.repeat(Math.max(0, 14 - String(port).length))}║
+  ║  Health:     http://localhost:${port}/api/health${' '.repeat(Math.max(0, 4 - String(port).length))}║
+  ║  Refresh:    Every ${config.refreshIntervalMinutes} min${' '.repeat(Math.max(0, 20 - String(config.refreshIntervalMinutes).length))}║
   ║  Auth:       ${isAuthEnabled() ? 'enabled (Bearer Token)' : 'disabled'}${' '.repeat(isAuthEnabled() ? 10 : 23)}║
   ║  LLM:        ${(config.llm.provider || 'disabled').padEnd(31)}║
   ╚══════════════════════════════════════════════╝
