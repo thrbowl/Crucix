@@ -284,6 +284,140 @@ identity ───────────┘
                               └──▶ 告警 + 报告 + 洞察
 ```
 
+## 数据处理流程详解
+
+从原始 API 响应到数据库落地，共经过 8 个处理阶段。流程图中所有标注了表名的节点均为实际数据库写入点。
+
+```mermaid
+flowchart TD
+    %% ─────────────────────────────────────────────
+    %% ① 采集层
+    %% ─────────────────────────────────────────────
+    subgraph A["① 采集层 — apis/briefing.mjs"]
+        A1["49 个 OSINT 数据源\nHTTP · API · RSS · STIX Bundle"]
+        A1 -->|"Promise.allSettled()\n全部并行  超时 30s\nATT&CK-STIX 单独 120s"| A2["runSource(name, fn)"]
+        A2 --> A3{"normalizeSourceData()"}
+        A3 -->|"active\nconnected/partial/web_scrape"| A4["有效负载"]
+        A3 -->|"inactive"| A5["原因码\nno_key · rate_limited\ngeo_blocked · api_error\nunreachable"]
+        A4 --> A6["runs/latest.json\nruns/briefing_{ts}.json\n📁 文件系统 (非 DB)"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ② 综合层
+    %% ─────────────────────────────────────────────
+    subgraph B["② 综合层 — dashboard/inject.mjs · synthesize()"]
+        A6 --> B1["computeThreatLevel()\nKEV数×5 + CVSS≥9数×3 + C2÷10\n+ 受害者×2 + 恶意IP÷50 ...\n→ 指数 0-100  级别 CRITICAL/HIGH/ELEVATED/LOW"]
+        A6 --> B2["buildCVEList()\nNVD 为主干\n+ EPSS Map → 注入 epss 值\n+ KEV Set  → 标记 inKEV\n+ ExploitDB→ 标记 hasPoc\n+ GitHub Advisory 补充未收录项\n→ 按 CVSS 排序 取 top 50"]
+        A6 --> B3["buildIOCs()\nmalware ← MalwareBazaar + ThreatFox\nc2      ← Feodo + URLhaus\nip      ← AbuseIPDB + GreyNoise + Spamhaus\nphish   ← OpenPhish"]
+        A6 --> B4["buildActors()\n勒索组织 ← Ransomware-Live byGroup\nAPT      ← OTX pulses (adversary 字段)"]
+        A6 --> B5["fetchAllNews()\n14 RSS 源并发  8s 超时\ngeoTagText() 关键词→坐标\n30天过滤 + 标题去重 → top 50"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ③ 归一化层
+    %% ─────────────────────────────────────────────
+    subgraph C["③ 归一化层 — lib/normalize/"]
+        B2 --> C1["normalizeCVE(sourceName)\n校验格式 CVE-YYYY-NNNN\n统一字段: cvss.v3/v2  epss.score\nkev  pocAvailable  lifecycle\ndescription 截断 500 字"]
+        C1 --> C2["deduplicateCVEs()\nmergeCVEs(): 按 CVE ID 合并\n  max(cvss.v3)  OR(kev, poc)\n  union(sources[], pocUrls[], vendors[])\n  lifecycle 取枚举最大值\n  min(firstPublished) max(lastModified)"]
+        B3 --> C3["normalizeIOC(sourceName)\ndetectIOCType() 正则识别\n  ipv4/ipv6/domain/url/file/email\n域名强制小写\n置信度 clamp [0, 100]"]
+        C3 --> C4["deduplicateIOCs()\nmergeIOCs(): 按 type::value 合并\n  max(confidence)\n  union(sources[], tags[], relatedCVEs[])\n  min(firstSeen)  max(lastSeen)"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ④ 评分层
+    %% ─────────────────────────────────────────────
+    subgraph D["④ 评分层 — lib/pipeline/scoring.mjs + lib/normalize/confidence.mjs"]
+        C2 --> D1["cvePriorityScore() → [0, 1]\nCVSS÷10 × 0.30\nEPSS    × 0.30\nKEV     × 0.20\nPoC     × 0.10\nsources÷5 × 0.10 (饱和于 5 源)"]
+        C4 --> D2["iocConfidenceScore() → [0, 1]\nsourceAuth  × 0.40\nsourceCount × 0.30 (÷5 饱和)\ndecay       × 0.20\nfprQuality  × 0.10"]
+        C4 --> D3["iocDecayFactor()  指数衰减\n0.5^(天数÷半衰期)\nIPv4/6=7天  URL=14天\ndomain/email=30天  file=90天"]
+        D2 & D3 --> D4["iocLifecycleState()\ndecay>0.80 → fresh\ndecay>0.50 → active\ndecay>0.25 → aging\n其余       → stale"]
+        C4 --> D5["calculateConfidence() → [0,100]\n基础 20\n+30 官方 CERT (CISA/CNCERT/ENISA...)\n+25 ≥3 源交叉确认  (+10 双源)\n+20 商业情报 (VT/ThreatBook/Qianxin)\n+10 社区 (OTX/AbuseIPDB/Feodo)\n+5  媒体/社交 (FreeBuf/Telegram)\n+10 24h 内观测  (+5 72h 内)\n+5  关联 CVE 存在"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ⑤ STIX 转换层
+    %% ─────────────────────────────────────────────
+    subgraph E["⑤ STIX 2.1 转换层 — lib/pipeline/"]
+        D1 --> E1["toStixVulnerability()\ntype: vulnerability  spec_version: 2.1\nid: stixId('vulnerability', cveId)\n─────────────── x_crucix 扩展 ───────────────\nx_crucix_cvss_score      x_crucix_epss_score\nx_crucix_kev_listed      x_crucix_exploit_public\nx_crucix_priority_score  x_crucix_lifecycle\nx_crucix_vendors[]       x_crucix_products[]\nx_crucix_poc_urls[]      x_crucix_patch_status\nx_crucix_attack_vector   x_crucix_source_count"]
+        D2 & D4 --> E2["toStixIndicator() → SDO + SCO 对\nSDO  type: indicator\n     pattern_type: stix\n     pattern: '[ipv4-addr:value = \"x.x.x.x\"]'\n              '[file:hashes.SHA-256 = \"...\"]'\n     ─────────── x_crucix 扩展 ───────────────\n     x_crucix_confidence_score\n     x_crucix_ioc_lifecycle  (fresh/active...)\n     x_crucix_sources[]      x_crucix_tags[]\n     x_crucix_last_seen      x_crucix_ioc_type\nSCO  ipv4-addr / ipv6-addr / domain-name\n     url / email-addr / file(hashes{})"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ⑥ DB 写入 — 情报流水线
+    %% ─────────────────────────────────────────────
+    subgraph F["⑥ 数据库写入 (情报流水线) — lib/pipeline/index.mjs · runPipeline()"]
+        E1 --> F1["upsertObject(pool, stixObj)\nINSERT INTO stix_objects (type, stix_id, data)\nON CONFLICT (stix_id)\nDO UPDATE SET data=EXCLUDED.data, updated_at=now()"]
+        E2 --> F1
+        F1 -->|"type='vulnerability'\nstix_id='vulnerability--{uuid}'\ndata=JSONB"| DB1[("stix_objects\n─────────────────\nid  BIGSERIAL PK\ntype  TEXT  (带索引)\nstix_id  TEXT UNIQUE\ndata  JSONB\n  (GIN 全文索引)\n  (priority_score 偏索引)\n  (confidence 偏索引)\ncreated_at / updated_at")]
+        F1 -->|"type='indicator' → SDO\ntype='ipv4-addr' 等 → SCO\n同一 IOC 写入两行"| DB1
+        DB1 -.->|"planned:\nindicator --indicates--> ipv4-addr\nvulnerability --exploited-by--> malware"| DB2[("stix_relations\n─────────────────\nid  BIGSERIAL PK\nsource_ref  TEXT\ntarget_ref  TEXT\nrelationship_type TEXT\nconfidence  REAL\nUNIQUE(src,tgt,rel_type)\n⚠️ 当前无写入者")]
+        DB1 -.->|"planned:\nNLP 提取候选"| DB3[("nlp_pending\n─────────────────\nsource_text  TEXT\ncandidate_object JSONB\nconfidence  REAL\nstatus  TEXT\n⚠️ 当前无写入者")]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ⑦ 信号引擎
+    %% ─────────────────────────────────────────────
+    subgraph G["⑦ 增量信号引擎 — lib/delta/engine.mjs · computeDelta()"]
+        A6 --> G1["Layer 1: 14 原子信号\n提取 curr/prev 指标值\ndiff 超阈值 → atomic 信号\n倍数升级: ×3→HIGH  ×5→CRITICAL"]
+        A6 --> G2["Layer 2: 4 交叉关联规则\nvuln_weaponization\n  高危CVE + (PoC 或 主动扫描)\ntargeted_infrastructure\n  AbuseIPDB + (ThreatFox 或 Feodo)\nsupply_chain_attack\n  GitHub Advisory + OSV/新闻关键词\nchina_high_confidence\n  CNCERT + CNVD/CNNVD + 奇安信"]
+        A6 --> G3["Layer 3: Z-Score 趋势\n|z|≥2.0→MEDIUM  |z|≥3.0→HIGH\n需 ≥2 次历史扫描数据"]
+        G1 & G2 & G3 --> G4["综合威胁等级\nCRITICAL · HIGH · MEDIUM · LOW\n威胁指数 = CRITICAL×25 + HIGH×15\n         + MEDIUM×8 + 关联触发×20\n方向: worsening / stable / improving"]
+        G4 -.->|"planned:\nsignal → alert 行\n当前无写入"| DB4[("alerts\n─────────────────\nid  BIGSERIAL PK\ntype  TEXT\nseverity  TEXT\ntitle  TEXT\nentity_ref  TEXT\nsignal_data  JSONB\ncreated_at\n索引: severity+created_at\n⚠️ 当前无写入者\nAPI 读取返回空数组")]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% ⑧ API + 用户行为写入
+    %% ─────────────────────────────────────────────
+    subgraph H["⑧ API 层写入 — lib/api/v1/ + lib/auth/"]
+        B1 & B2 & B4 --> H1["briefingFromSynthesized()\n内存数据→API响应 (不写DB)"]
+        H1 --> H2["GET /api/v1/briefings/latest\n消耗 1 积分"]
+        H2 -->|"每次调用扣积分"| DB5[("credit_log\n─────────────────\nuser_id  operation\namount  created_at\n用于积分审计")]
+        H2 -->|"更新余额"| DB6[("subscriptions\n─────────────────\nuser_id  FK→users\nplan_id  FK→plans\ncurrent_credits INT\nperiod_start/end\nstatus")]
+
+        RA["POST /api/v1/analysis/chain\n消耗 20 积分  Pro/Ultra 限定"] -->|"INSERT"| DB7[("analysis_jobs\n─────────────────\nuser_id  type\ninput  JSONB\nstatus: pending→done\nresult  JSONB")]
+
+        RU["POST /auth/register\nPOST /auth/login"] -->|"写用户行"| DB8[("users\n─────────────────\nid  email UNIQUE\npassword_hash\nemail_verified")]
+        RU -->|"写 token hash"| DB9[("refresh_tokens\n─────────────────\nuser_id  FK\ntoken_hash UNIQUE\nexpires_at\nrevoked BOOL")]
+
+        RW["POST /api/v1/watchlist"] -->|"INSERT UNIQUE\n(user_id,type,value)"| DB10[("watchlists\n─────────────────\nuser_id  FK\ntype  value\nlabel\nUNIQUE(user+type+val)")]
+
+        RK["POST /api/v1/account/keys"] -->|"存哈希 不存明文"| DB11[("api_keys\n─────────────────\nuser_id  FK\nkey_hash UNIQUE\nname  last_used_at\nrevoked BOOL")]
+
+        DB4 -->|"SELECT ORDER BY\ncreated_at DESC"| HR["GET /api/v1/alerts"]
+        DB1 -->|"SELECT WHERE type=?\nGIN 全文检索"| HS["GET /api/v1/entities/:type\nGET /api/v1/lookup/cve/:id\nPOST /api/v1/lookup/ioc\nPOST /api/v1/search"]
+    end
+```
+
+### 数据库表写入来源汇总
+
+| 表 | 写入者 | 写入时机 | 写入方式 |
+|---|---|---|---|
+| `stix_objects` | `runPipeline()` | 每轮扫描结束后 | `UPSERT ON CONFLICT stix_id` |
+| `stix_relations` | ⚠️ **未实现** | — | 已建表，pipeline 尚未写入 |
+| `nlp_pending` | ⚠️ **未实现** | — | 已建表，NLP 提取待开发 |
+| `alerts` | ⚠️ **未实现** | — | 已建表，Delta 引擎尚未写入；API 读取时返回空 |
+| `analysis_jobs` | `POST /api/v1/analysis/chain` | 用户发起攻击链分析 | `INSERT RETURNING` |
+| `users` | `POST /auth/register` | 用户注册 | `INSERT` |
+| `refresh_tokens` | `POST /auth/login` | 用户登录 | `INSERT`；登出时 `UPDATE revoked=true` |
+| `subscriptions` | 注册/订阅升级 | 账号创建 & 计划变更 | `INSERT`；积分扣减时 `UPDATE current_credits` |
+| `credit_log` | `requireCredits()` 中间件 | 每次 API 调用 | `INSERT`（审计追踪） |
+| `api_keys` | `POST /account/keys` | 用户创建 API Key | 存 SHA-256 哈希，明文仅返回一次 |
+| `watchlists` | `POST /api/v1/watchlist` | 用户添加监视项 | `INSERT UNIQUE(user_id, type, value)` |
+
+### 各阶段关键说明
+
+**采集层** — 所有源全部并行启动，单源超时不影响其余源，失败来源记录原因码（`no_key` 表示未配置 API Key，`rate_limited` 表示触达频率上限），最终结果落盘到 `runs/latest.json`（文件系统，非数据库）。
+
+**综合层** — `buildCVEList()` 以 NVD 为主干，用 Map/Set 将 EPSS 分数、KEV 状态、ExploitDB PoC 注入同一 CVE 对象，再补充 GitHub Advisory 中未出现在 NVD 的 CVE ID，最终按 CVSS 倒排。综合层输出的 `V2` 结构保留在内存中，简报 API 直接从内存读取，**不经过数据库**。
+
+**归一化层** — CVE 按 ID 合并时取"更严重"字段（max CVSS、OR kev/poc）；IOC 按 `type::value` 合并时取 max(confidence)，时间窗口取 min(firstSeen)/max(lastSeen)，多源确认的 IOC 自然获得更高优先级。
+
+**评分层** — CVE 优先级和 IOC 置信度均为 0-1 归一化加权和，供 `stix_objects` 表的偏索引直接排序。IOC 时效衰减用指数函数，IP 最短 7 天半衰期，文件哈希最长 90 天，反映其真实情报有效期差异。
+
+**STIX 转换与持久化** — `upsertObject()` 执行 `ON CONFLICT (stix_id) DO UPDATE`，同一 CVE/IOC 多次扫描只更新不重复插入。IOC 写入两行：Indicator SDO（带评分和 pattern）+ SCO（原始 observable 值），两者通过 `x_crucix_ioc_value` 关联。
+
+**`alerts` 表空缺** — Delta 引擎目前只在内存中计算信号，尚未将触发结果写入 `alerts` 表，导致 `/api/v1/alerts` 在有数据库时也返回空数组。需在 `computeDelta()` 之后添加 `INSERT INTO alerts` 的写入步骤。
+
 ## 功能依赖关系
 
 ```

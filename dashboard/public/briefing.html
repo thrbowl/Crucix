@@ -107,11 +107,11 @@
 <!-- Content -->
 <div class="relative z-10 p-10 h-full flex flex-col justify-end">
 <div class="flex gap-2 mb-4">
-<span class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">CRITICAL</span>
+<span id="hero-threat-level" class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">CRITICAL</span>
 <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">SUPPLY_CHAIN</span>
 </div>
 <h2 class="font-h2 text-white text-4xl mb-4 leading-tight">针对全球半导体制造链的<br/><span class="text-cyan-400 underline decoration-cyan-400/30 underline-offset-8">协同协同式供应链攻击</span></h2>
-<p class="text-slate-300 font-body-lg max-w-2xl mb-6">发现新型高度混淆的后门程序，该程序正通过受信任的自动化构建脚本在全球范围内秘密分发。初步分析表明这可能涉及国家级威胁行为者。</p>
+<p id="hero-description" class="text-slate-300 font-body-lg max-w-2xl mb-6">发现新型高度混淆的后门程序，该程序正通过受信任的自动化构建脚本在全球范围内秘密分发。初步分析表明这可能涉及国家级威胁行为者。</p>
 <div class="flex items-center gap-6">
 <button class="bg-cyan-400 text-slate-950 font-bold py-3 px-8 rounded-lg hover:bg-white hover:neon-glow transition-all active:scale-95 flex items-center gap-2">
 <span class="material-symbols-outlined">visibility</span>
@@ -139,7 +139,7 @@
                         </h3>
 <span class="text-cyan-400/50 material-symbols-outlined cursor-pointer hover:text-cyan-400">more_vert</span>
 </div>
-<div class="space-y-4">
+<div id="vuln-list" class="space-y-4">
 <!-- Vuln Item -->
 <div class="group cursor-pointer p-4 rounded-lg bg-white/5 border border-white/5 hover:border-cyan-400/30 transition-all">
 <div class="flex justify-between items-start mb-1">
@@ -189,9 +189,9 @@
 <span class="material-symbols-outlined text-cyan-400">group</span>
                         活跃行为者
                     </h3>
-<div class="text-xs text-slate-500">检测到 14 个活跃集群</div>
+<div id="actor-count" class="text-xs text-slate-500">检测到 14 个活跃集群</div>
 </div>
-<div class="flex flex-wrap gap-3">
+<div id="actor-list" class="flex flex-wrap gap-3">
 <!-- Actor Capsule -->
 <div class="flex items-center gap-3 bg-white/5 border border-white/10 hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all p-2 pr-5 rounded-full cursor-pointer group">
 <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
@@ -252,7 +252,7 @@
                     </h3>
 <div class="px-2 py-0.5 rounded bg-cyan-400/20 text-cyan-400 text-[10px] font-bold tracking-widest uppercase">LIVE</div>
 </div>
-<div class="space-y-6 relative">
+<div id="alert-stream" class="space-y-6 relative">
 <!-- Connection Line -->
 <div class="absolute left-[7px] top-2 bottom-2 w-[1px] bg-cyan-500/20"></div>
 <!-- Alert Item -->
@@ -260,36 +260,8 @@
 <div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full bg-slate-900 border border-cyan-400 flex items-center justify-center">
 <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></div>
 </div>
-<div class="text-[10px] text-cyan-400 font-mono mb-1">14:28:45 // NETWORK_ANOMALY</div>
-<div class="text-white text-sm font-medium">检测到大量对 <span class="text-cyan-400">AWS_US_EAST_1</span> 的身份验证尝试。</div>
-<div class="text-[11px] text-slate-500 mt-1">源 IP: 185.22.XX.XX [俄罗斯]</div>
-</div>
-<!-- Alert Item -->
-<div class="relative pl-6">
-<div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full bg-slate-900 border border-red-500 flex items-center justify-center">
-<div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-</div>
-<div class="text-[10px] text-red-400 font-mono mb-1">14:26:12 // EXFILTRATION_ALERT</div>
-<div class="text-white text-sm font-medium">检测到异常数据外发至不受信任的云存储。</div>
-<div class="text-[11px] text-slate-500 mt-1">受影响主机: DATA-CORE-SRV-09</div>
-</div>
-<!-- Alert Item -->
-<div class="relative pl-6">
-<div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full bg-slate-900 border border-orange-400 flex items-center justify-center">
-<div class="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
-</div>
-<div class="text-[10px] text-orange-400 font-mono mb-1">14:20:05 // COMPONENT_UPDATE</div>
-<div class="text-white text-sm font-medium">新的漏洞补丁已在情报网同步。</div>
-<div class="text-[11px] text-slate-500 mt-1">类型: 系统级紧急修复 (Hotfix)</div>
-</div>
-<!-- Alert Item -->
-<div class="relative pl-6">
-<div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full bg-slate-900 border border-cyan-400 flex items-center justify-center">
-<div class="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
-</div>
-<div class="text-[10px] text-cyan-400 font-mono mb-1">14:15:22 // ACTOR_MOVEMENT</div>
-<div class="text-white text-sm font-medium">APT-32 基础设施节点发生显著迁移。</div>
-<div class="text-[11px] text-slate-500 mt-1">更新 12 个 C2 域名列表。</div>
+<div class="text-[10px] text-cyan-400 font-mono mb-1">-- // LOADING</div>
+<div class="text-white text-sm font-medium">正在加载实时预警数据...</div>
 </div>
 </div>
 <div class="mt-8 pt-6 border-t border-white/5 flex justify-center">
@@ -323,24 +295,169 @@
   import { apiFetch } from './auth.js';
   await initShell('briefing');
 
-  // 加载最新简报
-  try {
-    const res = await apiFetch('/api/v1/briefings/latest');
-    if (res?.ok) {
-      const { data } = await res.json();
-      if (data) {
-        const titleEl = document.getElementById('briefing-title');
-        if (titleEl) titleEl.textContent = data.title ?? titleEl.textContent;
+  // ── 工具函数 ──────────────────────────────────────────────
 
-        const summaryEl = document.getElementById('briefing-summary');
-        if (summaryEl) summaryEl.textContent = data.summary ?? summaryEl.textContent;
+  function errHtml(msg) {
+    return `<div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">[ERROR] ${msg}</div>`;
+  }
 
-        const tsEl = document.getElementById('briefing-ts');
-        if (tsEl && data.published_at) {
-          tsEl.textContent = 'TS: ' + new Date(data.published_at).toISOString().replace('T', '_').slice(0, 19);
-        }
-      }
+  function emptyHtml(msg) {
+    return `<div class="p-4 rounded-lg bg-white/5 border border-white/5 text-slate-500 text-xs font-mono text-center">${msg}</div>`;
+  }
+
+  async function apiFetchOrThrow(path) {
+    const res = await apiFetch(path);
+    if (!res) throw new Error(`网络请求失败: ${path}`);
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try { const j = await res.clone().json(); msg = j.error ?? msg; } catch {}
+      throw new Error(msg);
     }
-  } catch { /* 保留静态内容 */ }
+    return res.json();
+  }
+
+  // ── 加载最新简报（英雄区 + 漏洞 + 行为者） ───────────────
+
+  let briefing = null;
+  try {
+    const { data } = await apiFetchOrThrow('/api/v1/briefings/latest');
+    briefing = data;
+  } catch (e) {
+    // 英雄区报错
+    document.getElementById('hero-description').textContent = `[ERROR] ${e.message}`;
+    document.getElementById('hero-threat-level').textContent = 'ERROR';
+    document.getElementById('hero-threat-level').className =
+      'bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md';
+    document.getElementById('vuln-list').innerHTML = errHtml(e.message);
+    document.getElementById('actor-list').innerHTML = errHtml(e.message);
+  }
+
+  if (briefing) {
+    // 时间戳
+    const tsEl = document.getElementById('briefing-ts');
+    if (briefing.generated_at) {
+      tsEl.textContent = 'TS: ' + new Date(briefing.generated_at).toISOString().replace('T', '_').slice(0, 19);
+    }
+
+    // 页面副标题 — executive_summary 是统计串，适合放这里
+    document.getElementById('briefing-summary').textContent = briefing.executive_summary ?? '';
+
+    // 英雄区威胁等级
+    const levelEl = document.getElementById('hero-threat-level');
+    const levelColors = {
+      CRITICAL: 'bg-red-500/20 text-red-400 border border-red-500/40',
+      HIGH:     'bg-orange-500/20 text-orange-400 border border-orange-500/40',
+      MEDIUM:   'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40',
+    };
+    levelEl.textContent = briefing.threat_level ?? 'UNKNOWN';
+    levelEl.className = `${levelColors[briefing.threat_level] ?? levelColors.CRITICAL} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md`;
+
+    // 英雄区标题 — 取最新 advisory 标题，没有就用统计摘要
+    const heroTitle = briefing.key_advisories?.[0]?.title ?? briefing.executive_summary ?? '';
+    document.getElementById('hero-description').textContent = heroTitle;
+
+    // ── 高危漏洞列表 ──────────────────────────────────────
+    // API 字段: cve_id, cvss, epss, kev, priority_score, description
+    // 缺失: published_at（无时间显示）、affected_count（无资产数）
+    const vulns = briefing.top_vulnerabilities ?? [];
+    const vulnList = document.getElementById('vuln-list');
+    if (!vulns.length) {
+      vulnList.innerHTML = emptyHtml('暂无漏洞数据');
+    } else {
+      vulnList.innerHTML = vulns.slice(0, 5).map(v => {
+        const score = v.cvss ?? 0;
+        const sev = score >= 9 ? 'CRITICAL' : score >= 7 ? 'HIGH' : 'MEDIUM';
+        const scoreColor = sev === 'CRITICAL' ? 'text-red-400' : 'text-orange-400';
+        const epssStr = v.epss != null ? `EPSS ${(v.epss * 100).toFixed(0)}%` : '';
+        const kevBadge = v.kev
+          ? `<span class="flex items-center gap-1 text-cyan-400"><span class="material-symbols-outlined text-[12px]">security</span>KEV</span>`
+          : '';
+        return `
+          <div class="group cursor-pointer p-4 rounded-lg bg-white/5 border border-white/5 hover:border-cyan-400/30 transition-all">
+            <div class="flex justify-between items-start mb-1">
+              <span class="font-mono text-cyan-400 text-sm">${v.cve_id ?? '—'}</span>
+              <span class="text-xs font-bold ${scoreColor}">${score.toFixed(1)} ${sev}</span>
+            </div>
+            <div class="text-white text-sm font-bold mb-2 line-clamp-2">${v.description ?? '—'}</div>
+            <div class="flex items-center gap-4 text-[10px] text-slate-500 uppercase tracking-tighter">
+              ${epssStr ? `<span>${epssStr}</span>` : ''}
+              ${kevBadge}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── 活跃行为者 ────────────────────────────────────────
+    // API 字段: name, type (均为 ransomware), victims_this_period, sources
+    // 缺失: region（地区）、dormant/active 状态标识
+    const actors = briefing.active_threat_actors ?? [];
+    const actorCountEl = document.getElementById('actor-count');
+    actorCountEl.textContent = actors.length ? `检测到 ${actors.length} 个活跃集群` : '暂无行为者数据';
+
+    const icons = ['public', 'token', 'terminal', 'radar', 'bug_report', 'lock'];
+    const actorList = document.getElementById('actor-list');
+    if (!actors.length) {
+      actorList.innerHTML = emptyHtml('暂无行为者数据');
+    } else {
+      actorList.innerHTML = actors.map((a, i) => {
+        const icon = icons[i % icons.length];
+        // victims_this_period > 0 视为活跃
+        const dotColor = (a.victims_this_period ?? 0) > 0 ? 'bg-red-400' : 'bg-slate-400';
+        const statusText = (a.victims_this_period ?? 0) > 0
+          ? `活跃 (${a.victims_this_period} 受害者)`
+          : '近期无活动';
+        return `
+          <div class="flex items-center gap-3 bg-white/5 border border-white/10 hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all p-2 pr-5 rounded-full cursor-pointer group">
+            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-lg">${icon}</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white uppercase tracking-wider">${a.name}</div>
+              <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>${statusText}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // ── 实时预警流 ───────────────────────────────────────────
+  // 依赖数据库；无 DB 时返回空数组（非错误）
+  const alertStream = document.getElementById('alert-stream');
+  try {
+    const { data } = await apiFetchOrThrow('/api/v1/alerts?limit=4');
+    const items = data?.items ?? [];
+    const connLine = `<div class="absolute left-[7px] top-2 bottom-2 w-[1px] bg-cyan-500/20"></div>`;
+    if (!items.length) {
+      alertStream.innerHTML = connLine + emptyHtml(data?.note ?? '暂无预警数据');
+    } else {
+      const severityStyle = {
+        critical: { border: 'border-cyan-400',  dot: 'bg-cyan-400',  text: 'text-cyan-400',  ping: 'animate-ping' },
+        high:     { border: 'border-red-500',    dot: 'bg-red-500',   text: 'text-red-400',   ping: '' },
+        medium:   { border: 'border-orange-400', dot: 'bg-orange-400',text: 'text-orange-400',ping: '' },
+        low:      { border: 'border-slate-400',  dot: 'bg-slate-400', text: 'text-slate-400', ping: '' },
+      };
+      alertStream.innerHTML = connLine + items.map(alert => {
+        const s = severityStyle[alert.severity] ?? severityStyle.low;
+        const time = alert.created_at ? new Date(alert.created_at).toISOString().slice(11, 19) : '--:--:--';
+        const typeLabel = (alert.type ?? 'ALERT').toUpperCase().replace(/_/g, '-');
+        const detail = alert.signal_data
+          ? Object.entries(alert.signal_data).slice(0, 1).map(([k, v]) => `${k}: ${v}`).join('')
+          : '';
+        return `
+          <div class="relative pl-6">
+            <div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full bg-slate-900 ${s.border} border flex items-center justify-center">
+              <div class="w-1.5 h-1.5 rounded-full ${s.dot} ${s.ping}"></div>
+            </div>
+            <div class="text-[10px] ${s.text} font-mono mb-1">${time} // ${typeLabel}</div>
+            <div class="text-white text-sm font-medium">${alert.title}</div>
+            ${detail ? `<div class="text-[11px] text-slate-500 mt-1">${detail}</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+  } catch (e) {
+    alertStream.innerHTML = errHtml(e.message);
+  }
 </script>
 </body></html>
