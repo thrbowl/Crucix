@@ -26,6 +26,7 @@ import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs'
 import { getPool, closePool } from './lib/db/index.mjs';
 import { runMigrations } from './lib/db/migrate.mjs';
 import { runPipeline } from './lib/pipeline/index.mjs';
+import { saveRawIntel } from './lib/pipeline/raw.mjs';
 import { createV1Router } from './lib/api/v1/router.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -59,12 +60,22 @@ app.use(express.json());
 app.use(cookieParser());
 
 const PROTECTED_PAGES = [
-  '/', '/index.html', '/briefing.html', '/search.html',
-  '/workbench.html', '/watchlist.html', '/sources.html', '/account.html',
+  '/', '/index.html', '/briefing.html', '/briefing', '/search.html', '/search',
+  '/workbench.html', '/workbench', '/watchlist.html', '/watchlist',
+  '/sources.html', '/sources', '/account.html', '/account',
 ];
 app.use((req, res, next) => {
   if (PROTECTED_PAGES.includes(req.path) && !req.cookies?.refresh_token) {
     return res.redirect('/login.html');
+  }
+  next();
+});
+
+// Clean URL support: /search → /search.html
+app.use((req, res, next) => {
+  if (!req.path.includes('.') && req.path !== '/') {
+    const htmlPath = join(ROOT, 'dashboard/public', req.path + '.html');
+    if (existsSync(htmlPath)) return res.sendFile(htmlPath);
   }
   next();
 });
@@ -495,7 +506,10 @@ async function runSweepCycle() {
 
     currentData = synthesized;
 
-    // Run STIX pipeline (non-blocking — failures don't kill sweep)
+    // Save raw intel items and run STIX pipeline (non-blocking)
+    saveRawIntel(getPool(), rawData.sources).catch(err =>
+      console.error('[RawIntel] Unhandled error:', err.message)
+    );
     runPipeline(getPool(), synthesized).catch(err =>
       console.error('[Pipeline] Unhandled error:', err.message)
     );

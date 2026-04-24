@@ -392,6 +392,7 @@ flowchart TD
 
 | 表 | 写入者 | 写入时机 | 写入方式 |
 |---|---|---|---|
+| `raw_intel_items` | `saveRawIntel()` | 每轮扫描结束后（fire-and-forget） | `INSERT ON CONFLICT (dedup_key) DO NOTHING` |
 | `stix_objects` | `runPipeline()` | 每轮扫描结束后 | `UPSERT ON CONFLICT stix_id` |
 | `stix_relations` | ⚠️ **未实现** | — | 已建表，pipeline 尚未写入 |
 | `nlp_pending` | ⚠️ **未实现** | — | 已建表，NLP 提取待开发 |
@@ -415,6 +416,16 @@ flowchart TD
 **评分层** — CVE 优先级和 IOC 置信度均为 0-1 归一化加权和，供 `stix_objects` 表的偏索引直接排序。IOC 时效衰减用指数函数，IP 最短 7 天半衰期，文件哈希最长 90 天，反映其真实情报有效期差异。
 
 **STIX 转换与持久化** — `upsertObject()` 执行 `ON CONFLICT (stix_id) DO UPDATE`，同一 CVE/IOC 多次扫描只更新不重复插入。IOC 写入两行：Indicator SDO（带评分和 pattern）+ SCO（原始 observable 值），两者通过 `x_crucix_ioc_value` 关联。
+
+**原始情报存储与去重 (`raw_intel_items`)** — 每轮扫描后，`saveRawIntel()` 把各数据源的每条原始条目写入 `raw_intel_items`，写入时通过 `dedup_key` 保证幂等性。`dedup_key` 的计算规则（优先级从高到低）：
+
+| 优先级 | 条件 | dedup_key 计算 | 含义 |
+|---|---|---|---|
+| 1 | 有 URL 且有最后修改时间 | `MD5(url + "::" + modified_at)` | 版本感知去重：同一 URL 内容更新后视为新条目 |
+| 2 | 有 URL，无修改时间 | `MD5(url)` | URL 唯一性去重：跨源同文章不重复存储 |
+| 3 | 无 URL | `MD5(source_name + "::" + content_hash)` | 源内容哈希去重：不同源对同一实体（如同一 CVE ID）的数据独立保留 |
+
+`content` 字段存储 JSON 字符串（API 数据）或原始文本（爬虫数据），`content_hash` 为其 MD5，`first_seen_at` 记录系统首次收录时间。
 
 **`alerts` 表空缺** — Delta 引擎目前只在内存中计算信号，尚未将触发结果写入 `alerts` 表，导致 `/api/v1/alerts` 在有数据库时也返回空数组。需在 `computeDelta()` 之后添加 `INSERT INTO alerts` 的写入步骤。
 
