@@ -16,7 +16,7 @@ export function setToken(token) {
 /** 清除 access token 并跳转到登录页 */
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
-  window.location.href = '/login.html';
+  window.location.href = '/login';
 }
 
 /**

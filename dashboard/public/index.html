@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html class="dark" lang="zh-CN"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -70,16 +69,6 @@
                         "xl": "0.75rem",
                         "full": "9999px"
                     },
-                    "spacing": {
-                        "xl": "40px",
-                        "margin": "24px",
-                        "gutter": "16px",
-                        "lg": "24px",
-                        "unit": "4px",
-                        "md": "16px",
-                        "xs": "4px",
-                        "sm": "8px"
-                    },
                     "fontFamily": {
                         "mono-data": ["Space Grotesk"],
                         "label-caps": ["Space Grotesk"],
@@ -109,270 +98,860 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+        .range-btn { transition: all 0.15s; }
+        .range-btn.active {
+            background: rgba(0,229,255,0.15);
+            color: rgb(0,229,255);
+            border-color: rgba(0,229,255,0.4);
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex flex-col">
 <div id="page-content" style="visibility:hidden" class="flex flex-1 pt-16 overflow-hidden">
-<!-- Main Content -->
 <main class="flex-1 ml-64 overflow-y-auto relative p-6 scanline">
-<!-- Background Map Visual -->
-<div class="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
-<div class="w-full h-full" style="background-image: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.1) 0%, transparent 70%);"></div>
-<img class="w-full h-full object-cover mix-blend-screen opacity-40" data-alt="Stylized glowing digital world map with network connections on a dark background" src="/libs/images/index-world-map.jpg"/>
+
+<!-- Background ambient -->
+<div class="absolute inset-0 z-0 opacity-10 pointer-events-none overflow-hidden">
+  <div class="w-full h-full" style="background-image: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.08) 0%, transparent 70%);"></div>
 </div>
-<div class="relative z-10 space-y-6">
-<!-- Header Section -->
-<div class="flex justify-between items-end">
-<div>
-<h1 class="font-h1 text-h1 text-primary tracking-tight">情报态势 <span class="text-cyan-500/50 text-h3 ml-2">THREAT SITUATION</span></h1>
-<p class="text-text-secondary mt-1 font-body-md">实时全域威胁监测与情报聚合分析系统</p>
+
+<div class="relative z-10 space-y-4">
+
+<!-- ─── Header / Situation Bar ─────────────────────────────────── -->
+<div class="glass-panel px-5 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div>
+      <h1 class="font-h1 text-base text-primary tracking-tight font-bold">情报态势 <span class="text-cyan-500/40 text-xs ml-1 font-normal">CRUCIX BRIEFING CENTER</span></h1>
+      <p class="text-[11px] text-slate-500 mt-0.5">实时全域威胁监测与情报聚合分析</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-5">
+    <!-- 威胁等级 -->
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] text-slate-500 uppercase tracking-widest">威胁等级</span>
+      <span id="sit-level-badge" class="px-2.5 py-0.5 rounded text-xs font-bold font-mono-data bg-slate-700/50 text-slate-400 border border-slate-600/30">--</span>
+    </div>
+    <div class="w-px h-5 bg-white/10"></div>
+    <!-- 威胁指数 -->
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] text-slate-500 uppercase tracking-widest">威胁指数</span>
+      <span id="sit-index" class="font-mono-data text-cyan-400 font-bold text-sm neon-text-glow">--</span>
+      <span id="sit-direction" class="text-[10px] text-slate-500">--</span>
+    </div>
+    <div class="w-px h-5 bg-white/10"></div>
+    <!-- 源在线 -->
+    <div class="flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="text-[10px] text-slate-400"><span id="sit-sources-ok" class="text-emerald-400 font-mono-data">--</span> 源在线</span>
+    </div>
+    <div class="w-px h-5 bg-white/10"></div>
+    <!-- 上次扫描 -->
+    <div class="flex items-center gap-1.5">
+      <span class="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
+      <span class="text-[10px] text-slate-500">扫描 <span id="sit-last-sweep" class="text-slate-400">--</span></span>
+    </div>
+    <div class="w-px h-5 bg-white/10"></div>
+    <!-- SSE -->
+    <div class="flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-slate-600" id="sse-dot"></span>
+      <span class="text-[10px] text-slate-500 font-mono-data" id="sse-badge">连接中...</span>
+    </div>
+  </div>
 </div>
-<div class="flex gap-3">
-<div class="glass-panel px-4 py-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-<span class="text-label-caps text-cyan-400 font-label-caps">实时推流中</span>
+
+<!-- ─── Stat Cards ──────────────────────────────────────────────── -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+  <!-- 高危 CVE (KEV ∩ PoC) -->
+  <div class="glass-panel p-4 relative overflow-hidden group">
+    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
+      <span class="material-symbols-outlined text-5xl">crisis_alert</span>
+    </div>
+    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">高危 CVE</div>
+    <div class="text-3xl font-mono-data text-red-400 font-bold" style="text-shadow:0 0 10px rgba(239,68,68,0.5)" id="stat-highrisk-cve">--</div>
+    <div class="mt-1.5 text-[10px] text-slate-500">KEV ∩ PoC 已公开 · 共 <span id="stat-total-cve" class="text-slate-400">--</span> CVE</div>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span class="text-[10px] text-slate-600">周期新增</span>
+      <span id="stat-new-cve" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+    </div>
+    <div class="absolute bottom-0 left-0 h-[2px] bg-red-500/60 transition-all duration-700" id="stat-cve-bar" style="width:0%"></div>
+  </div>
+
+  <!-- 24h 新增情报 -->
+  <div class="glass-panel p-4 relative overflow-hidden group">
+    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
+      <span class="material-symbols-outlined text-5xl">bolt</span>
+    </div>
+    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">24h 新增情报</div>
+    <div class="text-3xl font-mono-data text-amber-400 font-bold" style="text-shadow:0 0 10px rgba(251,191,36,0.5)" id="stat-intel-24h">--</div>
+    <div class="mt-1.5 text-[10px] text-slate-500">今日入库 · 累计 <span id="stat-intel-total" class="text-slate-400">--</span> 条</div>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span class="text-[10px] text-slate-600">周期新增</span>
+      <span id="stat-intel-period" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+    </div>
+    <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60" style="width:60%"></div>
+  </div>
+
+  <!-- 活跃 IOC -->
+  <div class="glass-panel p-4 relative overflow-hidden group">
+    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
+      <span class="material-symbols-outlined text-5xl">fingerprint</span>
+    </div>
+    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">活跃 IOC</div>
+    <div class="text-3xl font-mono-data text-cyan-400 font-bold neon-text-glow" id="stat-active-ioc">--</div>
+    <div class="mt-1.5 text-[10px] text-slate-500">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-400">--</span></div>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span class="text-[10px] text-slate-600">周期新增</span>
+      <span id="stat-new-ioc" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+    </div>
+    <div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500/60 transition-all duration-700" id="stat-ioc-bar" style="width:0%"></div>
+  </div>
+
+  <!-- 勒索受害者 -->
+  <div class="glass-panel p-4 relative overflow-hidden group">
+    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
+      <span class="material-symbols-outlined text-5xl">warning</span>
+    </div>
+    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">勒索受害者</div>
+    <div class="text-3xl font-mono-data text-secondary font-bold" style="text-shadow:0 0 10px rgba(255,178,183,0.4)" id="stat-victims">--</div>
+    <div class="mt-1.5 text-[10px] text-slate-500">近期追踪确认受害者</div>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span class="text-[10px] text-slate-600">活跃 C2</span>
+      <span id="stat-c2" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+    </div>
+    <div class="absolute bottom-0 left-0 h-[2px] bg-secondary/60" style="width:45%"></div>
+  </div>
+
 </div>
+
+<!-- ─── Charts Row ──────────────────────────────────────────────── -->
+<div class="glass-panel">
+  <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+    <h2 class="text-sm font-mono-data text-cyan-100 flex items-center gap-2">
+      <span class="material-symbols-outlined text-cyan-400 text-sm">monitoring</span>
+      情报趋势分析
+    </h2>
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] text-slate-500 mr-1">时间范围</span>
+      <button class="range-btn active text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="7">7天</button>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="30">30天</button>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="90">90天</button>
+    </div>
+  </div>
+  <div class="grid grid-cols-12 gap-0">
+    <!-- Line chart: daily intel -->
+    <div class="col-span-12 lg:col-span-8 p-4 border-r border-white/5">
+      <div class="text-[10px] text-slate-500 mb-2 uppercase tracking-widest">每日情报入库趋势</div>
+      <div class="relative" style="height:160px">
+        <canvas id="trend-chart" class="absolute inset-0 w-full h-full"></canvas>
+      </div>
+    </div>
+    <!-- Donut: type distribution -->
+    <div class="col-span-12 lg:col-span-4 p-4">
+      <div class="text-[10px] text-slate-500 mb-2 uppercase tracking-widest">情报类型分布</div>
+      <div class="flex items-center gap-4" style="height:160px">
+        <div class="relative shrink-0" style="width:120px;height:120px">
+          <canvas id="donut-chart" style="width:120px;height:120px"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span id="donut-center-val" class="font-mono-data text-lg text-cyan-400 font-bold neon-text-glow">--</span>
+            <span class="text-[9px] text-slate-500">总计</span>
+          </div>
+        </div>
+        <div id="donut-legend" class="flex-1 space-y-1.5 text-[10px] font-mono-data text-slate-400 overflow-hidden"></div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- ─── Intelligence Panels ─────────────────────────────────────── -->
+<div class="grid grid-cols-12 gap-4">
+
+  <!-- 勒索组织排行 Top 5 -->
+  <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col">
+    <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center gap-2">
+      <span class="material-symbols-outlined text-secondary text-sm">groups</span>
+      <h3 class="text-xs font-mono-data text-cyan-100">勒索组织排行 Top 5</h3>
+    </div>
+    <div id="ransomware-list" class="flex-1 p-3 space-y-2">
+      <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 受攻击行业 -->
+  <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col">
+    <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center gap-2">
+      <span class="material-symbols-outlined text-amber-400 text-sm">business</span>
+      <h3 class="text-xs font-mono-data text-cyan-100">受攻击行业</h3>
+    </div>
+    <div id="sector-list" class="flex-1 p-3 space-y-2">
+      <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
+    </div>
+  </div>
+
+  <!-- IOC 生命周期分布 -->
+  <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col">
+    <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center gap-2">
+      <span class="material-symbols-outlined text-cyan-400 text-sm">cycle</span>
+      <h3 class="text-xs font-mono-data text-cyan-100">IOC 生命周期分布</h3>
+    </div>
+    <div id="lifecycle-list" class="flex-1 p-4 space-y-2.5">
+      <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
+    </div>
+  </div>
+
 </div>
-<!-- Statistics Overview Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="glass-panel p-5 relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 text-white/5 transition-transform group-hover:scale-110">
-<span class="material-symbols-outlined text-4xl">bug_report</span>
+
+<!-- ─── Alert Stream + Threat Map ─────────────────────────────── -->
+<div class="grid grid-cols-12 gap-4" style="height:460px">
+
+  <!-- Alert Stream -->
+  <div class="col-span-12 lg:col-span-8 glass-panel flex flex-col overflow-hidden">
+    <div class="px-5 py-3 border-b border-white/5 flex justify-between items-center bg-white/5 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-cyan-400 text-sm">lan</span>
+        <h2 class="text-xs font-mono-data text-cyan-100">实时预警流 [CERT_FEED_LIVE]</h2>
+      </div>
+      <div class="text-[10px] text-slate-500 font-mono-data" id="alert-stream-meta">等待数据...</div>
+    </div>
+    <div id="alert-stream" class="flex-1 overflow-y-auto p-3 space-y-1.5 font-mono-data text-xs min-h-0">
+      <div class="flex items-center justify-center h-full text-slate-600 text-xs">加载中...</div>
+    </div>
+    <div class="px-4 py-2 border-t border-white/5 bg-slate-950/20 flex gap-2 shrink-0">
+      <span class="w-1.5 h-3.5 bg-cyan-500 animate-pulse self-center"></span>
+      <div class="text-[10px] text-cyan-400/50 uppercase tracking-widest self-center" id="alert-stream-footer">等待下一数据包...</div>
+    </div>
+  </div>
+
+  <!-- Threat Map -->
+  <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex justify-between items-center shrink-0">
+      <h2 class="text-xs font-mono-data text-cyan-100 flex items-center gap-2">
+        <span class="material-symbols-outlined text-cyan-400 text-sm">public</span>
+        全球威胁热力图
+      </h2>
+      <div class="text-[10px] text-slate-500 font-mono-data" id="map-point-count">--</div>
+    </div>
+    <div class="flex-1 relative overflow-hidden bg-slate-950/60 min-h-0" id="map-container">
+      <img src="/libs/images/index-world-map.jpg"
+           class="absolute inset-0 w-full h-full object-cover opacity-[0.15] grayscale pointer-events-none select-none"/>
+      <canvas id="threat-map-canvas" class="absolute inset-0 w-full h-full"></canvas>
+      <div id="map-tooltip"
+           class="hidden absolute z-20 bg-slate-900/95 border border-white/10 rounded px-2 py-1
+                  text-[10px] font-mono-data text-slate-200 pointer-events-none max-w-[200px] leading-snug"></div>
+    </div>
+    <div class="px-4 py-2 border-t border-white/5 flex items-center gap-3 shrink-0">
+      <span class="text-[9px] text-slate-600 uppercase tracking-widest shrink-0">严重程度</span>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block shadow-[0_0_4px_#ef4444]"></span><span class="text-[9px] text-slate-500">严重</span></span>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block shadow-[0_0_4px_#f97316]"></span><span class="text-[9px] text-slate-500">高危</span></span>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block shadow-[0_0_4px_#facc15]"></span><span class="text-[9px] text-slate-500">中等</span></span>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block shadow-[0_0_4px_#22d3ee]"></span><span class="text-[9px] text-slate-500">低危</span></span>
+      </div>
+    </div>
+  </div>
+
 </div>
-<div class="text-label-caps text-slate-500 mb-1">活跃 CVE 总数</div>
-<div class="text-4xl font-mono-data text-cyan-400 neon-text-glow font-bold">14,208</div>
-<div class="mt-2 text-xs text-cyan-500/70">较上次扫描 +12%</div>
-<div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500 w-1/3"></div>
-</div>
-<div class="glass-panel p-5 relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 text-white/5 transition-transform group-hover:scale-110">
-<span class="material-symbols-outlined text-4xl">priority_high</span>
-</div>
-<div class="text-label-caps text-slate-500 mb-1">KEV 已知漏洞</div>
-<div class="text-4xl font-mono-data text-cyan-400 neon-text-glow font-bold">842</div>
-<div class="mt-2 text-xs text-error">关键暴露风险</div>
-<div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500 w-1/2"></div>
-</div>
-<div class="glass-panel p-5 relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 text-white/5 transition-transform group-hover:scale-110">
-<span class="material-symbols-outlined text-4xl">radar</span>
-</div>
-<div class="text-label-caps text-slate-500 mb-1">今日 IOC 匹配量</div>
-<div class="text-4xl font-mono-data text-cyan-400 neon-text-glow font-bold">52,910</div>
-<div class="mt-2 text-xs text-cyan-500/70">全网关聚合数据</div>
-<div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500 w-1/4"></div>
-</div>
-<div class="glass-panel p-5 relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 text-white/5 transition-transform group-hover:scale-110">
-<span class="material-symbols-outlined text-4xl">group_work</span>
-</div>
-<div class="text-label-caps text-slate-500 mb-1">监控中 APT 组织</div>
-<div class="text-4xl font-mono-data text-cyan-400 neon-text-glow font-bold">32</div>
-<div class="mt-2 text-xs text-cyan-500/70">正在进行的监控行动</div>
-<div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500 w-2/3"></div>
-</div>
-</div>
-<!-- Main Grid Layout -->
-<div class="grid grid-cols-12 gap-6 h-[500px]">
-<!-- Real-time Alert Stream (SSE) -->
-<div class="col-span-12 lg:col-span-8 glass-panel flex flex-col">
-<div class="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-cyan-400 text-sm">lan</span>
-<h2 class="text-mono-data font-mono-data text-cyan-100">实时预警流 [SSE_STREAM_LIVE]</h2>
-</div>
-<div class="text-[10px] text-slate-500 font-mono-data">缓冲区状态: 稳定 (99.9%)</div>
-</div>
-<div id="alert-stream" class="flex-1 overflow-y-auto p-4 space-y-2 font-mono-data text-xs">
-<!-- Alert Item High -->
-<div class="flex items-center gap-4 p-3 border-l-2 border-error bg-error/5 hover:bg-error/10 transition-colors group">
-<span class="text-slate-500 shrink-0">14:22:05</span>
-<span class="px-2 py-0.5 bg-error/20 text-error rounded text-[10px] font-bold">危急</span>
-<span class="text-on-surface flex-1">检测: APT_LAZARUS 在 C-区 进行横向移动</span>
-<span class="text-slate-500 group-hover:text-cyan-400 cursor-pointer flex items-center gap-1">详情 <span class="material-symbols-outlined text-sm">open_in_new</span></span>
-</div>
-<!-- Alert Item Med -->
-<div class="flex items-center gap-4 p-3 border-l-2 border-secondary bg-secondary/5 hover:bg-secondary/10 transition-colors group">
-<span class="text-slate-500 shrink-0">14:21:42</span>
-<span class="px-2 py-0.5 bg-secondary/20 text-secondary rounded text-[10px] font-bold">警告</span>
-<span class="text-on-surface flex-1">异常: 敏感端点 [/auth/admin] 的高频请求</span>
-<span class="text-slate-500 group-hover:text-cyan-400 cursor-pointer flex items-center gap-1">详情 <span class="material-symbols-outlined text-sm">open_in_new</span></span>
-</div>
-<!-- Alert Item Info -->
-<div class="flex items-center gap-4 p-3 border-l-2 border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors group">
-<span class="text-slate-500 shrink-0">14:20:11</span>
-<span class="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded text-[10px] font-bold">信息</span>
-<span class="text-on-surface flex-1">数据库: 特征库已更新 [v2.0.441]</span>
-<span class="text-slate-500 group-hover:text-cyan-400 cursor-pointer flex items-center gap-1">详情 <span class="material-symbols-outlined text-sm">open_in_new</span></span>
-</div>
-<!-- Alert Item Med -->
-<div class="flex items-center gap-4 p-3 border-l-2 border-secondary bg-secondary/5 hover:bg-secondary/10 transition-colors group">
-<span class="text-slate-500 shrink-0">14:18:30</span>
-<span class="px-2 py-0.5 bg-secondary/20 text-secondary rounded text-[10px] font-bold">警告</span>
-<span class="text-on-surface flex-1">IOC 匹配: IP 185.156.73.54 命中已知恶意主机列表</span>
-<span class="text-slate-500 group-hover:text-cyan-400 cursor-pointer flex items-center gap-1">详情 <span class="material-symbols-outlined text-sm">open_in_new</span></span>
-</div>
-<!-- Alert Item Med -->
-<div class="flex items-center gap-4 p-3 border-l-2 border-secondary bg-secondary/5 hover:bg-secondary/10 transition-colors group">
-<span class="text-slate-500 shrink-0">14:15:02</span>
-<span class="px-2 py-0.5 bg-secondary/20 text-secondary rounded text-[10px] font-bold">警告</span>
-<span class="text-on-surface flex-1">检测: 发现对 22 端口 [SSH] 的未授权访问尝试</span>
-<span class="text-slate-500 group-hover:text-cyan-400 cursor-pointer flex items-center gap-1">详情 <span class="material-symbols-outlined text-sm">open_in_new</span></span>
-</div>
-</div>
-<div class="p-3 border-t border-white/5 bg-slate-950/20 flex gap-2">
-<span class="w-1.5 h-4 bg-cyan-500 animate-pulse"></span>
-<div class="text-[10px] text-cyan-400/50 uppercase tracking-widest self-center">系统空闲... 等待下一数据包...</div>
-</div>
-</div>
-<!-- Global Threat Distribution Overlay Widget -->
-<div class="col-span-12 lg:col-span-4 glass-panel flex flex-col relative overflow-hidden">
-<div class="px-6 py-4 border-b border-white/5 bg-white/5">
-<h2 class="text-mono-data font-mono-data text-cyan-100 flex items-center gap-2">
-<span class="material-symbols-outlined text-cyan-400 text-sm">public</span>
-                                威胁源地理分布
-                            </h2>
-</div>
-<div class="flex-1 relative p-4 flex flex-col justify-center items-center">
-<div class="absolute inset-0 z-0 opacity-40">
-<img class="w-full h-full object-cover grayscale brightness-50 contrast-125" data-alt="Satellite view of earth city lights at night with a futuristic neon overlay" src="/libs/images/index-satellite.jpg"/>
-</div>
-<!-- Geographic Heatlist -->
-<div class="relative z-10 w-full space-y-4">
-<div class="flex flex-col gap-1">
-<div class="flex justify-between text-xs font-mono-data">
-<span class="text-slate-300">东亚</span>
-<span class="text-cyan-400">42%</span>
-</div>
-<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-cyan-500" style="width: 42%;"></div>
-</div>
-</div>
-<div class="flex flex-col gap-1">
-<div class="flex justify-between text-xs font-mono-data">
-<span class="text-slate-300">北美</span>
-<span class="text-cyan-400">28%</span>
-</div>
-<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-cyan-500" style="width: 28%;"></div>
-</div>
-</div>
-<div class="flex flex-col gap-1">
-<div class="flex justify-between text-xs font-mono-data">
-<span class="text-slate-300">东欧</span>
-<span class="text-cyan-400">15%</span>
-</div>
-<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-cyan-500" style="width: 15%;"></div>
-</div>
-</div>
-<div class="flex flex-col gap-1">
-<div class="flex justify-between text-xs font-mono-data">
-<span class="text-slate-300">其他</span>
-<span class="text-cyan-400">15%</span>
-</div>
-<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-cyan-500" style="width: 15%;"></div>
-</div>
-</div>
-</div>
-<!-- Crosshair Decoration -->
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-20">
-<div class="w-32 h-32 border border-cyan-500 rounded-full flex items-center justify-center">
-<div class="w-24 h-24 border border-cyan-500/50 rounded-full border-dashed animate-spin" style="animation-duration: 20s;"></div>
-</div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-[1px] bg-cyan-500/30"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-48 w-[1px] bg-cyan-500/30"></div>
-</div>
-</div>
-</div>
-</div>
-<!-- Bottom Functional Panel -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<div class="glass-panel p-4 flex items-center gap-4 group cursor-pointer hover:border-cyan-500/40 transition-all">
-<div class="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20 group-hover:neon-glow">
-<span class="material-symbols-outlined">analytics</span>
-</div>
-<div>
-<div class="font-bold text-cyan-100">行为指纹库</div>
-<div class="text-[10px] text-slate-500 font-mono-data">指纹引擎版本 v4.2</div>
-</div>
-</div>
-<div class="glass-panel p-4 flex items-center gap-4 group cursor-pointer hover:border-cyan-500/40 transition-all">
-<div class="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20 group-hover:neon-glow">
-<span class="material-symbols-outlined">security</span>
-</div>
-<div>
-<div class="font-bold text-cyan-100">漏洞监测中心</div>
-<div class="text-[10px] text-slate-500 font-mono-data">扫描子系统 已激活</div>
-</div>
-</div>
-<div class="glass-panel p-4 flex items-center gap-4 group cursor-pointer hover:border-cyan-500/40 transition-all">
-<div class="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20 group-hover:neon-glow">
-<span class="material-symbols-outlined">hub</span>
-</div>
-<div>
-<div class="font-bold text-cyan-100">多源情报枢纽</div>
-<div class="text-[10px] text-slate-500 font-mono-data">正在接入 14 个全球数据源</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Footer Meta Info -->
-<footer class="mt-12 flex justify-between items-center text-[10px] font-mono-data text-slate-500 tracking-tighter">
-<div class="flex gap-4">
-<span>内核版本: 5.14.0-X-AMD64</span>
-<span>加密协议: AES-256-GCM</span>
-<span>运行时间: 14天 02时 11分</span>
-</div>
-<div>© 2024 CRUCIX 战术系统。保留所有权利。</div>
+
+<!-- Footer -->
+<footer class="flex justify-between items-center text-[10px] font-mono-data text-slate-500 tracking-tighter pb-2">
+  <div class="flex gap-4">
+    <span id="footer-uptime">运行时间: --</span>
+    <span id="footer-sweep">上次扫描: --</span>
+  </div>
+  <div>© 2025 CRUCIX 战术系统。保留所有权利。</div>
 </footer>
+
+</div><!-- /relative z-10 -->
 </main>
-</div>
+</div><!-- /page-content -->
+
 <script type="module">
   import { initShell } from './shell.js';
+  import { apiFetch } from './auth.js';
+
   await initShell('briefing-center');
 
-  // SSE 实时预警流
-  const alertStream = document.getElementById('alert-stream');
-  if (alertStream) {
-    const token = localStorage.getItem('crx_access_token');
-    const evtSrc = new EventSource(`/events?token=${encodeURIComponent(token ?? '')}`);
+  // ─── Constants ───────────────────────────────────────────────
+  const LEVEL_COLOR_CLASS = { CRITICAL: 'bg-red-500/20 text-red-400 border-red-500/30', HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30', ELEVATED: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', LOW: 'bg-cyan-500/10 text-cyan-400/70 border-cyan-500/20' };
+  const LEVEL_ZH = { CRITICAL: '严重', HIGH: '高危', ELEVATED: '中等', LOW: '低危' };
+  const DIR_ZH   = { worsening: '↑ 恶化', stable: '→ 平稳', improving: '↓ 好转' };
+  const ALERT_STYLE = {
+    CISA:         ['危急', 'border-error',       'bg-error/5',      'bg-error/20 text-error'],
+    ENISA:        ['警告', 'border-secondary',   'bg-secondary/5',  'bg-secondary/20 text-secondary'],
+    'CERTs Intl': ['警告', 'border-secondary',   'bg-secondary/5',  'bg-secondary/20 text-secondary'],
+    CNCERT:       ['信息', 'border-cyan-500/30', 'bg-cyan-500/5',   'bg-cyan-500/20 text-cyan-400'],
+    CNVD:         ['信息', 'border-cyan-500/30', 'bg-cyan-500/5',   'bg-cyan-500/20 text-cyan-400'],
+    CNNVD:        ['信息', 'border-cyan-500/30', 'bg-cyan-500/5',   'bg-cyan-500/20 text-cyan-400'],
+  };
 
-    evtSrc.addEventListener('alert', (e) => {
-      try {
-        const alert = JSON.parse(e.data);
-        const severityMap = {
-          critical: ['危急', 'border-error',        'bg-error/5',       'bg-error/20 text-error'],
-          high:     ['警告', 'border-secondary',    'bg-secondary/5',   'bg-secondary/20 text-secondary'],
-          medium:   ['警告', 'border-secondary',    'bg-secondary/5',   'bg-secondary/20 text-secondary'],
-          low:      ['信息', 'border-cyan-500/30',  'bg-cyan-500/5',    'bg-cyan-500/20 text-cyan-400'],
-        };
-        const [label, border, bg, badge] = severityMap[alert.severity] ?? severityMap.low;
-        const time = new Date(alert.created_at ?? Date.now()).toLocaleTimeString('zh-CN', { hour12: false });
-        const item = document.createElement('div');
-        item.className = `flex items-center gap-4 p-3 border-l-2 ${border} ${bg} hover:opacity-90 transition-colors`;
+  // ─── Type label map ──────────────────────────────────────────
+  const TYPE_LABEL = {
+    vulnerability: '漏洞',
+    ioc:           'IOC',
+    news:          '新闻',
+    event:         '事件',
+    threat_intel:  '威胁情报',
+    exposure:      '暴露资产',
+  };
+  const TYPE_COLORS = [
+    [0, 229, 255], [255, 178, 183], [251, 191, 36], [52, 211, 153],
+    [167, 139, 250], [248, 113, 113], [251, 146, 60],
+  ];
 
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'text-slate-500 shrink-0';
-        timeSpan.textContent = time;
+  // ─── Situation bar ───────────────────────────────────────────
+  function populateSitBar(data, health) {
+    const t = data?.threats || {};
+    const levelEl = document.getElementById('sit-level-badge');
+    if (levelEl && t.level) {
+      levelEl.textContent = LEVEL_ZH[t.level] || t.level;
+      levelEl.className = `px-2.5 py-0.5 rounded text-xs font-bold font-mono-data border ${LEVEL_COLOR_CLASS[t.level] || 'bg-slate-700/50 text-slate-400 border-slate-600/30'}`;
+    }
+    const idxEl = document.getElementById('sit-index');
+    if (idxEl) idxEl.textContent = t.index ?? '--';
+    const dirEl = document.getElementById('sit-direction');
+    if (dirEl) dirEl.textContent = DIR_ZH[t.direction] || '';
 
-        const badgeSpan = document.createElement('span');
-        badgeSpan.className = `px-2 py-0.5 ${badge} rounded text-[10px] font-bold`;
-        badgeSpan.textContent = label;
-
-        const msgSpan = document.createElement('span');
-        msgSpan.className = 'text-on-surface flex-1';
-        msgSpan.textContent = alert.title ?? alert.message ?? '新预警';
-
-        item.append(timeSpan, badgeSpan, msgSpan);
-        alertStream.prepend(item);
-        while (alertStream.children.length > 20) alertStream.lastChild.remove();
-      } catch { /* 忽略解析错误 */ }
-    });
-
-    evtSrc.onerror = () => evtSrc.close();
+    if (health) {
+      const srcEl = document.getElementById('sit-sources-ok');
+      if (srcEl) srcEl.textContent = health.sourcesOk ?? '--';
+      const sweepEl = document.getElementById('sit-last-sweep');
+      if (sweepEl && health.lastSweep) {
+        sweepEl.textContent = new Date(health.lastSweep).toLocaleTimeString('zh-CN', { hour12: false });
+      }
+    }
   }
+
+  // ─── Stat cards ──────────────────────────────────────────────
+  function populateCards(data, stats) {
+    // From /api/data (memory)
+    const victims = data?.actors?.totalVictims ?? null;
+    const c2 = data?.iocs?.c2Count ?? null;
+    document.getElementById('stat-victims').textContent = victims !== null ? victims.toLocaleString() : '--';
+    document.getElementById('stat-c2').textContent = c2 !== null ? c2.toLocaleString() : '--';
+
+    if (!stats || stats.db === null) return;
+
+    // CVE
+    const cveHighRisk = stats.cve?.high_risk ?? null;
+    const cveTotal    = stats.cve?.total ?? null;
+    const cveNew      = stats.cve?.new_in_period ?? null;
+    document.getElementById('stat-highrisk-cve').textContent = cveHighRisk !== null ? cveHighRisk.toLocaleString() : '--';
+    document.getElementById('stat-total-cve').textContent    = cveTotal !== null ? cveTotal.toLocaleString() : '--';
+    document.getElementById('stat-new-cve').textContent      = cveNew !== null ? `+${cveNew.toLocaleString()}` : '--';
+    const cveBar = document.getElementById('stat-cve-bar');
+    if (cveBar && cveTotal) cveBar.style.width = `${Math.min(100, (cveHighRisk / cveTotal) * 100 * 3)}%`;
+
+    // IOC
+    const iocActive = stats.ioc?.active ?? null;
+    const iocTotal  = stats.ioc?.total ?? null;
+    const iocNew    = stats.ioc?.new_in_period ?? null;
+    document.getElementById('stat-active-ioc').textContent = iocActive !== null ? iocActive.toLocaleString() : '--';
+    document.getElementById('stat-total-ioc').textContent  = iocTotal !== null ? iocTotal.toLocaleString() : '--';
+    document.getElementById('stat-new-ioc').textContent    = iocNew !== null ? `+${iocNew.toLocaleString()}` : '--';
+    const iocBar = document.getElementById('stat-ioc-bar');
+    if (iocBar && iocTotal) iocBar.style.width = `${Math.min(100, (iocActive / iocTotal) * 100)}%`;
+
+    // Intel
+    const intel24h    = stats.intel?.last_24h ?? null;
+    const intelTotal  = stats.intel?.total ?? null;
+    document.getElementById('stat-intel-24h').textContent   = intel24h !== null ? intel24h.toLocaleString() : '--';
+    document.getElementById('stat-intel-total').textContent = intelTotal !== null ? intelTotal.toLocaleString() : '--';
+    // period sum from trend
+    if (stats.trend) {
+      const sum = stats.trend.reduce((s, r) => s + r.count, 0);
+      document.getElementById('stat-intel-period').textContent = `+${sum.toLocaleString()}`;
+    }
+  }
+
+  // ─── Trend line chart ────────────────────────────────────────
+  function drawTrendChart(trend, days) {
+    const canvas = document.getElementById('trend-chart');
+    if (!canvas) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width  = rect.width  || 600;
+    canvas.height = rect.height || 160;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!trend || trend.length === 0) {
+      ctx.fillStyle = 'rgba(100,116,139,0.5)';
+      ctx.font = '11px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('暂无趋势数据', canvas.width / 2, canvas.height / 2);
+      return;
+    }
+
+    // Aggregate by day (sum all source types)
+    const dayMap = new Map();
+    for (const r of trend) {
+      const k = typeof r.day === 'string' ? r.day.slice(0, 10) : new Date(r.day).toISOString().slice(0, 10);
+      dayMap.set(k, (dayMap.get(k) || 0) + r.count);
+    }
+
+    // Fill missing days
+    const endDate = new Date();
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - days + 1);
+    const labels = [];
+    const values = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      labels.push(key.slice(5)); // MM-DD
+      values.push(dayMap.get(key) || 0);
+    }
+
+    const pad = { l: 36, r: 10, t: 10, b: 22 };
+    const w = canvas.width - pad.l - pad.r;
+    const h = canvas.height - pad.t - pad.b;
+    const maxVal = Math.max(...values, 1);
+
+    const xStep = w / Math.max(values.length - 1, 1);
+    const toX = (i) => pad.l + i * xStep;
+    const toY = (v) => pad.t + h - (v / maxVal) * h;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.t + (h / 4) * i;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + w, y); ctx.stroke();
+    }
+
+    // Y-axis labels
+    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.font = '9px Space Grotesk';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = Math.round(maxVal * (1 - i / 4));
+      ctx.fillText(v, pad.l - 4, pad.t + (h / 4) * i + 3);
+    }
+
+    // X-axis labels (show ~6 evenly spaced)
+    ctx.textAlign = 'center';
+    const step = Math.max(1, Math.floor(labels.length / 6));
+    for (let i = 0; i < labels.length; i += step) {
+      ctx.fillText(labels[i], toX(i), pad.t + h + 14);
+    }
+
+    // Area fill
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
+    grad.addColorStop(0, 'rgba(0,229,255,0.15)');
+    grad.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(values[0]));
+    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
+    ctx.lineTo(toX(values.length - 1), pad.t + h);
+    ctx.lineTo(toX(0), pad.t + h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Line
+    ctx.strokeStyle = 'rgba(0,229,255,0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(values[0]));
+    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
+    ctx.stroke();
+
+    // Dots for peaks
+    const peak = values.indexOf(Math.max(...values));
+    ctx.fillStyle = 'rgba(0,229,255,1)';
+    ctx.shadowColor = 'rgba(0,229,255,0.6)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(toX(peak), toY(values[peak]), 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // ─── Donut chart ─────────────────────────────────────────────
+  function drawDonutChart(typeDistribution) {
+    const canvas = document.getElementById('donut-chart');
+    if (!canvas) return;
+    canvas.width  = 120;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 120, 120);
+
+    const legend = document.getElementById('donut-legend');
+    if (legend) legend.innerHTML = '';
+
+    if (!typeDistribution || typeDistribution.length === 0) {
+      ctx.strokeStyle = 'rgba(100,116,139,0.2)';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(60, 60, 45, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
+
+    const total = typeDistribution.reduce((s, r) => s + r.count, 0);
+    const ctrEl = document.getElementById('donut-center-val');
+    if (ctrEl) ctrEl.textContent = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : total;
+
+    let angle = -Math.PI / 2;
+    typeDistribution.forEach((r, i) => {
+      const [cr, cg, cb] = TYPE_COLORS[i % TYPE_COLORS.length];
+      const sweep = (r.count / total) * Math.PI * 2;
+
+      ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
+      ctx.lineWidth = 11;
+      ctx.beginPath();
+      ctx.arc(60, 60, 45, angle, angle + sweep);
+      ctx.stroke();
+      angle += sweep;
+
+      // Gap
+      ctx.strokeStyle = 'rgba(11,14,20,1)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(60, 60, 45, angle, angle + 0.02);
+      ctx.stroke();
+      angle += 0.02;
+
+      // Legend
+      if (legend) {
+        const pct = Math.round(r.count / total * 100);
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1.5';
+        row.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background:rgb(${cr},${cg},${cb})"></span>
+          <span class="text-slate-400 truncate flex-1">${TYPE_LABEL[r.type] || r.type}</span>
+          <span class="text-slate-500 shrink-0">${pct}%</span>`;
+        legend.appendChild(row);
+      }
+    });
+  }
+
+  // ─── Intelligence panels ─────────────────────────────────────
+  function populateRansomwareList(data) {
+    const el = document.getElementById('ransomware-list');
+    if (!el) return;
+    const groups = data?.actors?.ransomwareGroups || [];
+    if (!groups.length) {
+      el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
+      return;
+    }
+    const maxV = groups[0]?.victims || 1;
+    el.innerHTML = groups.slice(0, 5).map((g, i) => {
+      const pct = Math.round((g.victims / maxV) * 100);
+      const rankColors = ['text-red-400', 'text-orange-400', 'text-amber-400', 'text-slate-400', 'text-slate-500'];
+      return `<div class="space-y-1">
+        <div class="flex justify-between items-center text-[11px]">
+          <div class="flex items-center gap-2">
+            <span class="font-mono-data font-bold ${rankColors[i]} w-4">${i + 1}</span>
+            <span class="text-slate-300 truncate">${g.name}</span>
+          </div>
+          <span class="font-mono-data text-[10px] text-slate-500 shrink-0">${g.victims} 受害</span>
+        </div>
+        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full rounded-full bg-secondary/60 transition-all duration-500" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function populateSectorList(data) {
+    const el = document.getElementById('sector-list');
+    if (!el) return;
+    const raw = data?.actors?.bySector || {};
+    const sectors = Object.entries(raw)
+      .map(([sector, count]) => ({ sector, count: typeof count === 'number' ? count : count?.count || 0 }))
+      .sort((a, b) => b.count - a.count);
+    if (!sectors.length) {
+      el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
+      return;
+    }
+    const maxV = sectors[0]?.count || 1;
+    el.innerHTML = sectors.slice(0, 6).map((s) => {
+      const pct = Math.round((s.count / maxV) * 100);
+      return `<div class="space-y-1">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-300 truncate">${s.sector || s.name}</span>
+          <span class="font-mono-data text-[10px] text-amber-400/70">${s.count}</span>
+        </div>
+        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full rounded-full bg-amber-500/50 transition-all duration-500" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function populateLifecycle(lifecycle) {
+    const el = document.getElementById('lifecycle-list');
+    if (!el) return;
+    if (!lifecycle || !lifecycle.length) {
+      el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
+      return;
+    }
+    const LIFECYCLE_META = {
+      fresh:    { label: 'Fresh',    color: 'bg-emerald-500', textColor: 'text-emerald-400', desc: '新发现，尚未确认' },
+      active:   { label: 'Active',   color: 'bg-cyan-500',    textColor: 'text-cyan-400',    desc: '确认活跃中' },
+      aging:    { label: 'Aging',    color: 'bg-amber-500',   textColor: 'text-amber-400',   desc: '活跃度下降' },
+      inactive: { label: 'Inactive', color: 'bg-slate-500',   textColor: 'text-slate-400',   desc: '已停止活动' },
+      revoked:  { label: 'Revoked',  color: 'bg-red-800',     textColor: 'text-red-500',     desc: '已吊销/误报' },
+    };
+    const total = lifecycle.reduce((s, r) => s + r.count, 0) || 1;
+    el.innerHTML = lifecycle.map(r => {
+      const m = LIFECYCLE_META[r.lifecycle] || { label: r.lifecycle, color: 'bg-slate-600', textColor: 'text-slate-400', desc: '' };
+      const pct = Math.round(r.count / total * 100);
+      return `<div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full ${m.color} shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between text-[11px]">
+            <span class="${m.textColor} font-mono-data font-medium">${m.label}</span>
+            <span class="text-slate-500">${pct}%</span>
+          </div>
+          <div class="h-1 mt-0.5 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full rounded-full ${m.color} opacity-60 transition-all duration-500" style="width:${pct}%"></div>
+          </div>
+          <div class="text-[9px] text-slate-600 mt-0.5">${r.count.toLocaleString()} 个指标 · ${m.desc}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─── Alert stream ────────────────────────────────────────────
+  function populateAlerts(data) {
+    const stream = document.getElementById('alert-stream');
+    if (!stream) return;
+    const allAlerts = [];
+    for (const item of (data.certAlerts?.items || [])) {
+      for (const alert of (item.alerts || [])) allAlerts.push({ ...alert, sourceLabel: item.label });
+    }
+    allAlerts.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    const metaEl = document.getElementById('alert-stream-meta');
+    if (metaEl) metaEl.textContent = `共 ${allAlerts.length} 条告警`;
+
+    stream.innerHTML = '';
+    if (!allAlerts.length) {
+      stream.innerHTML = '<div class="flex items-center justify-center h-full text-slate-600 text-xs">暂无告警数据</div>';
+      return;
+    }
+    for (const alert of allAlerts.slice(0, 30)) {
+      const [label, border, bg, badge] = ALERT_STYLE[alert.sourceLabel] || ALERT_STYLE.CNCERT;
+      const time = alert.date ? new Date(alert.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) : '--';
+      const item = document.createElement('div');
+      item.className = `flex items-start gap-2 p-2.5 border-l-2 ${border} ${bg} transition-colors`;
+      if (alert.url) {
+        item.classList.add('cursor-pointer', 'hover:opacity-90');
+        item.addEventListener('click', () => window.open(alert.url, '_blank', 'noopener,noreferrer'));
+      }
+      item.innerHTML = `<span class="text-slate-500 shrink-0 text-[10px] mt-0.5 w-9">${time}</span>
+        <span class="px-1.5 py-0.5 ${badge} rounded text-[10px] font-bold shrink-0">${label}</span>
+        <span class="text-slate-500 text-[10px] shrink-0 mt-0.5">[${alert.sourceLabel}]</span>
+        <span class="text-on-surface flex-1 leading-relaxed text-[11px]">${alert.title || '告警'}</span>`;
+      stream.appendChild(item);
+    }
+  }
+
+  // ─── Threat map ──────────────────────────────────────────────
+  const SEV = {
+    critical: { r:255, g:50,  b:50,  radius:3,   glow:14, pulse:true  },
+    high:     { r:255, g:130, b:0,   radius:2.5, glow:10, pulse:true  },
+    medium:   { r:255, g:204, b:0,   radius:2,   glow:7,  pulse:false },
+    low:      { r:0,   g:229, b:255, radius:1.5, glow:5,  pulse:false },
+  };
+  function project(lat, lon, w, h) { return [(lon + 180) / 360 * w, (90 - lat) / 180 * h]; }
+
+  let _geoAttacks = [], _animFrame = null, _hoverIdx = -1;
+
+  function drawMap(ts = 0) {
+    const canvas = document.getElementById('threat-map-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const { width: w, height: h } = canvas;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < _geoAttacks.length; i++) {
+      const pt = _geoAttacks[i];
+      const s = SEV[pt.severity] || SEV.low;
+      const [x, y] = project(pt.lat, pt.lon, w, h);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, s.glow);
+      g.addColorStop(0, `rgba(${s.r},${s.g},${s.b},0.3)`);
+      g.addColorStop(1, `rgba(${s.r},${s.g},${s.b},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, s.glow, 0, Math.PI * 2); ctx.fill();
+      if (s.pulse) {
+        const phase = (ts * 0.0005 + i * 0.4) % 1;
+        ctx.strokeStyle = `rgba(${s.r},${s.g},${s.b},${(1 - phase) * 0.6})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.arc(x, y, s.radius + s.glow * phase, 0, Math.PI * 2); ctx.stroke();
+      }
+      const hovered = i === _hoverIdx;
+      ctx.fillStyle = `rgba(${s.r},${s.g},${s.b},${hovered ? 1 : 0.9})`;
+      ctx.beginPath(); ctx.arc(x, y, hovered ? s.radius * 1.8 : s.radius, 0, Math.PI * 2); ctx.fill();
+    }
+    _animFrame = requestAnimationFrame(drawMap);
+  }
+
+  function initThreatMap(geoAttacks) {
+    if (_animFrame) { cancelAnimationFrame(_animFrame); _animFrame = null; }
+    const canvas = document.getElementById('threat-map-canvas');
+    if (!canvas) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width  = rect.width  || 400;
+    canvas.height = rect.height || 400;
+    _geoAttacks = [...(geoAttacks || [])]
+      .sort((a, b) => ({ critical:0, high:1, medium:2, low:3 }[a.severity] ?? 4) - ({ critical:0, high:1, medium:2, low:3 }[b.severity] ?? 4))
+      .slice(0, 400);
+    const countEl = document.getElementById('map-point-count');
+    if (countEl) countEl.textContent = `${_geoAttacks.length} 个威胁点`;
+    const tooltip = document.getElementById('map-tooltip');
+    canvas.onmousemove = (e) => {
+      const r  = canvas.getBoundingClientRect();
+      const mx = (e.clientX - r.left) * (canvas.width  / r.width);
+      const my = (e.clientY - r.top)  * (canvas.height / r.height);
+      let best = -1, bestD = 14;
+      for (let i = 0; i < _geoAttacks.length; i++) {
+        const [x, y] = project(_geoAttacks[i].lat, _geoAttacks[i].lon, canvas.width, canvas.height);
+        const d = Math.hypot(mx - x, my - y);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      _hoverIdx = best;
+      if (best >= 0 && tooltip) {
+        tooltip.textContent = _geoAttacks[best].label || _geoAttacks[best].source || '未知威胁';
+        tooltip.style.left = `${e.clientX - r.left + 14}px`;
+        tooltip.style.top  = `${e.clientY - r.top  - 6}px`;
+        tooltip.classList.remove('hidden');
+      } else tooltip?.classList.add('hidden');
+    };
+    canvas.onmouseleave = () => { _hoverIdx = -1; tooltip?.classList.add('hidden'); };
+    _animFrame = requestAnimationFrame(drawMap);
+  }
+  const _mapContainer = document.getElementById('map-container');
+  if (_mapContainer) {
+    new ResizeObserver(() => { if (_geoAttacks.length) initThreatMap(_geoAttacks); }).observe(_mapContainer);
+  }
+
+  // ─── Health / footer ─────────────────────────────────────────
+  let _healthData = null;
+  async function loadHealth() {
+    try {
+      const res = await fetch('/api/health');
+      if (!res.ok) return null;
+      _healthData = await res.json();
+      const uptimeEl = document.getElementById('footer-uptime');
+      if (uptimeEl && _healthData.uptime != null) {
+        const d = Math.floor(_healthData.uptime / 86400);
+        const hr = Math.floor((_healthData.uptime % 86400) / 3600);
+        const m = Math.floor((_healthData.uptime % 3600) / 60);
+        uptimeEl.textContent = `运行时间: ${d}天 ${hr}时 ${m}分`;
+      }
+      const sweepEl = document.getElementById('footer-sweep');
+      if (sweepEl && _healthData.lastSweep) {
+        sweepEl.textContent = `上次扫描: ${new Date(_healthData.lastSweep).toLocaleString('zh-CN', { hour12: false })}`;
+      }
+      return _healthData;
+    } catch { return null; }
+  }
+
+  // ─── Stats from DB ───────────────────────────────────────────
+  let _currentDays = 7;
+  let _lastApiData = null;
+
+  async function loadStats(days) {
+    try {
+      const res = await apiFetch(`/api/stats?days=${days}`);
+      if (!res || !res.ok) return null;
+      return await res.json();
+    } catch { return null; }
+  }
+
+  async function refreshCharts(days) {
+    const stats = await loadStats(days);
+    if (!stats) return;
+    drawTrendChart(stats.trend, days);
+    drawDonutChart(stats.typeDistribution);
+    populateLifecycle(stats.lifecycle);
+    if (_lastApiData) populateCards(_lastApiData, stats);
+    return stats;
+  }
+
+  // ─── Time range selector ─────────────────────────────────────
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _currentDays = parseInt(btn.dataset.days);
+      await refreshCharts(_currentDays);
+    });
+  });
+
+  // ─── Main data flow ──────────────────────────────────────────
+  function applyData(data) {
+    _lastApiData = data;
+    populateAlerts(data);
+    initThreatMap(data.geoAttacks);
+    populateSitBar(data, _healthData);
+    const footerEl = document.getElementById('alert-stream-footer');
+    if (footerEl) {
+      const ts = data.meta?.timestamp;
+      footerEl.textContent = ts ? `数据时间: ${new Date(ts).toLocaleString('zh-CN', { hour12: false })}` : '系统就绪';
+    }
+    // Ransomware + Sector from memory data
+    populateRansomwareList(data);
+    populateSectorList(data);
+  }
+
+  async function loadData() {
+    try {
+      const res = await apiFetch('/api/data');
+      if (!res || !res.ok) return;
+      applyData(await res.json());
+    } catch { /* 等待 SSE 推送 */ }
+  }
+
+  // Load everything in parallel
+  const [, health, stats] = await Promise.all([
+    loadData(),
+    loadHealth(),
+    loadStats(_currentDays),
+  ]);
+
+  if (health) _healthData = health;
+  if (stats) {
+    drawTrendChart(stats.trend, _currentDays);
+    drawDonutChart(stats.typeDistribution);
+    populateLifecycle(stats.lifecycle);
+    if (_lastApiData) populateCards(_lastApiData, stats);
+    else populateCards({}, stats);
+  }
+
+  // ResizeObserver for charts
+  const chartContainer = document.getElementById('trend-chart')?.parentElement;
+  if (chartContainer && stats) {
+    new ResizeObserver(() => drawTrendChart(stats.trend, _currentDays)).observe(chartContainer);
+  }
+
+  // ─── SSE ─────────────────────────────────────────────────────
+  const token = localStorage.getItem('crx_access_token');
+  const evtSrc = new EventSource(`/events?token=${encodeURIComponent(token ?? '')}`);
+
+  evtSrc.onopen = () => {
+    const dot = document.getElementById('sse-dot');
+    const badge = document.getElementById('sse-badge');
+    if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse';
+    if (badge) badge.textContent = '实时推流';
+  };
+
+  evtSrc.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'update' && msg.data) {
+        applyData(msg.data);
+        loadHealth();
+      }
+    } catch { /* 忽略解析错误 */ }
+  };
+
+  evtSrc.onerror = () => {
+    const dot = document.getElementById('sse-dot');
+    const badge = document.getElementById('sse-badge');
+    if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-600';
+    if (badge) badge.textContent = '连接断开';
+    evtSrc.close();
+  };
 </script>
 </body></html>

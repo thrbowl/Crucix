@@ -56,7 +56,7 @@
 <div class="flex items-center gap-4">
 <span class="material-symbols-outlined text-slate-400 hover:text-white transition-colors cursor-pointer">toll</span>
 <span class="material-symbols-outlined text-slate-400 hover:text-white transition-colors cursor-pointer">notifications</span>
-<button class="bg-primary text-black px-4 py-1.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors" onclick="window.location.href='/login.html'">
+<button class="bg-primary text-black px-4 py-1.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors" onclick="window.location.href='/login'">
                 登录
             </button>
 </div>
@@ -106,7 +106,7 @@
 <input class="w-4 h-4 rounded bg-surface-input border-border text-primary focus:ring-0 focus:ring-offset-0" type="checkbox"/>
 <span class="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">同意服务条款与通信协议</span>
 </label>
-<a class="text-xs text-primary hover:text-primary-hover transition-colors" href="/login.html">已有账号？直接登录</a>
+<a class="text-xs text-primary hover:text-primary-hover transition-colors" href="/login">已有账号？直接登录</a>
 </div>
 </div>
 </div>
@@ -114,7 +114,7 @@
 </main>
 <script type="module">
   import { getToken } from './auth.js';
-  if (getToken()) { window.location.href = '/index.html'; }
+  if (getToken()) { window.location.href = '/'; }
 
   const registerBtn = document.querySelector('main button');
   registerBtn.addEventListener('click', async () => {
@@ -140,7 +140,7 @@
       });
       const data = await res.json();
       if (res.ok) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       } else {
         showError(data.error || '注册失败，请稍后重试');
       }

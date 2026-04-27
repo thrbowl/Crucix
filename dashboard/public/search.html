@@ -422,7 +422,7 @@
       btn.className = 'w-full py-2 border border-cyan-500/30 text-cyan-400 rounded hover:bg-cyan-400 hover:text-slate-950 transition-all font-label-caps text-xs';
       btn.textContent = '查看全维图谱';
       btn.addEventListener('click', () => {
-        window.location.href = `/workbench.html?type=${encodeURIComponent(item.type ?? '')}&id=${encodeURIComponent(item.id ?? '')}`;
+        window.location.href = `/workbench?type=${encodeURIComponent(item.type ?? '')}&id=${encodeURIComponent(item.id ?? '')}`;
       });
 
       card.append(header, descP, btn);

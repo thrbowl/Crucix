@@ -66,7 +66,7 @@ const PROTECTED_PAGES = [
 ];
 app.use((req, res, next) => {
   if (PROTECTED_PAGES.includes(req.path) && !req.cookies?.refresh_token) {
-    return res.redirect('/login.html');
+    return res.redirect('/login');
   }
   next();
 });
@@ -121,7 +121,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
     const sub = await getOrCreateSubscription(pool, user.id);
-    const accessToken = signAccessToken({ id: user.id, email: user.email, plan: sub.plan_name });
+    const accessToken = signAccessToken({ id: user.id, email: user.email, role: user.role, plan: sub.plan_name });
     const { plaintext, hash, expiresAt } = generateRefreshToken();
     await storeRefreshToken(pool, user.id, { hash, expiresAt });
 
@@ -158,7 +158,7 @@ app.post('/api/auth/refresh', async (req, res) => {
 
     const sub = await getOrCreateSubscription(pool, userId);
     const userRow = await getUserById(pool, userId);
-    const accessToken = signAccessToken({ id: userId, email: userRow?.email, plan: sub.plan_name });
+    const accessToken = signAccessToken({ id: userId, email: userRow?.email, role: userRow?.role ?? 'user', plan: sub.plan_name });
     const { plaintext, hash, expiresAt } = generateRefreshToken();
     await storeRefreshToken(pool, userId, { hash, expiresAt });
 
@@ -191,9 +191,11 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   res.json({
     id: req.user.id,
     email: req.user.email,
+    role: req.user.role ?? 'user',
     plan: req.user.plan,
     credits: balance?.current_credits ?? null,
     period_end: balance?.period_end ?? null,
+    is_admin: req.user.role === 'admin',
   });
 });
 
@@ -225,8 +227,12 @@ app.delete('/api/auth/keys/:id', requireAuth, async (req, res) => {
   res.json({ message: 'API key revoked' });
 });
 
-// Auth middleware for /api/* routes
-app.use('/api', authMiddleware(getPool()));
+// Auth middleware for /api/* routes (health + stats are public)
+const PUBLIC_API = new Set(['/health', '/stats']);
+app.use('/api', (req, res, next) => {
+  if (PUBLIC_API.has(req.path)) return next();
+  return authMiddleware(getPool())(req, res, next);
+});
 
 // === REST API v1 ===
 app.use('/api/v1', createV1Router({ getPool, getCurrentData: () => currentData }));
@@ -400,6 +406,106 @@ app.get('/api/health', (req, res) => {
     language: currentLanguage,
     db: getPool() ? 'connected' : 'not-configured',
   });
+});
+
+// API: DB-sourced stats for 简报中心 dashboard
+app.get('/api/stats', async (req, res) => {
+  const days = Math.max(1, Math.min(parseInt(req.query.days) || 30, 90));
+  const pool = getPool();
+  if (!pool) return res.json({ db: null });
+
+  try {
+    const since = `NOW() - INTERVAL '${days} days'`;
+
+    // CVE counts
+    const cveQ = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE (data->>'x_crucix_kev_listed')::boolean = true
+                           AND (data->>'x_crucix_exploit_public')::boolean = true) AS high_risk,
+        COUNT(*) FILTER (WHERE created_at >= ${since}) AS new_in_period
+      FROM stix_objects WHERE type = 'vulnerability'
+    `);
+
+    // IOC counts
+    const iocQ = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE data->>'x_crucix_ioc_lifecycle' IN ('fresh','active')) AS active,
+        COUNT(*) FILTER (WHERE created_at >= ${since}) AS new_in_period
+      FROM stix_objects WHERE type = 'indicator'
+    `);
+
+    // Intel items: total + last 24h + trend by day
+    const intelTotalQ = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '24 hours') AS last_24h
+      FROM raw_intel_items
+    `);
+
+    const trendQ = await pool.query(`
+      SELECT
+        DATE(first_seen_at) AS day,
+        source_type,
+        COUNT(*) AS cnt
+      FROM raw_intel_items
+      WHERE first_seen_at >= ${since}
+      GROUP BY DATE(first_seen_at), source_type
+      ORDER BY day ASC
+    `);
+
+    // IOC lifecycle distribution
+    const lifecycleQ = await pool.query(`
+      SELECT data->>'x_crucix_ioc_lifecycle' AS lifecycle, COUNT(*) AS cnt
+      FROM stix_objects
+      WHERE type = 'indicator' AND data->>'x_crucix_ioc_lifecycle' IS NOT NULL
+      GROUP BY data->>'x_crucix_ioc_lifecycle'
+    `);
+
+    // Source type distribution from raw_intel_items
+    const typeDistQ = await pool.query(`
+      SELECT source_type, COUNT(*) AS cnt
+      FROM raw_intel_items
+      WHERE first_seen_at >= ${since}
+      GROUP BY source_type
+    `);
+
+    // Daily CVE new additions trend
+    const cveTrendQ = await pool.query(`
+      SELECT DATE(created_at) AS day, COUNT(*) AS cnt
+      FROM stix_objects
+      WHERE type = 'vulnerability' AND created_at >= ${since}
+      GROUP BY DATE(created_at)
+      ORDER BY day ASC
+    `);
+
+    res.json({
+      db: 'connected',
+      days,
+      cve: {
+        total: parseInt(cveQ.rows[0]?.total || 0),
+        high_risk: parseInt(cveQ.rows[0]?.high_risk || 0),
+        new_in_period: parseInt(cveQ.rows[0]?.new_in_period || 0),
+      },
+      ioc: {
+        total: parseInt(iocQ.rows[0]?.total || 0),
+        active: parseInt(iocQ.rows[0]?.active || 0),
+        new_in_period: parseInt(iocQ.rows[0]?.new_in_period || 0),
+      },
+      intel: {
+        total: parseInt(intelTotalQ.rows[0]?.total || 0),
+        last_24h: parseInt(intelTotalQ.rows[0]?.last_24h || 0),
+      },
+      trend: trendQ.rows.map(r => ({ day: r.day, source_type: r.source_type, count: parseInt(r.cnt) })),
+      cveTrend: cveTrendQ.rows.map(r => ({ day: r.day, count: parseInt(r.cnt) })),
+      lifecycle: lifecycleQ.rows.map(r => ({ lifecycle: r.lifecycle, count: parseInt(r.cnt) })),
+      typeDistribution: typeDistQ.rows.map(r => ({ type: r.source_type, count: parseInt(r.cnt) })),
+    });
+  } catch (err) {
+    console.error('[/api/stats]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // API: get a specific locale by code (for client-side language switching)

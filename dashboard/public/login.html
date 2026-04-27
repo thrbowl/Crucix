@@ -166,7 +166,7 @@
 <div class="h-[1px] flex-1 bg-border-subtle"></div>
 </div>
 <p class="text-[12px] text-text-secondary" style="">
-                    没有账号？<a class="text-primary-container hover:underline ml-1" href="/register.html" style="">立即注册</a>
+                    没有账号？<a class="text-primary-container hover:underline ml-1" href="/register" style="">立即注册</a>
 </p>
 </div>
 </div>
@@ -191,7 +191,7 @@
 <div class="fixed bottom-8 right-8 w-12 h-12 border-b border-r border-primary/20 pointer-events-none"></div>
 <script type="module">
   import { setToken, getToken } from './auth.js';
-  if (getToken()) { window.location.href = '/index.html'; }
+  if (getToken()) { window.location.href = '/'; }
 
   document.querySelector('form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -212,7 +212,7 @@
       const data = await res.json();
       if (res.ok && data.access_token) {
         setToken(data.access_token);
-        window.location.href = '/index.html';
+        window.location.href = '/';
       } else {
         showError(data.error || '登录失败，请检查邮箱和密码');
       }
