@@ -164,14 +164,14 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
   <!-- 今日新增情报 -->
-  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+  <div class="glass-panel px-5 py-4 relative group flex items-center justify-between gap-4">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-amber-400 text-xl">bolt</span>
         <span class="text-sm font-bold text-slate-200 tracking-wide">今日新增</span>
         <span class="metric-tip">
           <span class="material-symbols-outlined text-slate-500 cursor-help" style="font-size:14px;line-height:1">info</span>
-          <div class="metric-tip-content">统计当日 <b>00:00</b> 至今写入数据库的原始情报条目数，涵盖漏洞、IOC、新闻、事件等所有类型。底部显示与前一日完整数据的增减对比。</div>
+          <div class="metric-tip-content">统计当日 <b>00:00</b> 至今写入的原始情报条目，底部显示与前一日完整数量的增减对比。</div>
         </span>
       </div>
       <div class="text-xs text-slate-400">累计情报 <span id="stat-intel-total" class="text-slate-300 font-mono-data">--</span> 条</div>
@@ -185,14 +185,14 @@
   </div>
 
   <!-- 高危 CVE -->
-  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+  <div class="glass-panel px-5 py-4 relative group flex items-center justify-between gap-4">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-red-400 text-xl">crisis_alert</span>
         <span class="text-sm font-bold text-slate-200 tracking-wide">高危 CVE</span>
         <span class="metric-tip">
           <span class="material-symbols-outlined text-slate-500 cursor-help" style="font-size:14px;line-height:1">info</span>
-          <div class="metric-tip-content">满足以下<b>任意一项</b>即计入高危：<br>· <b>KEV</b>：已进入 CISA 在野利用目录<br>· <b>PoC</b>：公开利用代码已发布<br>· <b>CVSS ≥ 7.0</b>：通用漏洞评分高危及以上<br><br>共追踪 <b id="tip-total-cve">--</b> 个 CVE。</div>
+          <div class="metric-tip-content">满足以下<b>任意一项</b>即计入高危：<br>· <b>KEV</b>：已知在野被利用<br>· <b>PoC</b>：公开利用代码已发布<br>· <b>CVSS ≥ 7.0</b>：高危及以上评分</div>
         </span>
       </div>
       <div class="text-xs text-slate-400">共追踪 <span id="stat-total-cve" class="text-slate-300 font-mono-data">--</span> 个 CVE</div>
@@ -207,14 +207,14 @@
   </div>
 
   <!-- 活跃 IOC -->
-  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+  <div class="glass-panel px-5 py-4 relative group flex items-center justify-between gap-4">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-cyan-400 text-xl">fingerprint</span>
         <span class="text-sm font-bold text-slate-200 tracking-wide">活跃 IOC</span>
         <span class="metric-tip">
           <span class="material-symbols-outlined text-slate-500 cursor-help" style="font-size:14px;line-height:1">info</span>
-          <div class="metric-tip-content">生命周期状态为 <b>fresh</b>（新发现，待确认）或 <b>active</b>（已确认活跃）的网络威胁指标，包含 IP、域名、哈希、URL 等类型。共追踪 <b id="tip-total-ioc">--</b> 个 IOC。</div>
+          <div class="metric-tip-content">生命周期为 <b>fresh</b>（新发现，待确认）或 <b>active</b>（已确认活跃）的威胁指标，不含过期、撤销状态。</div>
         </span>
       </div>
       <div class="text-xs text-slate-400">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-300 font-mono-data">--</span></div>
@@ -229,14 +229,14 @@
   </div>
 
   <!-- 勒索受害者 -->
-  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+  <div class="glass-panel px-5 py-4 relative group flex items-center justify-between gap-4">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-secondary text-xl">warning</span>
         <span class="text-sm font-bold text-slate-200 tracking-wide">勒索受害者</span>
         <span class="metric-tip">
           <span class="material-symbols-outlined text-slate-500 cursor-help" style="font-size:14px;line-height:1">info</span>
-          <div class="metric-tip-content">来源：<b>Ransomware.live</b> 勒索软件追踪平台，统计近期被公开披露的受害组织数量。数据由各勒索团伙的暗网泄露站点聚合，存在一定滞后性。</div>
+          <div class="metric-tip-content">近期被公开披露的受害组织数量，数据存在一定滞后性。</div>
         </span>
       </div>
       <div class="text-xs text-slate-400">近期追踪确认受害组织</div>
@@ -466,8 +466,6 @@
     document.getElementById('stat-highrisk-cve').textContent = cveHighRisk !== null ? cveHighRisk.toLocaleString() : '--';
     document.getElementById('stat-total-cve').textContent    = cveTotal !== null ? cveTotal.toLocaleString() : '--';
     document.getElementById('stat-new-cve').textContent      = cveNew !== null ? `+${cveNew.toLocaleString()}` : '--';
-    const tipCve = document.getElementById('tip-total-cve');
-    if (tipCve && cveTotal !== null) tipCve.textContent = cveTotal.toLocaleString();
 
     // IOC
     const iocActive = stats.ioc?.active ?? null;
@@ -476,8 +474,6 @@
     document.getElementById('stat-active-ioc').textContent = iocActive !== null ? iocActive.toLocaleString() : '--';
     document.getElementById('stat-total-ioc').textContent  = iocTotal !== null ? iocTotal.toLocaleString() : '--';
     document.getElementById('stat-new-ioc').textContent    = iocNew !== null ? `+${iocNew.toLocaleString()}` : '--';
-    const tipIoc = document.getElementById('tip-total-ioc');
-    if (tipIoc && iocTotal !== null) tipIoc.textContent = iocTotal.toLocaleString();
 
     // Intel
     const intelToday     = stats.intel?.today     ?? null;
