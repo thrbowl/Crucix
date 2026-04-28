@@ -121,22 +121,22 @@
 <div class="glass-panel px-5 py-3 flex items-center justify-between">
   <div class="flex items-center gap-4">
     <div>
-      <h1 class="font-h1 text-base text-primary tracking-tight font-bold">情报态势 <span class="text-cyan-500/40 text-xs ml-1 font-normal">CRUCIX BRIEFING CENTER</span></h1>
-      <p class="text-[11px] text-slate-500 mt-0.5">实时全域威胁监测与情报聚合分析</p>
+      <h1 class="font-h1 text-base text-primary tracking-tight font-bold">仪表板 <span class="text-cyan-500/40 text-xs ml-1 font-normal">CRUCIX DASHBOARD</span></h1>
+      <p class="text-[11px] text-slate-400 mt-0.5">实时全域威胁监测与情报聚合分析</p>
     </div>
   </div>
   <div class="flex items-center gap-5">
     <!-- 威胁等级 -->
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-500 uppercase tracking-widest">威胁等级</span>
+      <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁等级</span>
       <span id="sit-level-badge" class="px-2.5 py-0.5 rounded text-xs font-bold font-mono-data bg-slate-700/50 text-slate-400 border border-slate-600/30">--</span>
     </div>
     <div class="w-px h-5 bg-white/10"></div>
     <!-- 威胁指数 -->
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-500 uppercase tracking-widest">威胁指数</span>
+      <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁指数</span>
       <span id="sit-index" class="font-mono-data text-cyan-400 font-bold text-sm neon-text-glow">--</span>
-      <span id="sit-direction" class="text-[10px] text-slate-500">--</span>
+      <span id="sit-direction" class="text-[10px] text-slate-400">--</span>
     </div>
     <div class="w-px h-5 bg-white/10"></div>
     <!-- 源在线 -->
@@ -147,14 +147,14 @@
     <div class="w-px h-5 bg-white/10"></div>
     <!-- 上次扫描 -->
     <div class="flex items-center gap-1.5">
-      <span class="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
-      <span class="text-[10px] text-slate-500">扫描 <span id="sit-last-sweep" class="text-slate-400">--</span></span>
+      <span class="material-symbols-outlined text-[13px] text-slate-400">schedule</span>
+      <span class="text-[10px] text-slate-400">扫描 <span id="sit-last-sweep" class="text-slate-300">--</span></span>
     </div>
     <div class="w-px h-5 bg-white/10"></div>
     <!-- SSE -->
     <div class="flex items-center gap-1.5">
       <span class="w-1.5 h-1.5 rounded-full bg-slate-600" id="sse-dot"></span>
-      <span class="text-[10px] text-slate-500 font-mono-data" id="sse-badge">连接中...</span>
+      <span class="text-[10px] text-slate-400 font-mono-data" id="sse-badge">连接中...</span>
     </div>
   </div>
 </div>
@@ -167,12 +167,12 @@
     <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
       <span class="material-symbols-outlined text-5xl">crisis_alert</span>
     </div>
-    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">高危 CVE</div>
+    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">高危 CVE</div>
     <div class="text-3xl font-mono-data text-red-400 font-bold" style="text-shadow:0 0 10px rgba(239,68,68,0.5)" id="stat-highrisk-cve">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-500">KEV ∩ PoC 已公开 · 共 <span id="stat-total-cve" class="text-slate-400">--</span> CVE</div>
+    <div class="mt-1.5 text-[10px] text-slate-400">KEV ∩ PoC 已公开 · 共 <span id="stat-total-cve" class="text-slate-300">--</span> CVE</div>
     <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-600">周期新增</span>
-      <span id="stat-new-cve" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+      <span class="text-[10px] text-slate-400">周期新增</span>
+      <span id="stat-new-cve" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-red-500/60 transition-all duration-700" id="stat-cve-bar" style="width:0%"></div>
   </div>
@@ -182,12 +182,12 @@
     <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
       <span class="material-symbols-outlined text-5xl">bolt</span>
     </div>
-    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">24h 新增情报</div>
+    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">24h 新增情报</div>
     <div class="text-3xl font-mono-data text-amber-400 font-bold" style="text-shadow:0 0 10px rgba(251,191,36,0.5)" id="stat-intel-24h">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-500">今日入库 · 累计 <span id="stat-intel-total" class="text-slate-400">--</span> 条</div>
+    <div class="mt-1.5 text-[10px] text-slate-400">今日入库 · 累计 <span id="stat-intel-total" class="text-slate-300">--</span> 条</div>
     <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-600">周期新增</span>
-      <span id="stat-intel-period" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+      <span class="text-[10px] text-slate-400">周期新增</span>
+      <span id="stat-intel-period" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60" style="width:60%"></div>
   </div>
@@ -197,12 +197,12 @@
     <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
       <span class="material-symbols-outlined text-5xl">fingerprint</span>
     </div>
-    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">活跃 IOC</div>
+    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">活跃 IOC</div>
     <div class="text-3xl font-mono-data text-cyan-400 font-bold neon-text-glow" id="stat-active-ioc">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-500">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-400">--</span></div>
+    <div class="mt-1.5 text-[10px] text-slate-400">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-300">--</span></div>
     <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-600">周期新增</span>
-      <span id="stat-new-ioc" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+      <span class="text-[10px] text-slate-400">周期新增</span>
+      <span id="stat-new-ioc" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500/60 transition-all duration-700" id="stat-ioc-bar" style="width:0%"></div>
   </div>
@@ -212,12 +212,12 @@
     <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
       <span class="material-symbols-outlined text-5xl">warning</span>
     </div>
-    <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">勒索受害者</div>
+    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">勒索受害者</div>
     <div class="text-3xl font-mono-data text-secondary font-bold" style="text-shadow:0 0 10px rgba(255,178,183,0.4)" id="stat-victims">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-500">近期追踪确认受害者</div>
+    <div class="mt-1.5 text-[10px] text-slate-400">近期追踪确认受害者</div>
     <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-600">活跃 C2</span>
-      <span id="stat-c2" class="text-[10px] text-cyan-500/70 font-mono-data">--</span>
+      <span class="text-[10px] text-slate-400">活跃 C2</span>
+      <span id="stat-c2" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-secondary/60" style="width:45%"></div>
   </div>
@@ -232,7 +232,7 @@
       情报趋势分析
     </h2>
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-500 mr-1">时间范围</span>
+      <span class="text-[10px] text-slate-400 mr-1">时间范围</span>
       <button class="range-btn active text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="7">7天</button>
       <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="30">30天</button>
       <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="90">90天</button>
@@ -241,20 +241,20 @@
   <div class="grid grid-cols-12 gap-0">
     <!-- Line chart: daily intel -->
     <div class="col-span-12 lg:col-span-8 p-4 border-r border-white/5">
-      <div class="text-[10px] text-slate-500 mb-2 uppercase tracking-widest">每日情报入库趋势</div>
+      <div class="text-[10px] text-slate-300 mb-2 uppercase tracking-widest">每日情报入库趋势</div>
       <div class="relative" style="height:160px">
         <canvas id="trend-chart" class="absolute inset-0 w-full h-full"></canvas>
       </div>
     </div>
     <!-- Donut: type distribution -->
     <div class="col-span-12 lg:col-span-4 p-4">
-      <div class="text-[10px] text-slate-500 mb-2 uppercase tracking-widest">情报类型分布</div>
+      <div class="text-[10px] text-slate-300 mb-2 uppercase tracking-widest">情报类型分布</div>
       <div class="flex items-center gap-4" style="height:160px">
         <div class="relative shrink-0" style="width:120px;height:120px">
           <canvas id="donut-chart" style="width:120px;height:120px"></canvas>
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span id="donut-center-val" class="font-mono-data text-lg text-cyan-400 font-bold neon-text-glow">--</span>
-            <span class="text-[9px] text-slate-500">总计</span>
+            <span class="text-[9px] text-slate-400">总计</span>
           </div>
         </div>
         <div id="donut-legend" class="flex-1 space-y-1.5 text-[10px] font-mono-data text-slate-400 overflow-hidden"></div>
@@ -474,7 +474,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!trend || trend.length === 0) {
-      ctx.fillStyle = 'rgba(100,116,139,0.5)';
+      ctx.fillStyle = 'rgba(148,163,184,0.7)';
       ctx.font = '11px Space Grotesk';
       ctx.textAlign = 'center';
       ctx.fillText('暂无趋势数据', canvas.width / 2, canvas.height / 2);
@@ -518,7 +518,7 @@
     }
 
     // Y-axis labels
-    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.fillStyle = 'rgba(148,163,184,0.8)';
     ctx.font = '9px Space Grotesk';
     ctx.textAlign = 'right';
     for (let i = 0; i <= 4; i++) {

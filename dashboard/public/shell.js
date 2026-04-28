@@ -2,7 +2,7 @@
 import { authGuard, populateNav, logout } from './auth.js';
 
 const NAV_ITEMS = [
-  { id: 'briefing-center', href: '/',           icon: 'newspaper',      label: '简报中心' },
+  { id: 'briefing-center', href: '/',           icon: 'newspaper',      label: '仪表板' },
   { id: 'briefing',        href: '/briefing',   icon: 'biotech',        label: '威胁态势' },
   { id: 'search',          href: '/search',     icon: 'manage_search',  label: '实体搜索' },
   { id: 'workbench',       href: '/workbench',  icon: 'terminal',       label: '工作台'   },
