@@ -436,11 +436,13 @@ app.get('/api/stats', async (req, res) => {
       FROM stix_objects WHERE type = 'indicator'
     `);
 
-    // Intel items: total + last 24h + trend by day
+    // Intel items: total + today (from midnight) + yesterday (for comparison)
     const intelTotalQ = await pool.query(`
       SELECT
         COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '24 hours') AS last_24h
+        COUNT(*) FILTER (WHERE first_seen_at >= DATE_TRUNC('day', NOW())) AS today,
+        COUNT(*) FILTER (WHERE first_seen_at >= DATE_TRUNC('day', NOW()) - INTERVAL '1 day'
+                           AND first_seen_at <  DATE_TRUNC('day', NOW())) AS yesterday
       FROM raw_intel_items
     `);
 
@@ -495,7 +497,8 @@ app.get('/api/stats', async (req, res) => {
       },
       intel: {
         total: parseInt(intelTotalQ.rows[0]?.total || 0),
-        last_24h: parseInt(intelTotalQ.rows[0]?.last_24h || 0),
+        today:     parseInt(intelTotalQ.rows[0]?.today     || 0),
+        yesterday: parseInt(intelTotalQ.rows[0]?.yesterday || 0),
       },
       trend: trendQ.rows.map(r => ({ day: r.day, source_type: r.source_type, count: parseInt(r.cnt) })),
       cveTrend: cveTrendQ.rows.map(r => ({ day: r.day, count: parseInt(r.cnt) })),

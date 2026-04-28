@@ -144,6 +144,20 @@
 <!-- ─── Stat Cards ──────────────────────────────────────────────── -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
+  <!-- 今日新增情报 (first) -->
+  <div class="glass-panel p-4 relative overflow-hidden group">
+    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
+      <span class="material-symbols-outlined text-5xl">bolt</span>
+    </div>
+    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">今日新增</div>
+    <div class="text-3xl font-mono-data text-amber-400 font-bold" style="text-shadow:0 0 10px rgba(251,191,36,0.5)" id="stat-intel-today">--</div>
+    <div class="mt-1.5 text-[10px] text-slate-400">累计情报 <span id="stat-intel-total" class="text-slate-300">--</span> 条</div>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span id="stat-intel-vs-yesterday" class="text-[10px] font-mono-data text-slate-500">较昨日 --</span>
+    </div>
+    <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60 transition-all duration-700" id="stat-intel-bar" style="width:60%"></div>
+  </div>
+
   <!-- 高危 CVE (KEV ∩ PoC) -->
   <div class="glass-panel p-4 relative overflow-hidden group">
     <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
@@ -157,21 +171,6 @@
       <span id="stat-new-cve" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-red-500/60 transition-all duration-700" id="stat-cve-bar" style="width:0%"></div>
-  </div>
-
-  <!-- 24h 新增情报 -->
-  <div class="glass-panel p-4 relative overflow-hidden group">
-    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
-      <span class="material-symbols-outlined text-5xl">bolt</span>
-    </div>
-    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">24h 新增情报</div>
-    <div class="text-3xl font-mono-data text-amber-400 font-bold" style="text-shadow:0 0 10px rgba(251,191,36,0.5)" id="stat-intel-24h">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-400">今日入库 · 累计 <span id="stat-intel-total" class="text-slate-300">--</span> 条</div>
-    <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-400">周期新增</span>
-      <span id="stat-intel-period" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
-    </div>
-    <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60" style="width:60%"></div>
   </div>
 
   <!-- 活跃 IOC -->
@@ -434,14 +433,24 @@
     if (iocBar && iocTotal) iocBar.style.width = `${Math.min(100, (iocActive / iocTotal) * 100)}%`;
 
     // Intel
-    const intel24h    = stats.intel?.last_24h ?? null;
-    const intelTotal  = stats.intel?.total ?? null;
-    document.getElementById('stat-intel-24h').textContent   = intel24h !== null ? intel24h.toLocaleString() : '--';
+    const intelToday     = stats.intel?.today     ?? null;
+    const intelYesterday = stats.intel?.yesterday  ?? null;
+    const intelTotal     = stats.intel?.total      ?? null;
+    document.getElementById('stat-intel-today').textContent = intelToday !== null ? intelToday.toLocaleString() : '--';
     document.getElementById('stat-intel-total').textContent = intelTotal !== null ? intelTotal.toLocaleString() : '--';
-    // period sum from trend
-    if (stats.trend) {
-      const sum = stats.trend.reduce((s, r) => s + r.count, 0);
-      document.getElementById('stat-intel-period').textContent = `+${sum.toLocaleString()}`;
+    const vsEl = document.getElementById('stat-intel-vs-yesterday');
+    if (vsEl && intelToday !== null && intelYesterday !== null) {
+      const diff = intelToday - intelYesterday;
+      if (diff > 0) {
+        vsEl.textContent = `↑ ${diff.toLocaleString()} 较昨日`;
+        vsEl.className = 'text-[10px] font-mono-data text-emerald-400';
+      } else if (diff < 0) {
+        vsEl.textContent = `↓ ${Math.abs(diff).toLocaleString()} 较昨日`;
+        vsEl.className = 'text-[10px] font-mono-data text-red-400';
+      } else {
+        vsEl.textContent = '与昨日持平';
+        vsEl.className = 'text-[10px] font-mono-data text-slate-400';
+      }
     }
   }
 
