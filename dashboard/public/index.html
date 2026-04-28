@@ -138,24 +138,6 @@
       <span id="sit-index" class="font-mono-data text-cyan-400 font-bold text-sm neon-text-glow">--</span>
       <span id="sit-direction" class="text-[10px] text-slate-400">--</span>
     </div>
-    <div class="w-px h-5 bg-white/10"></div>
-    <!-- 源在线 -->
-    <div class="flex items-center gap-2">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span class="text-[10px] text-slate-400"><span id="sit-sources-ok" class="text-emerald-400 font-mono-data">--</span> 源在线</span>
-    </div>
-    <div class="w-px h-5 bg-white/10"></div>
-    <!-- 上次扫描 -->
-    <div class="flex items-center gap-1.5">
-      <span class="material-symbols-outlined text-[13px] text-slate-400">schedule</span>
-      <span class="text-[10px] text-slate-400">扫描 <span id="sit-last-sweep" class="text-slate-300">--</span></span>
-    </div>
-    <div class="w-px h-5 bg-white/10"></div>
-    <!-- SSE -->
-    <div class="flex items-center gap-1.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-slate-600" id="sse-dot"></span>
-      <span class="text-[10px] text-slate-400 font-mono-data" id="sse-badge">连接中...</span>
-    </div>
   </div>
 </div>
 
@@ -301,35 +283,17 @@
 
 </div>
 
-<!-- ─── Alert Stream + Threat Map ─────────────────────────────── -->
+<!-- ─── Threat Map + Alert Stream ─────────────────────────────── -->
 <div class="grid grid-cols-12 gap-4" style="height:460px">
 
-  <!-- Alert Stream -->
-  <div class="col-span-12 lg:col-span-8 glass-panel flex flex-col overflow-hidden">
-    <div class="px-5 py-3 border-b border-white/5 flex justify-between items-center bg-white/5 shrink-0">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-cyan-400 text-sm">lan</span>
-        <h2 class="text-xs font-mono-data text-cyan-100">实时预警流 [CERT_FEED_LIVE]</h2>
-      </div>
-      <div class="text-[10px] text-slate-500 font-mono-data" id="alert-stream-meta">等待数据...</div>
-    </div>
-    <div id="alert-stream" class="flex-1 overflow-y-auto p-3 space-y-1.5 font-mono-data text-xs min-h-0">
-      <div class="flex items-center justify-center h-full text-slate-600 text-xs">加载中...</div>
-    </div>
-    <div class="px-4 py-2 border-t border-white/5 bg-slate-950/20 flex gap-2 shrink-0">
-      <span class="w-1.5 h-3.5 bg-cyan-500 animate-pulse self-center"></span>
-      <div class="text-[10px] text-cyan-400/50 uppercase tracking-widest self-center" id="alert-stream-footer">等待下一数据包...</div>
-    </div>
-  </div>
-
-  <!-- Threat Map -->
-  <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col overflow-hidden">
+  <!-- Threat Map (left, larger) -->
+  <div class="col-span-12 lg:col-span-7 glass-panel flex flex-col overflow-hidden">
     <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex justify-between items-center shrink-0">
       <h2 class="text-xs font-mono-data text-cyan-100 flex items-center gap-2">
         <span class="material-symbols-outlined text-cyan-400 text-sm">public</span>
         全球威胁热力图
       </h2>
-      <div class="text-[10px] text-slate-500 font-mono-data" id="map-point-count">--</div>
+      <div class="text-[10px] text-slate-400 font-mono-data" id="map-point-count">--</div>
     </div>
     <div class="flex-1 relative overflow-hidden bg-slate-950/60 min-h-0" id="map-container">
       <img src="/libs/images/index-world-map.jpg"
@@ -339,14 +303,32 @@
            class="hidden absolute z-20 bg-slate-900/95 border border-white/10 rounded px-2 py-1
                   text-[10px] font-mono-data text-slate-200 pointer-events-none max-w-[200px] leading-snug"></div>
     </div>
-    <div class="px-4 py-2 border-t border-white/5 flex items-center gap-3 shrink-0">
-      <span class="text-[9px] text-slate-600 uppercase tracking-widest shrink-0">严重程度</span>
-      <div class="flex items-center gap-3">
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block shadow-[0_0_4px_#ef4444]"></span><span class="text-[9px] text-slate-500">严重</span></span>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block shadow-[0_0_4px_#f97316]"></span><span class="text-[9px] text-slate-500">高危</span></span>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block shadow-[0_0_4px_#facc15]"></span><span class="text-[9px] text-slate-500">中等</span></span>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block shadow-[0_0_4px_#22d3ee]"></span><span class="text-[9px] text-slate-500">低危</span></span>
+    <div class="px-4 py-2 border-t border-white/5 flex items-center gap-4 shrink-0">
+      <span class="text-[9px] text-slate-400 uppercase tracking-widest shrink-0">严重程度</span>
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500 inline-block shadow-[0_0_4px_#ef4444]"></span><span class="text-[9px] text-slate-400">严重</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-500 inline-block shadow-[0_0_4px_#f97316]"></span><span class="text-[9px] text-slate-400">高危</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block shadow-[0_0_4px_#facc15]"></span><span class="text-[9px] text-slate-400">中等</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 inline-block shadow-[0_0_4px_#22d3ee]"></span><span class="text-[9px] text-slate-400">低危</span></span>
       </div>
+    </div>
+  </div>
+
+  <!-- Alert Stream (right, smaller) -->
+  <div class="col-span-12 lg:col-span-5 glass-panel flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-white/5 flex justify-between items-center bg-white/5 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-cyan-400 text-sm">lan</span>
+        <h2 class="text-xs font-mono-data text-cyan-100">实时预警流</h2>
+      </div>
+      <div class="text-[10px] text-slate-400 font-mono-data" id="alert-stream-meta">等待数据...</div>
+    </div>
+    <div id="alert-stream" class="flex-1 overflow-y-auto p-3 space-y-1.5 font-mono-data text-xs min-h-0">
+      <div class="flex items-center justify-center h-full text-slate-500 text-xs">加载中...</div>
+    </div>
+    <div class="px-4 py-2 border-t border-white/5 bg-slate-950/20 flex gap-2 shrink-0">
+      <span class="w-1.5 h-3.5 bg-cyan-500 animate-pulse self-center"></span>
+      <div class="text-[10px] text-cyan-400/50 uppercase tracking-widest self-center" id="alert-stream-footer">等待下一数据包...</div>
     </div>
   </div>
 
