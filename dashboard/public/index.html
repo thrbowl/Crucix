@@ -159,7 +159,6 @@
     <div class="shrink-0 text-right">
       <div class="text-5xl font-mono-data text-amber-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(251,191,36,0.6)" id="stat-intel-today">--</div>
     </div>
-    <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60 transition-all duration-700" id="stat-intel-bar" style="width:60%"></div>
   </div>
 
   <!-- 高危 CVE -->
@@ -169,7 +168,7 @@
         <span class="material-symbols-outlined text-red-400 text-xl">crisis_alert</span>
         <span class="text-sm font-bold text-slate-200 tracking-wide">高危 CVE</span>
       </div>
-      <div class="text-xs text-slate-400">KEV ∩ PoC · 共 <span id="stat-total-cve" class="text-slate-300 font-mono-data">--</span> 个</div>
+      <div class="text-xs text-slate-400">KEV / PoC / CVSS≥7 · 共 <span id="stat-total-cve" class="text-slate-300 font-mono-data">--</span> 个</div>
       <div class="mt-1 flex items-center gap-1">
         <span class="text-xs text-slate-500">周期新增</span>
         <span id="stat-new-cve" class="text-xs text-cyan-400/80 font-mono-data">--</span>
@@ -178,7 +177,6 @@
     <div class="shrink-0 text-right">
       <div class="text-5xl font-mono-data text-red-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(239,68,68,0.6)" id="stat-highrisk-cve">--</div>
     </div>
-    <div class="absolute bottom-0 left-0 h-[2px] bg-red-500/60 transition-all duration-700" id="stat-cve-bar" style="width:0%"></div>
   </div>
 
   <!-- 活跃 IOC -->
@@ -197,7 +195,6 @@
     <div class="shrink-0 text-right">
       <div class="text-5xl font-mono-data text-cyan-400 font-bold leading-none neon-text-glow" id="stat-active-ioc">--</div>
     </div>
-    <div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500/60 transition-all duration-700" id="stat-ioc-bar" style="width:0%"></div>
   </div>
 
   <!-- 勒索受害者 -->
@@ -216,7 +213,6 @@
     <div class="shrink-0 text-right">
       <div class="text-5xl font-mono-data text-secondary font-bold leading-none" style="text-shadow:0 0 14px rgba(255,178,183,0.5)" id="stat-victims">--</div>
     </div>
-    <div class="absolute bottom-0 left-0 h-[2px] bg-secondary/60" style="width:45%"></div>
   </div>
 
 </div>
@@ -435,8 +431,6 @@
     document.getElementById('stat-highrisk-cve').textContent = cveHighRisk !== null ? cveHighRisk.toLocaleString() : '--';
     document.getElementById('stat-total-cve').textContent    = cveTotal !== null ? cveTotal.toLocaleString() : '--';
     document.getElementById('stat-new-cve').textContent      = cveNew !== null ? `+${cveNew.toLocaleString()}` : '--';
-    const cveBar = document.getElementById('stat-cve-bar');
-    if (cveBar && cveTotal) cveBar.style.width = `${Math.min(100, (cveHighRisk / cveTotal) * 100 * 3)}%`;
 
     // IOC
     const iocActive = stats.ioc?.active ?? null;
@@ -445,8 +439,6 @@
     document.getElementById('stat-active-ioc').textContent = iocActive !== null ? iocActive.toLocaleString() : '--';
     document.getElementById('stat-total-ioc').textContent  = iocTotal !== null ? iocTotal.toLocaleString() : '--';
     document.getElementById('stat-new-ioc').textContent    = iocNew !== null ? `+${iocNew.toLocaleString()}` : '--';
-    const iocBar = document.getElementById('stat-ioc-bar');
-    if (iocBar && iocTotal) iocBar.style.width = `${Math.min(100, (iocActive / iocTotal) * 100)}%`;
 
     // Intel
     const intelToday     = stats.intel?.today     ?? null;

@@ -421,8 +421,11 @@ app.get('/api/stats', async (req, res) => {
     const cveQ = await pool.query(`
       SELECT
         COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE (data->>'x_crucix_kev_listed')::boolean = true
-                           AND (data->>'x_crucix_exploit_public')::boolean = true) AS high_risk,
+        COUNT(*) FILTER (
+          WHERE (data->>'x_crucix_kev_listed')::boolean = true
+             OR (data->>'x_crucix_exploit_public')::boolean = true
+             OR (data->>'x_crucix_cvss_score')::numeric >= 7.0
+        ) AS high_risk,
         COUNT(*) FILTER (WHERE created_at >= ${since}) AS new_in_period
       FROM stix_objects WHERE type = 'vulnerability'
     `);

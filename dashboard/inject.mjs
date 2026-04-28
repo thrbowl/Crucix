@@ -258,10 +258,10 @@ function buildCVEList(data) {
 
   const cves = nvdCves.map(c => ({
     id: c.cveId,
-    cvss: c.cvssScore || 0,
+    cvss: c.cvss ?? c.cvssScore ?? 0,
     epss: epssMap.get(c.cveId) || null,
     description: (c.description || '').substring(0, 200),
-    publishedDate: c.publishedDate,
+    publishedDate: c.published ?? c.publishedDate,
     inKEV: kevSet.has(c.cveId),
     hasPoc: exploitSet.has(c.cveId),
     sources: ['NVD',
