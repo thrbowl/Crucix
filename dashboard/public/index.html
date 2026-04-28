@@ -104,25 +104,8 @@
             color: rgb(0,229,255);
             border-color: rgba(0,229,255,0.4);
         }
-        .metric-tip { position: relative; display: inline-flex; align-items: center; }
-        .metric-tip-content {
-            display: none;
-            position: absolute;
-            left: 0; top: calc(100% + 6px);
-            width: 220px;
-            background: rgba(15, 20, 30, 0.97);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 10px 12px;
-            font-size: 11px;
-            color: #94a3b8;
-            line-height: 1.7;
-            z-index: 100;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            pointer-events: none;
-        }
-        .metric-tip:hover .metric-tip-content { display: block; }
-        .metric-tip-content b { color: #e2e8f0; }
+        .metric-tip { display: inline-flex; align-items: center; }
+        .metric-tip-content { display: none; } /* content stored here, rendered by JS */
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex flex-col">
@@ -398,6 +381,37 @@
   import { apiFetch } from './auth.js';
 
   await initShell('briefing-center');
+
+  // ─── Global metric tooltip (fixed, never clipped by panels) ──
+  const _gtip = document.createElement('div');
+  _gtip.style.cssText = [
+    'position:fixed', 'z-index:9999', 'display:none', 'max-width:240px',
+    'background:rgba(10,14,22,0.98)', 'border:1px solid rgba(255,255,255,0.12)',
+    'border-radius:6px', 'padding:10px 12px', 'font-size:11px',
+    'color:#94a3b8', 'line-height:1.75', 'pointer-events:none',
+    'box-shadow:0 12px 32px rgba(0,0,0,0.6)',
+  ].join(';');
+  document.body.appendChild(_gtip);
+  _gtip.style.setProperty('--tip-b', '#e2e8f0');
+
+  document.querySelectorAll('.metric-tip').forEach(el => {
+    const src = el.querySelector('.metric-tip-content');
+    if (!src) return;
+    el.addEventListener('mouseenter', () => {
+      _gtip.innerHTML = src.innerHTML;
+      _gtip.querySelectorAll('b').forEach(b => b.style.color = '#e2e8f0');
+      _gtip.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      const tw = 240, th = _gtip.offsetHeight || 120;
+      let top  = r.bottom + 8;
+      let left = r.left;
+      if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+      if (top  + th > window.innerHeight - 8) top  = r.top - th - 8;
+      _gtip.style.top  = top  + 'px';
+      _gtip.style.left = left + 'px';
+    });
+    el.addEventListener('mouseleave', () => { _gtip.style.display = 'none'; });
+  });
 
   // ─── Constants ───────────────────────────────────────────────
   const LEVEL_COLOR_CLASS = { CRITICAL: 'bg-red-500/20 text-red-400 border-red-500/30', HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30', ELEVATED: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', LOW: 'bg-cyan-500/10 text-cyan-400/70 border-cyan-500/20' };
