@@ -144,61 +144,77 @@
 <!-- ─── Stat Cards ──────────────────────────────────────────────── -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-  <!-- 今日新增情报 (first) -->
-  <div class="glass-panel p-4 relative overflow-hidden group">
-    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
-      <span class="material-symbols-outlined text-5xl">bolt</span>
+  <!-- 今日新增情报 -->
+  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-amber-400 text-xl">bolt</span>
+        <span class="text-sm font-bold text-slate-200 tracking-wide">今日新增</span>
+      </div>
+      <div class="text-xs text-slate-400">累计情报 <span id="stat-intel-total" class="text-slate-300 font-mono-data">--</span> 条</div>
+      <div class="mt-1">
+        <span id="stat-intel-vs-yesterday" class="text-xs font-mono-data text-slate-500">较昨日 --</span>
+      </div>
     </div>
-    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">今日新增</div>
-    <div class="text-3xl font-mono-data text-amber-400 font-bold" style="text-shadow:0 0 10px rgba(251,191,36,0.5)" id="stat-intel-today">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-400">累计情报 <span id="stat-intel-total" class="text-slate-300">--</span> 条</div>
-    <div class="mt-2 flex items-center gap-1.5">
-      <span id="stat-intel-vs-yesterday" class="text-[10px] font-mono-data text-slate-500">较昨日 --</span>
+    <div class="shrink-0 text-right">
+      <div class="text-5xl font-mono-data text-amber-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(251,191,36,0.6)" id="stat-intel-today">--</div>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-amber-500/60 transition-all duration-700" id="stat-intel-bar" style="width:60%"></div>
   </div>
 
-  <!-- 高危 CVE (KEV ∩ PoC) -->
-  <div class="glass-panel p-4 relative overflow-hidden group">
-    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
-      <span class="material-symbols-outlined text-5xl">crisis_alert</span>
+  <!-- 高危 CVE -->
+  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-red-400 text-xl">crisis_alert</span>
+        <span class="text-sm font-bold text-slate-200 tracking-wide">高危 CVE</span>
+      </div>
+      <div class="text-xs text-slate-400">KEV ∩ PoC · 共 <span id="stat-total-cve" class="text-slate-300 font-mono-data">--</span> 个</div>
+      <div class="mt-1 flex items-center gap-1">
+        <span class="text-xs text-slate-500">周期新增</span>
+        <span id="stat-new-cve" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      </div>
     </div>
-    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">高危 CVE</div>
-    <div class="text-3xl font-mono-data text-red-400 font-bold" style="text-shadow:0 0 10px rgba(239,68,68,0.5)" id="stat-highrisk-cve">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-400">KEV ∩ PoC 已公开 · 共 <span id="stat-total-cve" class="text-slate-300">--</span> CVE</div>
-    <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-400">周期新增</span>
-      <span id="stat-new-cve" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
+    <div class="shrink-0 text-right">
+      <div class="text-5xl font-mono-data text-red-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(239,68,68,0.6)" id="stat-highrisk-cve">--</div>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-red-500/60 transition-all duration-700" id="stat-cve-bar" style="width:0%"></div>
   </div>
 
   <!-- 活跃 IOC -->
-  <div class="glass-panel p-4 relative overflow-hidden group">
-    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
-      <span class="material-symbols-outlined text-5xl">fingerprint</span>
+  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-cyan-400 text-xl">fingerprint</span>
+        <span class="text-sm font-bold text-slate-200 tracking-wide">活跃 IOC</span>
+      </div>
+      <div class="text-xs text-slate-400">fresh+active · 共 <span id="stat-total-ioc" class="text-slate-300 font-mono-data">--</span></div>
+      <div class="mt-1 flex items-center gap-1">
+        <span class="text-xs text-slate-500">周期新增</span>
+        <span id="stat-new-ioc" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      </div>
     </div>
-    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">活跃 IOC</div>
-    <div class="text-3xl font-mono-data text-cyan-400 font-bold neon-text-glow" id="stat-active-ioc">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-400">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-300">--</span></div>
-    <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-400">周期新增</span>
-      <span id="stat-new-ioc" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
+    <div class="shrink-0 text-right">
+      <div class="text-5xl font-mono-data text-cyan-400 font-bold leading-none neon-text-glow" id="stat-active-ioc">--</div>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-cyan-500/60 transition-all duration-700" id="stat-ioc-bar" style="width:0%"></div>
   </div>
 
   <!-- 勒索受害者 -->
-  <div class="glass-panel p-4 relative overflow-hidden group">
-    <div class="absolute top-0 right-0 p-2 text-white/5 group-hover:text-white/10 transition-colors">
-      <span class="material-symbols-outlined text-5xl">warning</span>
+  <div class="glass-panel px-5 py-4 relative overflow-hidden group flex items-center justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-secondary text-xl">warning</span>
+        <span class="text-sm font-bold text-slate-200 tracking-wide">勒索受害者</span>
+      </div>
+      <div class="text-xs text-slate-400">近期追踪确认</div>
+      <div class="mt-1 flex items-center gap-1">
+        <span class="text-xs text-slate-500">活跃 C2</span>
+        <span id="stat-c2" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      </div>
     </div>
-    <div class="text-[10px] text-slate-300 uppercase tracking-widest mb-1">勒索受害者</div>
-    <div class="text-3xl font-mono-data text-secondary font-bold" style="text-shadow:0 0 10px rgba(255,178,183,0.4)" id="stat-victims">--</div>
-    <div class="mt-1.5 text-[10px] text-slate-400">近期追踪确认受害者</div>
-    <div class="mt-2 flex items-center gap-1.5">
-      <span class="text-[10px] text-slate-400">活跃 C2</span>
-      <span id="stat-c2" class="text-[10px] text-cyan-400/80 font-mono-data">--</span>
+    <div class="shrink-0 text-right">
+      <div class="text-5xl font-mono-data text-secondary font-bold leading-none" style="text-shadow:0 0 14px rgba(255,178,183,0.5)" id="stat-victims">--</div>
     </div>
     <div class="absolute bottom-0 left-0 h-[2px] bg-secondary/60" style="width:45%"></div>
   </div>
