@@ -3,9 +3,9 @@ import { authGuard, populateNav, logout } from './auth.js';
 
 const NAV_ITEMS = [
   { id: 'briefing-center', href: '/',           icon: 'newspaper',      label: '仪表板' },
-  { id: 'briefing',        href: '/briefing',   icon: 'biotech',        label: '威胁态势' },
-  { id: 'search',          href: '/search',     icon: 'manage_search',  label: '实体搜索' },
+  { id: 'search',          href: '/search',     icon: 'manage_search',  label: '情报检索' },
   { id: 'workbench',       href: '/workbench',  icon: 'terminal',       label: '工作台'   },
+  { id: 'briefing',        href: '/briefing',   icon: 'biotech',        label: '威胁态势' },
   { id: 'watchlist',       href: '/watchlist',  icon: 'visibility',     label: '监视列表' },
   { id: 'sources',         href: '/sources',    icon: 'analytics',      label: '源健康状态' },
   { id: 'account',         href: '/account',    icon: 'account_circle', label: '账户管理' },

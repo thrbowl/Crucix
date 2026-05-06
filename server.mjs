@@ -23,6 +23,7 @@ import { getCreditBalance } from './lib/credits/index.mjs';
 import { exportIOCsJSON, exportIOCsCSV, exportIOCsSTIX, exportCVEsJSON, exportCVEsCSV } from './lib/export/index.mjs';
 import { matchIOC, matchCVE, filterByWatchlist } from './lib/watchlist/index.mjs';
 import { generateDailyReport, generateReportHTML } from './lib/report/index.mjs';
+import { lookupIP } from './lib/geoip.mjs';
 import { getPool, closePool } from './lib/db/index.mjs';
 import { runMigrations } from './lib/db/migrate.mjs';
 import { runPipeline } from './lib/pipeline/index.mjs';
@@ -410,12 +411,15 @@ app.get('/api/health', (req, res) => {
 
 // API: DB-sourced stats for 简报中心 dashboard
 app.get('/api/stats', async (req, res) => {
-  const days = Math.max(1, Math.min(parseInt(req.query.days) || 30, 90));
+  const rawDays = parseInt(req.query.days);
+  const days = isNaN(rawDays) ? 30 : Math.max(0, Math.min(rawDays, 90));
   const pool = getPool();
   if (!pool) return res.json({ db: null });
 
   try {
-    const since = `NOW() - INTERVAL '${days} days'`;
+    const since = `DATE_TRUNC('day', NOW()) - INTERVAL '${days === 0 ? 0 : days - 1} days'`;
+    const prevSince = `DATE_TRUNC('day', NOW()) - INTERVAL '${days === 0 ? 1 : days * 2 - 1} days'`;
+    const prevUntil = `DATE_TRUNC('day', NOW()) - INTERVAL '${days === 0 ? 0 : days - 1} days'`;
 
     // CVE counts
     const cveQ = await pool.query(`
@@ -426,7 +430,9 @@ app.get('/api/stats', async (req, res) => {
              OR (data->>'x_crucix_exploit_public')::boolean = true
              OR (data->>'x_crucix_cvss_score')::numeric >= 7.0
         ) AS high_risk,
-        COUNT(*) FILTER (WHERE created_at >= ${since}) AS new_in_period
+        COUNT(*) FILTER (WHERE last_seen_at >= ${since}) AS new_in_period,
+        COUNT(*) FILTER (WHERE last_seen_at >= ${prevSince}
+                           AND last_seen_at <  ${prevUntil}) AS new_in_prev_period
       FROM stix_objects WHERE type = 'vulnerability'
     `);
 
@@ -435,28 +441,40 @@ app.get('/api/stats', async (req, res) => {
       SELECT
         COUNT(*) AS total,
         COUNT(*) FILTER (WHERE data->>'x_crucix_ioc_lifecycle' IN ('fresh','active')) AS active,
-        COUNT(*) FILTER (WHERE created_at >= ${since}) AS new_in_period
+        COUNT(*) FILTER (WHERE last_seen_at >= ${since}) AS new_in_period,
+        COUNT(*) FILTER (WHERE last_seen_at >= ${prevSince}
+                           AND last_seen_at <  ${prevUntil}) AS new_in_prev_period
       FROM stix_objects WHERE type = 'indicator'
     `);
 
-    // Intel items: total + today (from midnight) + yesterday (for comparison)
+    // Intel items: total + current period + previous period (for comparison)
     const intelTotalQ = await pool.query(`
       SELECT
         COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE first_seen_at >= DATE_TRUNC('day', NOW())) AS today,
-        COUNT(*) FILTER (WHERE first_seen_at >= DATE_TRUNC('day', NOW()) - INTERVAL '1 day'
-                           AND first_seen_at <  DATE_TRUNC('day', NOW())) AS yesterday
+        COUNT(*) FILTER (WHERE last_seen_at >= ${since}) AS current_period,
+        COUNT(*) FILTER (WHERE last_seen_at >= ${prevSince}
+                           AND last_seen_at <  ${prevUntil}) AS prev_period
       FROM raw_intel_items
+    `);
+
+    // Ransomware victims: period comparison
+    const victimQ = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE last_seen_at >= ${since}) AS current_period,
+        COUNT(*) FILTER (WHERE last_seen_at >= ${prevSince}
+                           AND last_seen_at <  ${prevUntil}) AS prev_period
+      FROM raw_intel_items
+      WHERE source_name = 'Ransomware-Live'
     `);
 
     const trendQ = await pool.query(`
       SELECT
-        DATE(first_seen_at) AS day,
+        TO_CHAR(last_seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
         source_type,
         COUNT(*) AS cnt
       FROM raw_intel_items
-      WHERE first_seen_at >= ${since}
-      GROUP BY DATE(first_seen_at), source_type
+      WHERE last_seen_at >= ${since}
+      GROUP BY TO_CHAR(last_seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD'), source_type
       ORDER BY day ASC
     `);
 
@@ -472,41 +490,167 @@ app.get('/api/stats', async (req, res) => {
     const typeDistQ = await pool.query(`
       SELECT source_type, COUNT(*) AS cnt
       FROM raw_intel_items
-      WHERE first_seen_at >= ${since}
+      WHERE last_seen_at >= ${since}
       GROUP BY source_type
+    `);
+
+    // Ransomware: top groups and sectors within the selected period
+    const ransomGroupQ = await pool.query(`
+      SELECT content::jsonb->>'group' AS name, COUNT(*) AS cnt
+      FROM raw_intel_items
+      WHERE source_name = 'Ransomware-Live'
+        AND last_seen_at >= ${since}
+        AND content::jsonb->>'group' IS NOT NULL
+        AND content::jsonb->>'group' != 'Unknown'
+      GROUP BY content::jsonb->>'group'
+      ORDER BY cnt DESC
+      LIMIT 10
+    `);
+
+    const ransomSectorQ = await pool.query(`
+      SELECT content::jsonb->>'sector' AS name, COUNT(*) AS cnt
+      FROM raw_intel_items
+      WHERE source_name = 'Ransomware-Live'
+        AND last_seen_at >= ${since}
+        AND content::jsonb->>'sector' IS NOT NULL
+        AND content::jsonb->>'sector' != 'Unknown'
+      GROUP BY content::jsonb->>'sector'
+      ORDER BY cnt DESC
+      LIMIT 10
     `);
 
     // Daily CVE new additions trend
     const cveTrendQ = await pool.query(`
-      SELECT DATE(created_at) AS day, COUNT(*) AS cnt
+      SELECT TO_CHAR(last_seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, COUNT(*) AS cnt
       FROM stix_objects
-      WHERE type = 'vulnerability' AND created_at >= ${since}
-      GROUP BY DATE(created_at)
+      WHERE type = 'vulnerability' AND last_seen_at >= ${since}
+      GROUP BY TO_CHAR(last_seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
       ORDER BY day ASC
     `);
+
+    // ── Alerts (CERT / advisory sources) ──
+    const alertsQ = await pool.query(`
+      SELECT source_name, title, url,
+             last_seen_at AS date
+      FROM raw_intel_items
+      WHERE source_name IN ('CISA-Alerts','CERTs-Intl','CNCERT','CNVD','ENISA')
+        AND last_seen_at >= ${since}
+      ORDER BY last_seen_at DESC
+      LIMIT 30
+    `);
+
+    // ── Threat index — count signals from DB ──
+    const threatQ = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE source_name = 'CISA-KEV')     AS kev,
+        COUNT(*) FILTER (WHERE source_name = 'NVD')          AS crit_cve,
+        COUNT(*) FILTER (WHERE source_name = 'Feodo')        AS c2,
+        COUNT(*) FILTER (WHERE source_name = 'MalwareBazaar') AS malware,
+        COUNT(*) FILTER (WHERE source_name = 'URLhaus')      AS urlhaus
+      FROM raw_intel_items
+      WHERE last_seen_at >= ${since}
+    `);
+    const tr = threatQ.rows[0] || {};
+    const kevCount     = parseInt(tr.kev     || 0);
+    const critCVEs     = parseInt(tr.crit_cve || 0);
+    const c2Count      = parseInt(tr.c2      || 0);
+    const malwareCount = parseInt(tr.malware  || 0);
+    const urlhausCount = parseInt(tr.urlhaus  || 0);
+    const ransomCount  = parseInt(victimQ.rows[0]?.current_period || 0);
+    let threatScore = 0;
+    threatScore += Math.min(kevCount * 5, 20);
+    threatScore += Math.min(critCVEs * 3, 15);
+    threatScore += Math.min(Math.floor(c2Count / 10), 10);
+    threatScore += Math.min(Math.floor(malwareCount / 5), 10);
+    threatScore += Math.min(ransomCount * 2, 15);
+    threatScore += Math.min(Math.floor(urlhausCount / 100), 10);
+    threatScore = Math.min(threatScore, 100);
+    const threatLevel = threatScore >= 75 ? 'CRITICAL' : threatScore >= 50 ? 'HIGH' : threatScore >= 25 ? 'ELEVATED' : 'LOW';
+    const threatDir   = threatScore >= 70 ? 'worsening' : threatScore >= 40 ? 'stable' : 'improving';
+
+    // ── Geo attacks from DB + GeoIP ──
+    const COUNTRY_GEO = {
+      US:[39,-98],CN:[35,105],DE:[51,10],FR:[46,2],NL:[52.1,5.3],GB:[54,-2],
+      RU:[56,38],BR:[-14,-51],IN:[20,78],JP:[36,138],KR:[37,127],SG:[1.35,103.8],
+      AU:[-25,134],CA:[56,-96],IT:[42,12],ES:[40,-4],SE:[62,15],HK:[22.3,114.2],
+      TW:[23.5,121],PL:[52,20],RO:[46,25],UA:[49,32],ID:[-2,118],TH:[15,100],
+    };
+    const geoQ = await pool.query(`
+      SELECT source_name, title, content
+      FROM raw_intel_items
+      WHERE source_name IN ('Feodo','AbuseIPDB','Ransomware-Live','OTX')
+        AND last_seen_at >= ${since}
+      ORDER BY last_seen_at DESC
+      LIMIT 200
+    `);
+    const geoPoints = [];
+    for (const row of geoQ.rows) {
+      let c;
+      try { c = JSON.parse(row.content); } catch { continue; }
+      const sn = row.source_name;
+      if (sn === 'Feodo' || sn === 'AbuseIPDB') {
+        const ip = c.ip || c.ip_address || c.ipAddress;
+        if (!ip) continue;
+        const geo = await lookupIP(ip);
+        if (!geo) continue;
+        const loc = geo.city ? `${geo.city}, ${geo.country}` : (geo.country ?? '');
+        geoPoints.push({
+          lat: geo.lat, lon: geo.lon,
+          type: sn === 'Feodo' ? 'c2' : 'honeypot',
+          label: sn === 'Feodo' ? `C2: ${ip} (${c.malware || 'unknown'}) · ${loc}` : `Abuse: ${ip} (${c.totalReports || 0} reports) · ${loc}`,
+          severity: sn === 'Feodo' ? 'critical' : 'medium',
+          source: sn,
+        });
+      } else if (sn === 'Ransomware-Live') {
+        const cc = c.country;
+        const coords = cc ? COUNTRY_GEO[cc] : null;
+        if (!coords) continue;
+        geoPoints.push({
+          lat: coords[0] + (Math.random() - 0.5) * 0.8,
+          lon: coords[1] + (Math.random() - 0.5) * 0.8,
+          type: 'victim', label: `${c.group || '?'}: ${c.name || '?'}`,
+          severity: 'high', source: sn,
+        });
+      } else if (sn === 'OTX') {
+        // OTX pulses — no reliable geo, skip
+      }
+    }
 
     res.json({
       db: 'connected',
       days,
       cve: {
-        total: parseInt(cveQ.rows[0]?.total || 0),
-        high_risk: parseInt(cveQ.rows[0]?.high_risk || 0),
-        new_in_period: parseInt(cveQ.rows[0]?.new_in_period || 0),
+        total:              parseInt(cveQ.rows[0]?.total              || 0),
+        high_risk:          parseInt(cveQ.rows[0]?.high_risk          || 0),
+        new_in_period:      parseInt(cveQ.rows[0]?.new_in_period      || 0),
+        new_in_prev_period: parseInt(cveQ.rows[0]?.new_in_prev_period || 0),
       },
       ioc: {
-        total: parseInt(iocQ.rows[0]?.total || 0),
-        active: parseInt(iocQ.rows[0]?.active || 0),
-        new_in_period: parseInt(iocQ.rows[0]?.new_in_period || 0),
+        total:              parseInt(iocQ.rows[0]?.total              || 0),
+        active:             parseInt(iocQ.rows[0]?.active             || 0),
+        new_in_period:      parseInt(iocQ.rows[0]?.new_in_period      || 0),
+        new_in_prev_period: parseInt(iocQ.rows[0]?.new_in_prev_period || 0),
       },
       intel: {
-        total: parseInt(intelTotalQ.rows[0]?.total || 0),
-        today:     parseInt(intelTotalQ.rows[0]?.today     || 0),
-        yesterday: parseInt(intelTotalQ.rows[0]?.yesterday || 0),
+        total:          parseInt(intelTotalQ.rows[0]?.total          || 0),
+        current_period: parseInt(intelTotalQ.rows[0]?.current_period || 0),
+        prev_period:    parseInt(intelTotalQ.rows[0]?.prev_period    || 0),
       },
+      victims: {
+        current_period: parseInt(victimQ.rows[0]?.current_period || 0),
+        prev_period:    parseInt(victimQ.rows[0]?.prev_period    || 0),
+        total:          parseInt(victimQ.rows[0]?.current_period || 0),
+        activeGroups:   ransomGroupQ.rows.length,
+      },
+      ransomGroups:  ransomGroupQ.rows.map(r  => ({ name: r.name,  count: parseInt(r.cnt) })),
+      ransomSectors: ransomSectorQ.rows.map(r => ({ name: r.name,  count: parseInt(r.cnt) })),
       trend: trendQ.rows.map(r => ({ day: r.day, source_type: r.source_type, count: parseInt(r.cnt) })),
       cveTrend: cveTrendQ.rows.map(r => ({ day: r.day, count: parseInt(r.cnt) })),
       lifecycle: lifecycleQ.rows.map(r => ({ lifecycle: r.lifecycle, count: parseInt(r.cnt) })),
       typeDistribution: typeDistQ.rows.map(r => ({ type: r.source_type, count: parseInt(r.cnt) })),
+      alerts: alertsQ.rows.map(r => ({ source: r.source_name, title: r.title, url: r.url, date: r.date })),
+      threats: { level: threatLevel, index: threatScore, direction: threatDir },
+      geoAttacks: geoPoints,
     });
   } catch (err) {
     console.error('[/api/stats]', err.message);

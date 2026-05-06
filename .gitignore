@@ -9,6 +9,9 @@ apis/.env
 runs/
 output/
 
+# GeoIP database (large binary, download separately)
+data/*.mmdb
+
 # IDE / Editor
 .vscode/
 .idea/

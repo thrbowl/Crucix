@@ -12,6 +12,7 @@ import { exec } from 'child_process';
 import config from '../crucix.config.mjs';
 import { createLLMProvider } from '../lib/llm/index.mjs';
 import { generateLLMIdeas } from '../lib/llm/ideas.mjs';
+import { lookupIP } from '../lib/geoip.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -453,7 +454,7 @@ function buildActors(data) {
 }
 
 // === Geographic Attack Points for Globe ===
-function buildGeoAttacks(data) {
+async function buildGeoAttacks(data) {
   const points = [];
   const countryGeo = {
     US:[39,-98],CN:[35,105],DE:[51,10],FR:[46,2],NL:[52.1,5.3],GB:[54,-2],
@@ -485,8 +486,8 @@ function buildGeoAttacks(data) {
     const geo = geoFromCC(v.country);
     if (geo) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 3,
-        lon: geo.lon + (Math.random() - 0.5) * 3,
+        lat: geo.lat + (Math.random() - 0.5) * 0.8,
+        lon: geo.lon + (Math.random() - 0.5) * 0.8,
         type: 'victim',
         label: `${v.group}: ${v.name}`,
         severity: 'high',
@@ -495,48 +496,58 @@ function buildGeoAttacks(data) {
     }
   }
 
-  // GreyNoise top scanners
+  // GreyNoise top scanners — IP-level geolocation
   for (const s of (data.sources.GreyNoise?.topScanners || []).slice(0, 20)) {
-    const country = s.metadata?.country || s.country;
-    const geo = country ? geoFromCC(country) : null;
-    if (geo) {
+    const geo = s.ip ? await lookupIP(s.ip) : null;
+    const fallback = !geo && (s.metadata?.country || s.country) ? geoFromCC(s.metadata?.country || s.country) : null;
+    const pt = geo || fallback;
+    if (pt) {
+      const loc = geo?.city ? `${geo.city}, ${geo.country}` : (geo?.country ?? '');
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 3,
-        lon: geo.lon + (Math.random() - 0.5) * 3,
+        lat: pt.lat,
+        lon: pt.lon,
         type: 'attack_source',
-        label: `Scanner: ${s.ip}`,
+        label: `Scanner: ${s.ip}${loc ? ` (${loc})` : ''}`,
         severity: 'critical',
         source: 'GreyNoise',
       });
     }
   }
 
-  // Feodo C2 servers — geo-tag by country field or fallback to IP text
+  // Feodo C2 servers — IP-level geolocation
   for (const c of (data.sources.Feodo?.activeC2s || data.sources.Feodo?.c2Servers || []).slice(0, 20)) {
+    const ip = c.ip || c.ip_address;
+    const geo = ip ? await lookupIP(ip) : null;
     const country = c.country || c.countryCode;
-    const geo = country ? geoTagText(country) : null;
-    if (geo) {
+    const fallback = !geo && country ? geoTagText(country) : null;
+    const pt = geo || fallback;
+    if (pt) {
+      const loc = geo?.city ? `${geo.city}, ${geo.country}` : (geo?.country ?? '');
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 2,
-        lon: geo.lon + (Math.random() - 0.5) * 2,
+        lat: pt.lat,
+        lon: pt.lon,
         type: 'c2',
-        label: `C2: ${c.ip || c.ip_address} (${c.malware || 'unknown'})`,
+        label: `C2: ${ip} (${c.malware || 'unknown'})${loc ? ` · ${loc}` : ''}`,
         severity: 'critical',
         source: 'Feodo',
       });
     }
   }
 
-  // AbuseIPDB reported IPs
+  // AbuseIPDB reported IPs — IP-level geolocation
   for (const entry of (data.sources.AbuseIPDB?.reportedIPs || []).slice(0, 15)) {
+    const ip = entry.ipAddress || entry.ip;
+    const geo = ip ? await lookupIP(ip) : null;
     const country = entry.countryCode || entry.country;
-    const geo = country ? geoFromCC(country) : null;
-    if (geo) {
+    const fallback = !geo && country ? geoFromCC(country) : null;
+    const pt = geo || fallback;
+    if (pt) {
+      const loc = geo?.city ? `${geo.city}, ${geo.country}` : (geo?.country ?? '');
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 2,
-        lon: geo.lon + (Math.random() - 0.5) * 2,
+        lat: pt.lat,
+        lon: pt.lon,
         type: 'honeypot',
-        label: `Abuse: ${entry.ipAddress || entry.ip} (${entry.totalReports || 0} reports)`,
+        label: `Abuse: ${ip} (${entry.totalReports || 0} reports)${loc ? ` · ${loc}` : ''}`,
         severity: 'medium',
         source: 'AbuseIPDB',
       });
@@ -548,8 +559,8 @@ function buildGeoAttacks(data) {
     const geo = geoTagText(alert.title || alert.cert || '');
     if (geo) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 2,
-        lon: geo.lon + (Math.random() - 0.5) * 2,
+        lat: geo.lat + (Math.random() - 0.5) * 0.6,
+        lon: geo.lon + (Math.random() - 0.5) * 0.6,
         type: 'cert',
         label: `CERT: ${(alert.title || '').substring(0, 60)}`,
         severity: 'low',
@@ -566,8 +577,8 @@ function buildGeoAttacks(data) {
     if (!geo) continue;
     for (let i = 0; i < Math.min(count, 3); i++) {
       points.push({
-        lat: geo[0] + (Math.random() - 0.5) * 4,
-        lon: geo[1] + (Math.random() - 0.5) * 4,
+        lat: geo[0] + (Math.random() - 0.5) * 1,
+        lon: geo[1] + (Math.random() - 0.5) * 1,
         type: 'c2',
         label: `C2 cluster: ${cc} (${count})`,
         severity: count >= 5 ? 'critical' : 'high',
@@ -579,8 +590,8 @@ function buildGeoAttacks(data) {
   // CISA alerts → US region markers
   for (const a of (data.sources['CISA-Alerts']?.recentAlerts || []).slice(0, 8)) {
     points.push({
-      lat: 38.9 + (Math.random() - 0.5) * 8,
-      lon: -95 + (Math.random() - 0.5) * 20,
+      lat: 38.9 + (Math.random() - 0.5) * 3,
+      lon: -95 + (Math.random() - 0.5) * 6,
       type: 'cert',
       label: `CISA: ${(a.title || '').substring(0, 60)}`,
       severity: 'high',
@@ -590,10 +601,10 @@ function buildGeoAttacks(data) {
 
   // ENISA reports → EU region markers
   for (const r of (data.sources.ENISA?.recentReports || data.sources.ENISA?.links || []).slice(0, 6)) {
-    const geo = geoTagText(r.title || '') || { lat: 50 + (Math.random()-0.5)*10, lon: 10 + (Math.random()-0.5)*20 };
+    const geo = geoTagText(r.title || '') || { lat: 50 + (Math.random()-0.5)*3, lon: 10 + (Math.random()-0.5)*5 };
     points.push({
-      lat: geo.lat + (Math.random() - 0.5) * 3,
-      lon: geo.lon + (Math.random() - 0.5) * 3,
+      lat: geo.lat + (Math.random() - 0.5) * 1,
+      lon: geo.lon + (Math.random() - 0.5) * 1,
       type: 'cert',
       label: `ENISA: ${(r.title || '').substring(0, 60)}`,
       severity: 'medium',
@@ -604,8 +615,8 @@ function buildGeoAttacks(data) {
   // CNCERT/CNVD/CNNVD → China region markers
   for (const a of (data.sources.CNCERT?.recentAlerts || []).slice(0, 6)) {
     points.push({
-      lat: 35 + (Math.random() - 0.5) * 16,
-      lon: 105 + (Math.random() - 0.5) * 20,
+      lat: 35 + (Math.random() - 0.5) * 5,
+      lon: 105 + (Math.random() - 0.5) * 6,
       type: 'cert',
       label: `CNCERT: ${(a.title || '').substring(0, 50)}`,
       severity: 'medium',
@@ -614,8 +625,8 @@ function buildGeoAttacks(data) {
   }
   for (const v of (data.sources.CNVD?.recentVulns || []).slice(0, 5)) {
     points.push({
-      lat: 35 + (Math.random() - 0.5) * 16,
-      lon: 105 + (Math.random() - 0.5) * 20,
+      lat: 35 + (Math.random() - 0.5) * 5,
+      lon: 105 + (Math.random() - 0.5) * 6,
       type: 'exposed_asset',
       label: `CNVD: ${(v.title || v.name || '').substring(0, 50)}`,
       severity: 'medium',
@@ -624,8 +635,8 @@ function buildGeoAttacks(data) {
   }
   for (const v of (data.sources.CNNVD?.recentVulns || []).slice(0, 5)) {
     points.push({
-      lat: 35 + (Math.random() - 0.5) * 16,
-      lon: 105 + (Math.random() - 0.5) * 20,
+      lat: 35 + (Math.random() - 0.5) * 5,
+      lon: 105 + (Math.random() - 0.5) * 6,
       type: 'exposed_asset',
       label: `CNNVD: ${(v.title || v.name || '').substring(0, 50)}`,
       severity: 'medium',
@@ -636,12 +647,12 @@ function buildGeoAttacks(data) {
   // KEV CVEs → spread globally with high severity
   for (const c of (data.sources['CISA-KEV']?.recent || []).slice(0, 10)) {
     const geo = geoTagText(c.vendorProject || c.product || '') || {
-      lat: (Math.random() - 0.5) * 100,
-      lon: (Math.random() - 0.5) * 300,
+      lat: 39 + (Math.random() - 0.5) * 3,
+      lon: -95 + (Math.random() - 0.5) * 6,
     };
     points.push({
-      lat: geo.lat + (Math.random() - 0.5) * 5,
-      lon: geo.lon + (Math.random() - 0.5) * 5,
+      lat: geo.lat + (Math.random() - 0.5) * 1,
+      lon: geo.lon + (Math.random() - 0.5) * 1,
       type: 'exposed_asset',
       label: `KEV: ${(c.vulnerabilityName || c.cveID || '').substring(0, 60)}`,
       severity: 'critical',
@@ -656,8 +667,8 @@ function buildGeoAttacks(data) {
     if (!geo || cc === 'Unknown') continue;
     for (let i = 0; i < Math.min(count, 4); i++) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 5,
-        lon: geo.lon + (Math.random() - 0.5) * 5,
+        lat: geo.lat + (Math.random() - 0.5) * 1,
+        lon: geo.lon + (Math.random() - 0.5) * 1,
         type: 'victim',
         label: `Ransomware victim: ${cc} (${count} total)`,
         severity: count >= 5 ? 'high' : 'medium',
@@ -671,8 +682,8 @@ function buildGeoAttacks(data) {
     const geo = geoTagText(p.name || p.title || '');
     if (geo) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 3,
-        lon: geo.lon + (Math.random() - 0.5) * 3,
+        lat: geo.lat + (Math.random() - 0.5) * 0.8,
+        lon: geo.lon + (Math.random() - 0.5) * 0.8,
         type: 'attack_source',
         label: `OTX: ${(p.name || p.title || '').substring(0, 50)}`,
         severity: 'medium',
@@ -687,8 +698,8 @@ function buildGeoAttacks(data) {
     const geo = cc ? geoFromCC(cc) : null;
     if (geo) {
       points.push({
-        lat: geo.lat + (Math.random() - 0.5) * 4,
-        lon: geo.lon + (Math.random() - 0.5) * 4,
+        lat: geo.lat + (Math.random() - 0.5) * 1,
+        lon: geo.lon + (Math.random() - 0.5) * 1,
         type: 'exposed_asset',
         label: `Shodan: ${s.port || s.service || 'exposed'} (${cc})`,
         severity: 'low',
@@ -1065,7 +1076,7 @@ export async function synthesize(data) {
   const iocs = buildIOCs(data);
   const attackMatrix = buildAttackMatrix(data);
   const actors = buildActors(data);
-  const geoAttacks = buildGeoAttacks(data);
+  const geoAttacks = await buildGeoAttacks(data);
   const certAlerts = buildCertAlerts(data);
   const securityNews = buildSecurityNewsList(data);
   const chinaIntel = buildChinaIntel(data);

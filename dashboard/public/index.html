@@ -3,6 +3,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <script src="/libs/tailwind.js"></script>
+<script src="/libs/topojson-client.min.js"></script>
 <link href="/libs/fonts/space-grotesk-inter.css" rel="stylesheet"/>
 <link href="/libs/fonts/material-symbols.css" rel="stylesheet"/>
 <script id="tailwind-config">
@@ -130,15 +131,36 @@
   <div class="flex items-center gap-5">
     <!-- 威胁等级 -->
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁等级</span>
+      <span class="flex items-center gap-1">
+        <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁等级</span>
+        <span class="metric-tip">
+          <span class="material-symbols-outlined text-slate-600 cursor-help" style="font-size:13px;line-height:1">info</span>
+          <div class="metric-tip-content">基于当轮所有触发信号中最高级别确定，共四级：<br>· <b style="color:#ef4444">严重</b> — 存在在野利用或多源交叉确认的高置信度威胁<br>· <b style="color:#f97316">高危</b> — 高危 CVE、活跃 C2 或大规模攻击活动<br>· <b style="color:#eab308">中等</b> — 新漏洞或 IOC 告警，尚无明确利用证据<br>· <b style="color:#22d3ee">低危</b> — 无显著异常信号</div>
+        </span>
+      </span>
       <span id="sit-level-badge" class="px-2.5 py-0.5 rounded text-xs font-bold font-mono-data bg-slate-700/50 text-slate-400 border border-slate-600/30">--</span>
     </div>
     <div class="w-px h-5 bg-white/10"></div>
     <!-- 威胁指数 -->
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁指数</span>
+      <span class="flex items-center gap-1">
+        <span class="text-[10px] text-slate-400 uppercase tracking-widest">威胁指数</span>
+        <span class="metric-tip">
+          <span class="material-symbols-outlined text-slate-600 cursor-help" style="font-size:13px;line-height:1">info</span>
+          <div class="metric-tip-content">0–100 的综合评分，由触发信号加权求和：<br>· 严重信号 × 25　高危信号 × 15<br>· 中等信号 × 8　　低危信号 × 2<br>· 关联规则每条额外 +20（多源印证加权）<br>方向：<b>↑ 恶化</b> / <b>→ 平稳</b> / <b>↓ 好转</b>，由上升与下降信号数量差决定</div>
+        </span>
+      </span>
       <span id="sit-index" class="font-mono-data text-cyan-400 font-bold text-sm neon-text-glow">--</span>
       <span id="sit-direction" class="text-[10px] text-slate-400">--</span>
+    </div>
+    <div class="w-px h-5 bg-white/10"></div>
+    <!-- 全局时间范围 -->
+    <div class="flex items-center gap-1.5">
+      <span class="text-[10px] text-slate-400 mr-0.5">时间范围</span>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="0">今天</button>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="7">7天</button>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="30">30天</button>
+      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="90">90天</button>
     </div>
   </div>
 </div>
@@ -146,24 +168,24 @@
 <!-- ─── Stat Cards ──────────────────────────────────────────────── -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-  <!-- 今日新增情报 -->
+  <!-- 新增情报 -->
   <div class="glass-panel px-5 py-4 relative group flex items-center justify-between gap-4">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-amber-400 text-xl">bolt</span>
-        <span class="text-sm font-bold text-slate-200 tracking-wide">今日新增</span>
+        <span class="text-sm font-bold text-slate-200 tracking-wide">新增情报</span>
         <span class="metric-tip">
           <span class="material-symbols-outlined text-slate-500 cursor-help" style="font-size:14px;line-height:1">info</span>
-          <div class="metric-tip-content">统计当日 <b>00:00</b> 至今写入的原始情报条目，底部显示与前一日完整数量的增减对比。</div>
+          <div class="metric-tip-content">当前时间范围内写入的原始情报条目数，底部显示与上个相同长度周期的增减对比。</div>
         </span>
       </div>
       <div class="text-xs text-slate-400">累计情报 <span id="stat-intel-total" class="text-slate-300 font-mono-data">--</span> 条</div>
       <div class="mt-1">
-        <span id="stat-intel-vs-yesterday" class="text-xs font-mono-data text-slate-500">较昨日 --</span>
+        <span id="stat-intel-vs-yesterday" class="text-xs font-mono-data text-slate-500">--</span>
       </div>
     </div>
     <div class="shrink-0 text-right">
-      <div class="text-5xl font-mono-data text-amber-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(251,191,36,0.6)" id="stat-intel-today">--</div>
+      <a class="text-5xl font-mono-data text-amber-400 font-bold leading-none block cursor-pointer hover:text-amber-300 transition-colors" style="text-shadow:0 0 14px rgba(251,191,36,0.6)" id="stat-intel-today">--</a>
     </div>
   </div>
 
@@ -179,13 +201,12 @@
         </span>
       </div>
       <div class="text-xs text-slate-400">共追踪 <span id="stat-total-cve" class="text-slate-300 font-mono-data">--</span> 个 CVE</div>
-      <div class="mt-1 flex items-center gap-1">
-        <span class="text-xs text-slate-500">周期新增</span>
-        <span id="stat-new-cve" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      <div class="mt-1">
+        <span id="stat-new-cve" class="text-[10px] font-mono-data text-slate-500">--</span>
       </div>
     </div>
     <div class="shrink-0 text-right">
-      <div class="text-5xl font-mono-data text-red-400 font-bold leading-none" style="text-shadow:0 0 14px rgba(239,68,68,0.6)" id="stat-highrisk-cve">--</div>
+      <a class="text-5xl font-mono-data text-red-400 font-bold leading-none block cursor-pointer hover:text-red-300 transition-colors" style="text-shadow:0 0 14px rgba(239,68,68,0.6)" id="stat-highrisk-cve">--</a>
     </div>
   </div>
 
@@ -200,14 +221,13 @@
           <div class="metric-tip-content">生命周期为 <b>fresh</b>（新发现，待确认）或 <b>active</b>（已确认活跃）的威胁指标，不含过期、撤销状态。</div>
         </span>
       </div>
-      <div class="text-xs text-slate-400">fresh + active · 共 <span id="stat-total-ioc" class="text-slate-300 font-mono-data">--</span></div>
-      <div class="mt-1 flex items-center gap-1">
-        <span class="text-xs text-slate-500">周期新增</span>
-        <span id="stat-new-ioc" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      <div class="text-xs text-slate-400">共追踪 <span id="stat-total-ioc" class="text-slate-300 font-mono-data">--</span> 个 IOC</div>
+      <div class="mt-1">
+        <span id="stat-new-ioc" class="text-[10px] font-mono-data text-slate-500">--</span>
       </div>
     </div>
     <div class="shrink-0 text-right">
-      <div class="text-5xl font-mono-data text-cyan-400 font-bold leading-none neon-text-glow" id="stat-active-ioc">--</div>
+      <a class="text-5xl font-mono-data text-cyan-400 font-bold leading-none block cursor-pointer hover:text-cyan-300 transition-colors neon-text-glow" id="stat-active-ioc">--</a>
     </div>
   </div>
 
@@ -222,14 +242,16 @@
           <div class="metric-tip-content">近期被公开披露的受害组织数量，数据存在一定滞后性。</div>
         </span>
       </div>
-      <div class="text-xs text-slate-400">近期追踪确认受害组织</div>
       <div class="mt-1 flex items-center gap-1">
-        <span class="text-xs text-slate-500">活跃 C2</span>
-        <span id="stat-c2" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+        <span class="text-xs text-slate-500">活跃组织</span>
+        <span id="stat-active-groups" class="text-xs text-cyan-400/80 font-mono-data">--</span>
+      </div>
+      <div class="mt-1">
+        <span id="stat-victims-vs-prev" class="text-[10px] font-mono-data text-slate-500">--</span>
       </div>
     </div>
     <div class="shrink-0 text-right">
-      <div class="text-5xl font-mono-data text-secondary font-bold leading-none" style="text-shadow:0 0 14px rgba(255,178,183,0.5)" id="stat-victims">--</div>
+      <a class="text-5xl font-mono-data text-secondary font-bold leading-none block cursor-pointer hover:text-secondary transition-colors" style="text-shadow:0 0 14px rgba(255,178,183,0.5)" id="stat-victims">--</a>
     </div>
   </div>
 
@@ -242,12 +264,6 @@
       <span class="material-symbols-outlined text-cyan-400 text-sm">monitoring</span>
       情报趋势分析
     </h2>
-    <div class="flex items-center gap-2">
-      <span class="text-[10px] text-slate-400 mr-1">时间范围</span>
-      <button class="range-btn active text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="7">7天</button>
-      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="30">30天</button>
-      <button class="range-btn text-[10px] font-mono-data px-2.5 py-1 rounded border border-white/10 text-slate-400" data-days="90">90天</button>
-    </div>
   </div>
   <div class="grid grid-cols-12 gap-0">
     <!-- Line chart: daily intel -->
@@ -281,7 +297,7 @@
   <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col">
     <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center gap-2">
       <span class="material-symbols-outlined text-secondary text-sm">groups</span>
-      <h3 class="text-xs font-mono-data text-cyan-100">勒索组织排行 Top 5</h3>
+      <h3 class="text-xs font-mono-data text-cyan-100">勒索组织排行 Top 10</h3>
     </div>
     <div id="ransomware-list" class="flex-1 p-3 space-y-2">
       <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
@@ -292,7 +308,7 @@
   <div class="col-span-12 lg:col-span-4 glass-panel flex flex-col">
     <div class="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center gap-2">
       <span class="material-symbols-outlined text-amber-400 text-sm">business</span>
-      <h3 class="text-xs font-mono-data text-cyan-100">受攻击行业</h3>
+      <h3 class="text-xs font-mono-data text-cyan-100">受攻击行业 Top 10</h3>
     </div>
     <div id="sector-list" class="flex-1 p-3 space-y-2">
       <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
@@ -305,8 +321,8 @@
       <span class="material-symbols-outlined text-cyan-400 text-sm">cycle</span>
       <h3 class="text-xs font-mono-data text-cyan-100">IOC 生命周期分布</h3>
     </div>
-    <div id="lifecycle-list" class="flex-1 p-4 space-y-2.5">
-      <div class="text-center text-slate-600 text-xs py-4">加载中...</div>
+    <div id="lifecycle-list" class="flex-1 flex p-4 gap-4 min-h-0">
+      <div class="text-center text-slate-600 text-xs w-full self-center">加载中...</div>
     </div>
   </div>
 
@@ -325,8 +341,6 @@
       <div class="text-[10px] text-slate-400 font-mono-data" id="map-point-count">--</div>
     </div>
     <div class="flex-1 relative overflow-hidden bg-slate-950/60 min-h-0" id="map-container">
-      <img src="/libs/images/index-world-map.jpg"
-           class="absolute inset-0 w-full h-full object-cover opacity-[0.15] grayscale pointer-events-none select-none"/>
       <canvas id="threat-map-canvas" class="absolute inset-0 w-full h-full"></canvas>
       <div id="map-tooltip"
            class="hidden absolute z-20 bg-slate-900/95 border border-white/10 rounded px-2 py-1
@@ -441,8 +455,8 @@
   ];
 
   // ─── Situation bar ───────────────────────────────────────────
-  function populateSitBar(data, health) {
-    const t = data?.threats || {};
+  function populateSitBar(threats) {
+    const t = threats || {};
     const levelEl = document.getElementById('sit-level-badge');
     if (levelEl && t.level) {
       levelEl.textContent = LEVEL_ZH[t.level] || t.level;
@@ -452,66 +466,80 @@
     if (idxEl) idxEl.textContent = t.index ?? '--';
     const dirEl = document.getElementById('sit-direction');
     if (dirEl) dirEl.textContent = DIR_ZH[t.direction] || '';
+  }
 
-    if (health) {
-      const srcEl = document.getElementById('sit-sources-ok');
-      if (srcEl) srcEl.textContent = health.sourcesOk ?? '--';
-      const sweepEl = document.getElementById('sit-last-sweep');
-      if (sweepEl && health.lastSweep) {
-        sweepEl.textContent = new Date(health.lastSweep).toLocaleTimeString('zh-CN', { hour12: false });
-      }
+  function populateHealth(health) {
+    if (!health) return;
+    const srcEl = document.getElementById('sit-sources-ok');
+    if (srcEl) srcEl.textContent = health.sourcesOk ?? '--';
+    const sweepEl = document.getElementById('sit-last-sweep');
+    if (sweepEl && health.lastSweep) {
+      sweepEl.textContent = new Date(health.lastSweep).toLocaleTimeString('zh-CN', { hour12: false });
     }
   }
 
   // ─── Stat cards ──────────────────────────────────────────────
-  function populateCards(data, stats) {
-    // From /api/data (memory)
-    const victims = data?.actors?.totalVictims ?? null;
-    const c2 = data?.iocs?.c2Count ?? null;
-    document.getElementById('stat-victims').textContent = victims !== null ? victims.toLocaleString() : '--';
-    document.getElementById('stat-c2').textContent = c2 !== null ? c2.toLocaleString() : '--';
-
+  function populateCards(stats) {
     if (!stats || stats.db === null) return;
 
-    // CVE
-    const cveHighRisk = stats.cve?.high_risk ?? null;
-    const cveTotal    = stats.cve?.total ?? null;
-    const cveNew      = stats.cve?.new_in_period ?? null;
-    document.getElementById('stat-highrisk-cve').textContent = cveHighRisk !== null ? cveHighRisk.toLocaleString() : '--';
-    document.getElementById('stat-total-cve').textContent    = cveTotal !== null ? cveTotal.toLocaleString() : '--';
-    document.getElementById('stat-new-cve').textContent      = cveNew !== null ? `+${cveNew.toLocaleString()}` : '--';
+    // Victims from DB
+    const victims      = stats.victims?.total        ?? null;
+    const activeGroups = stats.victims?.activeGroups  ?? null;
+    document.getElementById('stat-victims').textContent       = victims      !== null ? victims.toLocaleString()      : '--';
+    document.getElementById('stat-active-groups').textContent = activeGroups !== null ? activeGroups.toLocaleString() : '--';
 
-    // IOC
-    const iocActive = stats.ioc?.active ?? null;
-    const iocTotal  = stats.ioc?.total ?? null;
-    const iocNew    = stats.ioc?.new_in_period ?? null;
-    document.getElementById('stat-active-ioc').textContent = iocActive !== null ? iocActive.toLocaleString() : '--';
-    document.getElementById('stat-total-ioc').textContent  = iocTotal !== null ? iocTotal.toLocaleString() : '--';
-    document.getElementById('stat-new-ioc').textContent    = iocNew !== null ? `+${iocNew.toLocaleString()}` : '--';
+    const prevLabel = _currentDays === 0 ? '较昨日' : `较上个${_currentDays}天`;
 
-    // Intel
-    const intelToday     = stats.intel?.today     ?? null;
-    const intelYesterday = stats.intel?.yesterday  ?? null;
-    const intelTotal     = stats.intel?.total      ?? null;
-    document.getElementById('stat-intel-today').textContent = intelToday !== null ? intelToday.toLocaleString() : '--';
-    document.getElementById('stat-intel-total').textContent = intelTotal !== null ? intelTotal.toLocaleString() : '--';
-    const vsEl = document.getElementById('stat-intel-vs-yesterday');
-    if (vsEl && intelToday !== null && intelYesterday !== null) {
-      const diff = intelToday - intelYesterday;
+    function renderVs(elId, current, prev) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      if (current === null || prev === null) { el.textContent = '--'; el.className = 'text-[10px] font-mono-data text-slate-500'; return; }
+      const diff = current - prev;
       if (diff > 0) {
-        vsEl.textContent = `↑ ${diff.toLocaleString()} 较昨日`;
-        vsEl.className = 'text-[10px] font-mono-data text-emerald-400';
+        el.textContent = `↑ ${diff.toLocaleString()} ${prevLabel}`;
+        el.className = 'text-[10px] font-mono-data text-emerald-400';
       } else if (diff < 0) {
-        vsEl.textContent = `↓ ${Math.abs(diff).toLocaleString()} 较昨日`;
-        vsEl.className = 'text-[10px] font-mono-data text-red-400';
+        el.textContent = `↓ ${Math.abs(diff).toLocaleString()} ${prevLabel}`;
+        el.className = 'text-[10px] font-mono-data text-red-400';
       } else {
-        vsEl.textContent = '与昨日持平';
-        vsEl.className = 'text-[10px] font-mono-data text-slate-400';
+        el.textContent = _currentDays === 0 ? '与昨日持平' : `与上个${_currentDays}天持平`;
+        el.className = 'text-[10px] font-mono-data text-slate-400';
       }
     }
+
+    // CVE
+    const cveHighRisk = stats.cve?.high_risk          ?? null;
+    const cveTotal    = stats.cve?.total               ?? null;
+    const cveNew      = stats.cve?.new_in_period       ?? null;
+    const cvePrev     = stats.cve?.new_in_prev_period  ?? null;
+    document.getElementById('stat-highrisk-cve').textContent = cveHighRisk !== null ? cveHighRisk.toLocaleString() : '--';
+    document.getElementById('stat-total-cve').textContent    = cveTotal    !== null ? cveTotal.toLocaleString()    : '--';
+    renderVs('stat-new-cve', cveNew, cvePrev);
+
+    // IOC
+    const iocActive = stats.ioc?.active              ?? null;
+    const iocTotal  = stats.ioc?.total               ?? null;
+    const iocNew    = stats.ioc?.new_in_period        ?? null;
+    const iocPrev   = stats.ioc?.new_in_prev_period   ?? null;
+    document.getElementById('stat-active-ioc').textContent = iocActive !== null ? iocActive.toLocaleString() : '--';
+    document.getElementById('stat-total-ioc').textContent  = iocTotal  !== null ? iocTotal.toLocaleString()  : '--';
+    renderVs('stat-new-ioc', iocNew, iocPrev);
+
+    // Intel
+    const intelCurrent = stats.intel?.current_period ?? null;
+    const intelPrev    = stats.intel?.prev_period    ?? null;
+    const intelTotal   = stats.intel?.total          ?? null;
+    document.getElementById('stat-intel-today').textContent = intelCurrent !== null ? intelCurrent.toLocaleString() : '--';
+    document.getElementById('stat-intel-total').textContent = intelTotal   !== null ? intelTotal.toLocaleString()   : '--';
+    renderVs('stat-intel-vs-yesterday', intelCurrent, intelPrev);
+
+    // Victims
+    renderVs('stat-victims-vs-prev', stats.victims?.current_period ?? null, stats.victims?.prev_period ?? null);
   }
 
   // ─── Trend line chart ────────────────────────────────────────
+  let _trendChartData = null;
+
   function drawTrendChart(trend, days) {
     const canvas = document.getElementById('trend-chart');
     if (!canvas) return;
@@ -520,6 +548,7 @@
     canvas.height = rect.height || 160;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    _trendChartData = null;
 
     if (!trend || trend.length === 0) {
       ctx.fillStyle = 'rgba(148,163,184,0.7)';
@@ -529,33 +558,45 @@
       return;
     }
 
-    // Aggregate by day (sum all source types)
+    // Aggregate by day (sum all source types); server guarantees 'YYYY-MM-DD' strings
     const dayMap = new Map();
     for (const r of trend) {
-      const k = typeof r.day === 'string' ? r.day.slice(0, 10) : new Date(r.day).toISOString().slice(0, 10);
-      dayMap.set(k, (dayMap.get(k) || 0) + r.count);
+      const k = String(r.day).slice(0, 10);
+      dayMap.set(k, (dayMap.get(k) || 0) + (r.count || 0));
     }
 
-    // Fill missing days
-    const endDate = new Date();
-    const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - days + 1);
+    // Fill days — days=0 means today only (1 point), days=N means N days
+    // Use UTC dates to match server (PostgreSQL UTC timezone)
+    const now = new Date();
+    const endKey = now.toISOString().slice(0, 10);
+    const startMs = Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(),
+      now.getUTCDate() - Math.max(days - 1, 0)
+    );
     const labels = [];
     const values = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
-      labels.push(key.slice(5)); // MM-DD
+    for (let ms = startMs; ; ms += 86400000) {
+      const key = new Date(ms).toISOString().slice(0, 10);
+      labels.push(key.slice(5));
       values.push(dayMap.get(key) || 0);
+      if (key === endKey) break;
+      if (ms > Date.now() + 86400000) break; // safety
     }
 
     const pad = { l: 36, r: 10, t: 10, b: 22 };
     const w = canvas.width - pad.l - pad.r;
     const h = canvas.height - pad.t - pad.b;
     const maxVal = Math.max(...values, 1);
+    const n = values.length;
 
-    const xStep = w / Math.max(values.length - 1, 1);
-    const toX = (i) => pad.l + i * xStep;
+    // For single point, pin X to center
+    const toX = n === 1
+      ? () => pad.l + w / 2
+      : (i) => pad.l + i * (w / (n - 1));
     const toY = (v) => pad.t + h - (v / maxVal) * h;
+
+    // Store for hover
+    _trendChartData = { labels, values, toX, toY, pad, w, h };
 
     // Grid lines
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
@@ -574,11 +615,30 @@
       ctx.fillText(v, pad.l - 4, pad.t + (h / 4) * i + 3);
     }
 
-    // X-axis labels (show ~6 evenly spaced)
+    // X-axis labels (show ~6 evenly spaced, always show first/last)
     ctx.textAlign = 'center';
-    const step = Math.max(1, Math.floor(labels.length / 6));
-    for (let i = 0; i < labels.length; i += step) {
-      ctx.fillText(labels[i], toX(i), pad.t + h + 14);
+    ctx.fillStyle = 'rgba(148,163,184,0.8)';
+    if (n === 1) {
+      ctx.fillText(labels[0], toX(0), pad.t + h + 14);
+    } else {
+      const step = Math.max(1, Math.floor(n / 6));
+      for (let i = 0; i < n; i += step) ctx.fillText(labels[i], toX(i), pad.t + h + 14);
+      if ((n - 1) % step !== 0) ctx.fillText(labels[n - 1], toX(n - 1), pad.t + h + 14);
+    }
+
+    if (n === 1) {
+      // Single point — just draw a glowing dot + value label
+      const x = toX(0), y = toY(values[0]);
+      ctx.fillStyle = 'rgba(0,229,255,1)';
+      ctx.shadowColor = 'rgba(0,229,255,0.7)';
+      ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(0,229,255,0.9)';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(values[0].toLocaleString(), x, y - 12);
+      return;
     }
 
     // Area fill
@@ -588,8 +648,8 @@
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(values[0]));
-    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
-    ctx.lineTo(toX(values.length - 1), pad.t + h);
+    for (let i = 1; i < n; i++) ctx.lineTo(toX(i), toY(values[i]));
+    ctx.lineTo(toX(n - 1), pad.t + h);
     ctx.lineTo(toX(0), pad.t + h);
     ctx.closePath();
     ctx.fill();
@@ -600,10 +660,10 @@
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(values[0]));
-    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
+    for (let i = 1; i < n; i++) ctx.lineTo(toX(i), toY(values[i]));
     ctx.stroke();
 
-    // Dots for peaks
+    // Peak dot
     const peak = values.indexOf(Math.max(...values));
     ctx.fillStyle = 'rgba(0,229,255,1)';
     ctx.shadowColor = 'rgba(0,229,255,0.6)';
@@ -614,8 +674,76 @@
     ctx.shadowBlur = 0;
   }
 
+  // ─── Trend chart hover tooltip ────────────────────────────────
+  (function() {
+    const canvas = document.getElementById('trend-chart');
+    if (!canvas) return;
+
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;z-index:9999;display:none;pointer-events:none;' +
+      'background:rgba(15,23,42,0.92);border:1px solid rgba(0,229,255,0.25);' +
+      'border-radius:6px;padding:5px 10px;font-family:monospace;font-size:11px;' +
+      'color:#e2e8f0;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4)';
+    document.body.appendChild(tip);
+
+    let _hoverIdx = -1;
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!_trendChartData) return;
+      const { labels, values, toX, pad } = _trendChartData;
+      const n = values.length;
+      if (!n) return;
+
+      const cr = canvas.getBoundingClientRect();
+      const mx = (e.clientX - cr.left) * (canvas.width / cr.width);
+
+      let nearest = 0, minDist = Infinity;
+      for (let i = 0; i < n; i++) {
+        const d = Math.abs(toX(i) - mx);
+        if (d < minDist) { minDist = d; nearest = i; }
+      }
+
+      if (nearest !== _hoverIdx) {
+        _hoverIdx = nearest;
+        // Redraw to show hover highlight
+        drawTrendChart(_lastTrend, _currentDays);
+        // Draw highlight dot
+        const cv = document.getElementById('trend-chart');
+        const ctx2 = cv?.getContext('2d');
+        if (ctx2 && _trendChartData) {
+          const { toX: tx, toY, values: vs } = _trendChartData;
+          ctx2.fillStyle = '#fff';
+          ctx2.shadowColor = 'rgba(0,229,255,0.8)';
+          ctx2.shadowBlur = 8;
+          ctx2.beginPath();
+          ctx2.arc(tx(nearest), toY(vs[nearest]), 4, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.shadowBlur = 0;
+        }
+      }
+
+      tip.textContent = `${labels[nearest]}  ${values[nearest].toLocaleString()} 条`;
+      tip.style.display = 'block';
+      const th = tip.offsetHeight;
+      let top = e.clientY - th - 10;
+      let left = e.clientX - tip.offsetWidth / 2;
+      if (top < 4) top = e.clientY + 14;
+      if (left < 4) left = 4;
+      if (left + tip.offsetWidth > window.innerWidth - 4) left = window.innerWidth - tip.offsetWidth - 4;
+      tip.style.top = top + 'px';
+      tip.style.left = left + 'px';
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      tip.style.display = 'none';
+      _hoverIdx = -1;
+    });
+  })();
+
   // ─── Donut chart ─────────────────────────────────────────────
-  function drawDonutChart(typeDistribution) {
+  let _donutSegments = [];
+
+  function drawDonutChart(typeDistribution, highlightIdx = -1) {
     const canvas = document.getElementById('donut-chart');
     if (!canvas) return;
     canvas.width  = 120;
@@ -632,6 +760,7 @@
       ctx.beginPath();
       ctx.arc(60, 60, 45, 0, Math.PI * 2);
       ctx.stroke();
+      _donutSegments = [];
       return;
     }
 
@@ -639,13 +768,17 @@
     const ctrEl = document.getElementById('donut-center-val');
     if (ctrEl) ctrEl.textContent = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : total;
 
+    _donutSegments = [];
     let angle = -Math.PI / 2;
     typeDistribution.forEach((r, i) => {
       const [cr, cg, cb] = TYPE_COLORS[i % TYPE_COLORS.length];
       const sweep = (r.count / total) * Math.PI * 2;
+      const isHl = i === highlightIdx;
 
-      ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
-      ctx.lineWidth = 11;
+      _donutSegments.push({ start: angle, end: angle + sweep, count: r.count, type: r.type, color: [cr, cg, cb] });
+
+      ctx.strokeStyle = isHl ? `rgb(${cr},${cg},${cb})` : `rgba(${cr},${cg},${cb},${isHl || highlightIdx < 0 ? 1 : 0.4})`;
+      ctx.lineWidth = isHl ? 14 : 11;
       ctx.beginPath();
       ctx.arc(60, 60, 45, angle, angle + sweep);
       ctx.stroke();
@@ -663,7 +796,7 @@
       if (legend) {
         const pct = Math.round(r.count / total * 100);
         const row = document.createElement('div');
-        row.className = 'flex items-center gap-1.5';
+        row.className = `flex items-center gap-1.5${i === highlightIdx ? ' opacity-100' : highlightIdx >= 0 ? ' opacity-40' : ''}`;
         row.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background:rgb(${cr},${cg},${cb})"></span>
           <span class="text-slate-400 truncate flex-1">${TYPE_LABEL[r.type] || r.type}</span>
           <span class="text-slate-500 shrink-0">${pct}%</span>`;
@@ -672,26 +805,92 @@
     });
   }
 
+  // ─── Donut hover ─────────────────────────────────────────────
+  (function() {
+    const canvas = document.getElementById('donut-chart');
+    if (!canvas) return;
+
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;z-index:9999;display:none;pointer-events:none;' +
+      'background:rgba(15,23,42,0.92);border:1px solid rgba(0,229,255,0.25);' +
+      'border-radius:6px;padding:5px 10px;font-family:monospace;font-size:11px;' +
+      'color:#e2e8f0;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4)';
+    document.body.appendChild(tip);
+
+    let _lastHlIdx = -1;
+    let _lastDist = null;
+
+    function hitTest(e) {
+      const cr = canvas.getBoundingClientRect();
+      const scale = canvas.width / cr.width;
+      const mx = (e.clientX - cr.left) * scale;
+      const my = (e.clientY - cr.top)  * scale;
+      const dx = mx - 60, dy = my - 60;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 34 || dist > 56) return -1; // outside donut ring
+      let a = Math.atan2(dy, dx);
+      // normalize to [-π/2, 3π/2] to match our start angle (-π/2)
+      if (a < -Math.PI / 2) a += Math.PI * 2;
+      for (let i = 0; i < _donutSegments.length; i++) {
+        const seg = _donutSegments[i];
+        if (a >= seg.start && a < seg.end) return i;
+      }
+      return -1;
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const idx = hitTest(e);
+      if (idx !== _lastHlIdx) {
+        _lastHlIdx = idx;
+        _lastDist = _donutSegments;
+        drawDonutChart(
+          _donutSegments.map(s => ({ type: s.type, count: s.count })),
+          idx
+        );
+      }
+      if (idx < 0) { tip.style.display = 'none'; return; }
+      const seg = _donutSegments[idx];
+      const total = _donutSegments.reduce((s, x) => s + x.count, 0);
+      const pct = Math.round(seg.count / total * 100);
+      tip.textContent = `${TYPE_LABEL[seg.type] || seg.type}  ${seg.count.toLocaleString()} 条 (${pct}%)`;
+      tip.style.display = 'block';
+      let top = e.clientY - tip.offsetHeight - 10;
+      let left = e.clientX - tip.offsetWidth / 2;
+      if (top < 4) top = e.clientY + 14;
+      if (left < 4) left = 4;
+      if (left + tip.offsetWidth > window.innerWidth - 4) left = window.innerWidth - tip.offsetWidth - 4;
+      tip.style.top = top + 'px';
+      tip.style.left = left + 'px';
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      tip.style.display = 'none';
+      if (_lastHlIdx !== -1) {
+        _lastHlIdx = -1;
+        drawDonutChart(_donutSegments.map(s => ({ type: s.type, count: s.count })), -1);
+      }
+    });
+  })();
+
   // ─── Intelligence panels ─────────────────────────────────────
-  function populateRansomwareList(data) {
+  function populateRansomwareList(groups) {
     const el = document.getElementById('ransomware-list');
     if (!el) return;
-    const groups = data?.actors?.ransomwareGroups || [];
-    if (!groups.length) {
+    if (!groups?.length) {
       el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
       return;
     }
-    const maxV = groups[0]?.victims || 1;
-    el.innerHTML = groups.slice(0, 5).map((g, i) => {
-      const pct = Math.round((g.victims / maxV) * 100);
-      const rankColors = ['text-red-400', 'text-orange-400', 'text-amber-400', 'text-slate-400', 'text-slate-500'];
+    const maxV = groups[0]?.count || 1;
+    const rankColors = ['text-red-400', 'text-orange-400', 'text-amber-400', 'text-yellow-500', 'text-slate-300', 'text-slate-400', 'text-slate-400', 'text-slate-500', 'text-slate-500', 'text-slate-500'];
+    el.innerHTML = groups.map((g, i) => {
+      const pct = Math.round((g.count / maxV) * 100);
       return `<div class="space-y-1">
         <div class="flex justify-between items-center text-[11px]">
           <div class="flex items-center gap-2">
-            <span class="font-mono-data font-bold ${rankColors[i]} w-4">${i + 1}</span>
+            <span class="font-mono-data font-bold ${rankColors[i] || 'text-slate-500'} w-4">${i + 1}</span>
             <span class="text-slate-300 truncate">${g.name}</span>
           </div>
-          <span class="font-mono-data text-[10px] text-slate-500 shrink-0">${g.victims} 受害</span>
+          <span class="font-mono-data text-[10px] text-slate-500 shrink-0">${g.count} 受害</span>
         </div>
         <div class="h-1 bg-white/5 rounded-full overflow-hidden">
           <div class="h-full rounded-full bg-secondary/60 transition-all duration-500" style="width:${pct}%"></div>
@@ -700,23 +899,19 @@
     }).join('');
   }
 
-  function populateSectorList(data) {
+  function populateSectorList(sectors) {
     const el = document.getElementById('sector-list');
     if (!el) return;
-    const raw = data?.actors?.bySector || {};
-    const sectors = Object.entries(raw)
-      .map(([sector, count]) => ({ sector, count: typeof count === 'number' ? count : count?.count || 0 }))
-      .sort((a, b) => b.count - a.count);
-    if (!sectors.length) {
+    if (!sectors?.length) {
       el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
       return;
     }
     const maxV = sectors[0]?.count || 1;
-    el.innerHTML = sectors.slice(0, 6).map((s) => {
+    el.innerHTML = sectors.map((s) => {
       const pct = Math.round((s.count / maxV) * 100);
       return `<div class="space-y-1">
         <div class="flex justify-between text-[11px]">
-          <span class="text-slate-300 truncate">${s.sector || s.name}</span>
+          <span class="text-slate-300 truncate">${s.name}</span>
           <span class="font-mono-data text-[10px] text-amber-400/70">${s.count}</span>
         </div>
         <div class="h-1 bg-white/5 rounded-full overflow-hidden">
@@ -729,57 +924,68 @@
   function populateLifecycle(lifecycle) {
     const el = document.getElementById('lifecycle-list');
     if (!el) return;
-    if (!lifecycle || !lifecycle.length) {
-      el.innerHTML = '<div class="text-center text-slate-600 text-xs py-4">暂无数据</div>';
-      return;
-    }
-    const LIFECYCLE_META = {
-      fresh:    { label: 'Fresh',    color: 'bg-emerald-500', textColor: 'text-emerald-400', desc: '新发现，尚未确认' },
-      active:   { label: 'Active',   color: 'bg-cyan-500',    textColor: 'text-cyan-400',    desc: '确认活跃中' },
-      aging:    { label: 'Aging',    color: 'bg-amber-500',   textColor: 'text-amber-400',   desc: '活跃度下降' },
-      inactive: { label: 'Inactive', color: 'bg-slate-500',   textColor: 'text-slate-400',   desc: '已停止活动' },
-      revoked:  { label: 'Revoked',  color: 'bg-red-800',     textColor: 'text-red-500',     desc: '已吊销/误报' },
-    };
-    const total = lifecycle.reduce((s, r) => s + r.count, 0) || 1;
-    el.innerHTML = lifecycle.map(r => {
-      const m = LIFECYCLE_META[r.lifecycle] || { label: r.lifecycle, color: 'bg-slate-600', textColor: 'text-slate-400', desc: '' };
-      const pct = Math.round(r.count / total * 100);
-      return `<div class="flex items-center gap-3">
-        <div class="w-2 h-2 rounded-full ${m.color} shrink-0"></div>
-        <div class="flex-1 min-w-0">
-          <div class="flex justify-between text-[11px]">
-            <span class="${m.textColor} font-mono-data font-medium">${m.label}</span>
-            <span class="text-slate-500">${pct}%</span>
-          </div>
-          <div class="h-1 mt-0.5 bg-white/5 rounded-full overflow-hidden">
-            <div class="h-full rounded-full ${m.color} opacity-60 transition-all duration-500" style="width:${pct}%"></div>
-          </div>
-          <div class="text-[9px] text-slate-600 mt-0.5">${r.count.toLocaleString()} 个指标 · ${m.desc}</div>
+
+    const STATES = [
+      { key: 'fresh',  label: 'Fresh',  color: '#34d399', glow: 'rgba(52,211,153,0.4)',  desc: '新发现' },
+      { key: 'active', label: 'Active', color: '#22d3ee', glow: 'rgba(34,211,238,0.4)',  desc: '确认活跃' },
+      { key: 'aging',  label: 'Aging',  color: '#fbbf24', glow: 'rgba(251,191,36,0.4)',  desc: '活跃度下降' },
+      { key: 'stale',  label: 'Stale',  color: '#f87171', glow: 'rgba(248,113,113,0.4)', desc: '基本失效' },
+    ];
+
+    const countMap = {};
+    (lifecycle || []).forEach(r => { countMap[r.lifecycle] = r.count; });
+    const data = STATES.map(s => ({ ...s, count: countMap[s.key] ?? 0 }));
+    const maxVal = Math.max(...data.map(d => d.count), 1);
+
+    const bars = data.map(d => {
+      const barPct = d.count > 0 ? Math.max(d.count / maxVal * 100, 3) : 0;
+      return `<div class="flex flex-col items-center gap-1.5 flex-1 h-full min-h-0">
+        ${d.count > 0 ? `<span class="font-mono-data text-sm font-bold shrink-0" style="color:${d.color}">${d.count.toLocaleString()}</span>` : ''}
+        <div class="flex-1 w-full flex flex-col items-center justify-end min-h-0">
+          ${d.count > 0
+            ? `<div class="w-full rounded-t transition-all duration-700" style="height:${barPct}%;background:${d.color};box-shadow:0 0 10px ${d.glow}"></div>`
+            : `<span class="font-mono-data text-sm font-bold mb-1" style="color:${d.color};opacity:0.5">0</span>
+               <div class="w-full" style="height:2px;background:${d.color};opacity:0.4"></div>`
+          }
         </div>
+        <span class="font-mono-data text-xs font-semibold shrink-0" style="color:${d.color}">${d.label}</span>
       </div>`;
     }).join('');
+
+    const legend = STATES.map(s => `
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full shrink-0" style="background:${s.color};box-shadow:0 0 5px ${s.glow}"></span>
+        <span class="font-mono-data text-xs font-semibold" style="color:${s.color}">${s.label}</span>
+        <span class="text-[11px] text-slate-400">— ${s.desc}</span>
+      </div>`).join('');
+
+    el.innerHTML = `
+      <div class="flex gap-4 w-full h-full">
+        <div class="flex items-end justify-around gap-2 flex-1 h-full min-h-0">${bars}</div>
+        <div class="flex flex-col justify-center gap-3 shrink-0 border-l border-white/5 pl-4" style="width:30%">${legend}</div>
+      </div>`;
   }
 
   // ─── Alert stream ────────────────────────────────────────────
-  function populateAlerts(data) {
+  const ALERT_SOURCE_LABEL = {
+    'CISA-Alerts': 'CISA', 'CERTs-Intl': 'CERTs Intl',
+    'CNCERT': 'CNCERT', 'CNVD': 'CNVD', 'ENISA': 'ENISA',
+  };
+  function populateAlerts(alerts) {
     const stream = document.getElementById('alert-stream');
     if (!stream) return;
-    const allAlerts = [];
-    for (const item of (data.certAlerts?.items || [])) {
-      for (const alert of (item.alerts || [])) allAlerts.push({ ...alert, sourceLabel: item.label });
-    }
-    allAlerts.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     const metaEl = document.getElementById('alert-stream-meta');
-    if (metaEl) metaEl.textContent = `共 ${allAlerts.length} 条告警`;
+    if (metaEl) metaEl.textContent = `共 ${alerts.length} 条告警`;
 
     stream.innerHTML = '';
-    if (!allAlerts.length) {
+    if (!alerts.length) {
       stream.innerHTML = '<div class="flex items-center justify-center h-full text-slate-600 text-xs">暂无告警数据</div>';
       return;
     }
-    for (const alert of allAlerts.slice(0, 30)) {
-      const [label, border, bg, badge] = ALERT_STYLE[alert.sourceLabel] || ALERT_STYLE.CNCERT;
+    for (const alert of alerts) {
+      const srcLabel = ALERT_SOURCE_LABEL[alert.source] || alert.source;
+      const [label, border, bg, badge] = ALERT_STYLE[srcLabel] || ALERT_STYLE.CNCERT;
       const time = alert.date ? new Date(alert.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) : '--';
       const item = document.createElement('div');
       item.className = `flex items-start gap-2 p-2.5 border-l-2 ${border} ${bg} transition-colors`;
@@ -789,7 +995,7 @@
       }
       item.innerHTML = `<span class="text-slate-500 shrink-0 text-[10px] mt-0.5 w-9">${time}</span>
         <span class="px-1.5 py-0.5 ${badge} rounded text-[10px] font-bold shrink-0">${label}</span>
-        <span class="text-slate-500 text-[10px] shrink-0 mt-0.5">[${alert.sourceLabel}]</span>
+        <span class="text-slate-500 text-[10px] shrink-0 mt-0.5">[${srcLabel}]</span>
         <span class="text-on-surface flex-1 leading-relaxed text-[11px]">${alert.title || '告警'}</span>`;
       stream.appendChild(item);
     }
@@ -802,34 +1008,139 @@
     medium:   { r:255, g:204, b:0,   radius:2,   glow:7,  pulse:false },
     low:      { r:0,   g:229, b:255, radius:1.5, glow:5,  pulse:false },
   };
-  function project(lat, lon, w, h) { return [(lon + 180) / 360 * w, (90 - lat) / 180 * h]; }
 
   let _geoAttacks = [], _animFrame = null, _hoverIdx = -1;
+  let _mapZoom = 1, _mapPanX = 0, _mapPanY = 0;
+  let _mapW = 0, _mapH = 0;
+  let _dragging = false, _dragStartX = 0, _dragStartY = 0, _panOX0 = 0, _panOY0 = 0;
+  let _worldGeo = null;
+  let _hoverCountry = null; // { feature, name }
+
+  // Ray-casting point-in-polygon (lon/lat → geo coords, no projection)
+  function pointInRing(ring, lon, lat) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i], [xj, yj] = ring[j];
+      if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  function pointInFeature(feature, lon, lat) {
+    const g = feature.geometry;
+    if (!g) return false;
+    if (g.type === 'Polygon') return g.coordinates.some(ring => pointInRing(ring, lon, lat));
+    if (g.type === 'MultiPolygon') return g.coordinates.some(poly => poly.some(ring => pointInRing(ring, lon, lat)));
+    return false;
+  }
+  function findCountryAt(lon, lat) {
+    if (!_worldGeo?.features) return null;
+    for (const f of _worldGeo.features) {
+      if (pointInFeature(f, lon, lat)) return { feature: f, name: f.properties?.name || '?' };
+    }
+    return null;
+  }
+
+  // Load GeoJSON country borders (same approach as dev branch)
+  fetch('/libs/countries-110m.json')
+    .then(r => r.json())
+    .then(topo => { _worldGeo = topojson.feature(topo, topo.objects.countries); })
+    .catch(() => {});
+
+  // Equirectangular projection — map & points share the same functions
+  function toX(lon) {
+    const dw = _mapW * _mapZoom;
+    return _mapPanX + (_mapW - dw) / 2 + ((lon + 180) / 360) * dw;
+  }
+  function toY(lat) {
+    const dh = _mapH * _mapZoom;
+    return _mapPanY + (_mapH - dh) / 2 + ((90 - lat) / 180) * dh;
+  }
+
+  function drawGeoPoly(ctx, coords) {
+    coords.forEach(ring => {
+      ctx.beginPath();
+      ring.forEach(([lon, lat], i) => {
+        if (i === 0) ctx.moveTo(toX(lon), toY(lat));
+        else ctx.lineTo(toX(lon), toY(lat));
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+  function drawGeoFeature(ctx, f) {
+    const g = f.geometry;
+    if (!g) return;
+    if (g.type === 'Polygon') drawGeoPoly(ctx, g.coordinates);
+    else if (g.type === 'MultiPolygon') g.coordinates.forEach(p => drawGeoPoly(ctx, p));
+  }
 
   function drawMap(ts = 0) {
     const canvas = document.getElementById('threat-map-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const { width: w, height: h } = canvas;
-    ctx.clearRect(0, 0, w, h);
+
+    ctx.clearRect(0, 0, _mapW, _mapH);
+
+    // Background
+    ctx.fillStyle = '#060610';
+    ctx.fillRect(0, 0, _mapW, _mapH);
+
+    // Country borders (GeoJSON)
+    if (_worldGeo?.features) {
+      ctx.fillStyle = 'rgba(18,22,32,0.95)';
+      ctx.strokeStyle = 'rgba(80,100,120,0.35)';
+      ctx.lineWidth = 0.6;
+      _worldGeo.features.forEach(f => {
+        if (_hoverCountry && f === _hoverCountry.feature) return; // draw later on top
+        drawGeoFeature(ctx, f);
+      });
+      // Hovered country highlight
+      if (_hoverCountry) {
+        ctx.fillStyle = 'rgba(0,229,255,0.12)';
+        ctx.strokeStyle = 'rgba(0,229,255,0.6)';
+        ctx.lineWidth = 1.2;
+        drawGeoFeature(ctx, _hoverCountry.feature);
+      }
+    }
+
+    // Subtle graticule
+    ctx.strokeStyle = 'rgba(0,229,255,0.04)';
+    ctx.lineWidth = 0.3;
+    for (let lon = -180; lon <= 180; lon += 30) {
+      const x = toX(lon);
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, _mapH); ctx.stroke();
+    }
+    for (let lat = -90; lat <= 90; lat += 30) {
+      const y = toY(lat);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(_mapW, y); ctx.stroke();
+    }
+
+    // Threat points
+    const zoomSqrt = Math.sqrt(_mapZoom);
     for (let i = 0; i < _geoAttacks.length; i++) {
       const pt = _geoAttacks[i];
-      const s = SEV[pt.severity] || SEV.low;
-      const [x, y] = project(pt.lat, pt.lon, w, h);
-      const g = ctx.createRadialGradient(x, y, 0, x, y, s.glow);
+      const s  = SEV[pt.severity] || SEV.low;
+      const x  = toX(pt.lon);
+      const y  = toY(pt.lat);
+      if (x < -20 || x > _mapW + 20 || y < -20 || y > _mapH + 20) continue;
+
+      const dotR  = s.radius * zoomSqrt;
+      const glowR = s.glow * zoomSqrt;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, glowR);
       g.addColorStop(0, `rgba(${s.r},${s.g},${s.b},0.3)`);
       g.addColorStop(1, `rgba(${s.r},${s.g},${s.b},0)`);
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x, y, s.glow, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, glowR, 0, Math.PI * 2); ctx.fill();
       if (s.pulse) {
         const phase = (ts * 0.0005 + i * 0.4) % 1;
         ctx.strokeStyle = `rgba(${s.r},${s.g},${s.b},${(1 - phase) * 0.6})`;
         ctx.lineWidth = 0.8;
-        ctx.beginPath(); ctx.arc(x, y, s.radius + s.glow * phase, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, dotR + glowR * phase, 0, Math.PI * 2); ctx.stroke();
       }
       const hovered = i === _hoverIdx;
       ctx.fillStyle = `rgba(${s.r},${s.g},${s.b},${hovered ? 1 : 0.9})`;
-      ctx.beginPath(); ctx.arc(x, y, hovered ? s.radius * 1.8 : s.radius, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, hovered ? dotR * 1.8 : dotR, 0, Math.PI * 2); ctx.fill();
     }
     _animFrame = requestAnimationFrame(drawMap);
   }
@@ -839,38 +1150,108 @@
     const canvas = document.getElementById('threat-map-canvas');
     if (!canvas) return;
     const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width  = rect.width  || 400;
-    canvas.height = rect.height || 400;
+    _mapW = canvas.width  = rect.width  || 400;
+    _mapH = canvas.height = rect.height || 400;
     _geoAttacks = [...(geoAttacks || [])]
       .sort((a, b) => ({ critical:0, high:1, medium:2, low:3 }[a.severity] ?? 4) - ({ critical:0, high:1, medium:2, low:3 }[b.severity] ?? 4))
       .slice(0, 400);
     const countEl = document.getElementById('map-point-count');
     if (countEl) countEl.textContent = `${_geoAttacks.length} 个威胁点`;
+    canvas.style.cursor = 'grab';
+
     const tooltip = document.getElementById('map-tooltip');
+
     canvas.onmousemove = (e) => {
       const r  = canvas.getBoundingClientRect();
-      const mx = (e.clientX - r.left) * (canvas.width  / r.width);
-      const my = (e.clientY - r.top)  * (canvas.height / r.height);
+      const mx = (e.clientX - r.left) * (_mapW / r.width);
+      const my = (e.clientY - r.top)  * (_mapH / r.height);
+
+      if (_dragging) {
+        _mapPanX = _panOX0 + (e.clientX - _dragStartX) * (_mapW / r.width);
+        _mapPanY = _panOY0 + (e.clientY - _dragStartY) * (_mapH / r.height);
+        tooltip?.classList.add('hidden');
+        return;
+      }
+
+      // Hit test: threat points first
       let best = -1, bestD = 14;
       for (let i = 0; i < _geoAttacks.length; i++) {
-        const [x, y] = project(_geoAttacks[i].lat, _geoAttacks[i].lon, canvas.width, canvas.height);
-        const d = Math.hypot(mx - x, my - y);
+        const d = Math.hypot(mx - toX(_geoAttacks[i].lon), my - toY(_geoAttacks[i].lat));
         if (d < bestD) { bestD = d; best = i; }
       }
       _hoverIdx = best;
+
       if (best >= 0 && tooltip) {
         tooltip.textContent = _geoAttacks[best].label || _geoAttacks[best].source || '未知威胁';
         tooltip.style.left = `${e.clientX - r.left + 14}px`;
         tooltip.style.top  = `${e.clientY - r.top  - 6}px`;
         tooltip.classList.remove('hidden');
-      } else tooltip?.classList.add('hidden');
+        _hoverCountry = null;
+      } else {
+        // Screen → geo coords for country hit test
+        const dw = _mapW * _mapZoom, dh = _mapH * _mapZoom;
+        const dx = _mapPanX + (_mapW - dw) / 2, dy = _mapPanY + (_mapH - dh) / 2;
+        const geoLon = (mx - dx) / dw * 360 - 180;
+        const geoLat = 90 - (my - dy) / dh * 180;
+        const country = findCountryAt(geoLon, geoLat);
+        _hoverCountry = country;
+        if (country && tooltip) {
+          tooltip.textContent = country.name;
+          tooltip.style.left = `${e.clientX - r.left + 14}px`;
+          tooltip.style.top  = `${e.clientY - r.top  - 6}px`;
+          tooltip.classList.remove('hidden');
+        } else {
+          tooltip?.classList.add('hidden');
+        }
+      }
     };
-    canvas.onmouseleave = () => { _hoverIdx = -1; tooltip?.classList.add('hidden'); };
+
+    canvas.onmousedown = (e) => {
+      _dragging = true;
+      _dragStartX = e.clientX;
+      _dragStartY = e.clientY;
+      _panOX0 = _mapPanX;
+      _panOY0 = _mapPanY;
+      canvas.style.cursor = 'grabbing';
+    };
+    canvas.onmouseup = () => { _dragging = false; canvas.style.cursor = 'grab'; };
+    canvas.onmouseleave = () => {
+      _dragging = false; _hoverIdx = -1; _hoverCountry = null;
+      canvas.style.cursor = 'grab';
+      tooltip?.classList.add('hidden');
+    };
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r  = canvas.getBoundingClientRect();
+      const mx = (e.clientX - r.left) * (_mapW / r.width);
+      const my = (e.clientY - r.top)  * (_mapH / r.height);
+
+      const oldZoom = _mapZoom;
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      _mapZoom = Math.max(0.5, Math.min(20, _mapZoom * factor));
+
+      // Inverse-project cursor to normalized geo position under old zoom
+      const oldDW = _mapW * oldZoom, oldDH = _mapH * oldZoom;
+      const oldDX = _mapPanX + (_mapW - oldDW) / 2;
+      const oldDY = _mapPanY + (_mapH - oldDH) / 2;
+      const normX = (mx - oldDX) / oldDW;
+      const normY = (my - oldDY) / oldDH;
+
+      // Forward-project: solve for new panX/panY so same geo point stays under cursor
+      const newDW = _mapW * _mapZoom, newDH = _mapH * _mapZoom;
+      _mapPanX = mx - normX * newDW - (_mapW - newDW) / 2;
+      _mapPanY = my - normY * newDH - (_mapH - newDH) / 2;
+    }, { passive: false });
+
     _animFrame = requestAnimationFrame(drawMap);
   }
+
   const _mapContainer = document.getElementById('map-container');
   if (_mapContainer) {
-    new ResizeObserver(() => { if (_geoAttacks.length) initThreatMap(_geoAttacks); }).observe(_mapContainer);
+    new ResizeObserver(() => {
+      if (_geoAttacks.length) initThreatMap(_geoAttacks);
+    }).observe(_mapContainer);
   }
 
   // ─── Health / footer ─────────────────────────────────────────
@@ -896,8 +1277,9 @@
   }
 
   // ─── Stats from DB ───────────────────────────────────────────
-  let _currentDays = 7;
-  let _lastApiData = null;
+  const _DAYS_KEY   = 'crx_time_range_days';
+  let _currentDays  = parseInt(localStorage.getItem(_DAYS_KEY) ?? '7');
+  let _lastTrend   = null;
 
   async function loadStats(days) {
     try {
@@ -910,61 +1292,78 @@
   async function refreshCharts(days) {
     const stats = await loadStats(days);
     if (!stats) return;
+    _lastTrend = stats.trend;
     drawTrendChart(stats.trend, days);
     drawDonutChart(stats.typeDistribution);
     populateLifecycle(stats.lifecycle);
-    if (_lastApiData) populateCards(_lastApiData, stats);
+    populateCards(stats);
+    populateRansomwareList(stats.ransomGroups ?? []);
+    populateSectorList(stats.ransomSectors ?? []);
+    populateAlerts(stats.alerts ?? []);
+    populateSitBar(stats.threats);
+    initThreatMap(stats.geoAttacks ?? []);
     return stats;
   }
 
   // ─── Time range selector ─────────────────────────────────────
+  // Restore button highlight from saved preference
   document.querySelectorAll('.range-btn').forEach(btn => {
+    if (parseInt(btn.dataset.days) === _currentDays) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
     btn.addEventListener('click', async () => {
       document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       _currentDays = parseInt(btn.dataset.days);
+      localStorage.setItem(_DAYS_KEY, _currentDays);
       await refreshCharts(_currentDays);
     });
   });
 
+  // ─── Stat card drill-down: numbers → search page ─────────────
+  function localDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function drilldownToSearch(extraParams) {
+    const now = new Date();
+    const params = new URLSearchParams();
+    params.set('date_to', localDateStr(now));
+    const from = new Date(now);
+    from.setDate(from.getDate() - (_currentDays === 0 ? 0 : _currentDays - 1));
+    params.set('date_from', localDateStr(from));
+    Object.entries(extraParams || {}).forEach(([k, v]) => params.set(k, v));
+    window.location.href = `/search.html?${params}`;
+  }
+
+  document.getElementById('stat-intel-today')?.addEventListener('click', (e) => { e.preventDefault(); drilldownToSearch(); });
+  document.getElementById('stat-highrisk-cve')?.addEventListener('click', (e) => { e.preventDefault(); drilldownToSearch({ mode: 'entity', entity_type: 'vulnerability', high_risk: 'true' }); });
+  document.getElementById('stat-active-ioc')?.addEventListener('click', (e) => { e.preventDefault(); drilldownToSearch({ mode: 'entity', entity_type: 'indicator', active_only: 'true' }); });
+  document.getElementById('stat-victims')?.addEventListener('click', (e) => { e.preventDefault(); drilldownToSearch({ source_type: 'event' }); });
+
   // ─── Main data flow ──────────────────────────────────────────
-  function applyData(data) {
-    _lastApiData = data;
-    populateAlerts(data);
-    initThreatMap(data.geoAttacks);
-    populateSitBar(data, _healthData);
-    const footerEl = document.getElementById('alert-stream-footer');
-    if (footerEl) {
-      const ts = data.meta?.timestamp;
-      footerEl.textContent = ts ? `数据时间: ${new Date(ts).toLocaleString('zh-CN', { hour12: false })}` : '系统就绪';
-    }
-    // Ransomware + Sector from memory data
-    populateRansomwareList(data);
-    populateSectorList(data);
-  }
-
-  async function loadData() {
-    try {
-      const res = await apiFetch('/api/data');
-      if (!res || !res.ok) return;
-      applyData(await res.json());
-    } catch { /* 等待 SSE 推送 */ }
-  }
-
-  // Load everything in parallel
-  const [, health, stats] = await Promise.all([
-    loadData(),
+  // Load everything from DB
+  const [health, stats] = await Promise.all([
     loadHealth(),
     loadStats(_currentDays),
   ]);
 
-  if (health) _healthData = health;
+  if (health) {
+    _healthData = health;
+    populateHealth(health);
+  }
   if (stats) {
+    _lastTrend = stats.trend;
     drawTrendChart(stats.trend, _currentDays);
     drawDonutChart(stats.typeDistribution);
     populateLifecycle(stats.lifecycle);
-    if (_lastApiData) populateCards(_lastApiData, stats);
-    else populateCards({}, stats);
+    populateCards(stats);
+    populateRansomwareList(stats.ransomGroups ?? []);
+    populateSectorList(stats.ransomSectors ?? []);
+    populateAlerts(stats.alerts ?? []);
+    populateSitBar(stats.threats);
+    initThreatMap(stats.geoAttacks ?? []);
   }
 
   // ResizeObserver for charts
@@ -973,7 +1372,7 @@
     new ResizeObserver(() => drawTrendChart(stats.trend, _currentDays)).observe(chartContainer);
   }
 
-  // ─── SSE ─────────────────────────────────────────────────────
+  // ─── SSE — on sweep update, refresh from DB ──────────────────
   const token = localStorage.getItem('crx_access_token');
   const evtSrc = new EventSource(`/events?token=${encodeURIComponent(token ?? '')}`);
 
@@ -987,9 +1386,9 @@
   evtSrc.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
-      if (msg.type === 'update' && msg.data) {
-        applyData(msg.data);
-        loadHealth();
+      if (msg.type === 'update') {
+        refreshCharts(_currentDays);
+        loadHealth().then(h => { if (h) { _healthData = h; populateHealth(h); } });
       }
     } catch { /* 忽略解析错误 */ }
   };

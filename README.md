@@ -73,7 +73,7 @@
 ┌──────────────────────────────▼──────────────────────────────────┐
 │                        前端仪表盘                                │
 │                                                                  │
-│   简报中心 │ 威胁态势 │ 实体搜索 │ 工作台 │ 监视列表 │ 源健康   │
+│   仪表板  │ 情报检索 │ 工作台 │ 威胁态势 │ 监视列表 │ 源健康状态 │
 │                                                                  │
 │   shell.js (统一导航) + auth.js (JWT 认证)                       │
 │   Tailwind CSS + Material Symbols                                │
@@ -162,57 +162,92 @@
 
 ## 洞察维度
 
-### 威胁指数 (Threat Index)
+### 威胁等级与威胁指数
 
-`computeThreatLevel()` 综合以下维度打分 (0-100):
+增量引擎 `computeDelta()` (`lib/delta/engine.mjs`) 在每轮扫描后运行，输出三个核心指标：
 
-| 维度 | 权重因子 | 数据源 |
-|---|---|---|
-| KEV 已利用漏洞数 | 高 | CISA KEV + VulnCheck |
-| Critical CVE 数量 | 高 | NVD + EPSS |
-| C2 基础设施数量 | 中 | Feodo + ThreatFox |
-| 恶意样本量 | 中 | MalwareBazaar |
-| 勒索受害者数 | 中 | Ransomware.live |
-| 恶意 IP 数量 | 低 | AbuseIPDB + GreyNoise |
-| 钓鱼 URL 数量 | 低 | URLhaus + OpenPhish |
+#### 威胁等级 (overallLevel)
 
-映射为四级: `CRITICAL` (>80) → `HIGH` (>60) → `ELEVATED` (>40) → `LOW`
+四级枚举：`CRITICAL` / `HIGH` / `MEDIUM` / `LOW`。
+
+取所有已触发信号（原子 + 关联 + 趋势）中**优先级最高**的一级：
+
+```
+任意 CRITICAL 信号触发 → 威胁等级 = CRITICAL
+无 CRITICAL 但有 HIGH   → 威胁等级 = HIGH
+无 HIGH 但有 MEDIUM     → 威胁等级 = MEDIUM
+否则                    → 威胁等级 = LOW
+```
+
+#### 威胁指数 (threatIndex，0–100)
+
+所有已触发信号的加权求和，上限 100：
+
+```
+威胁指数 = min(100,
+    CRITICAL 信号数 × 25
+  + HIGH     信号数 × 15
+  + MEDIUM   信号数 × 8
+  + LOW      信号数 × 2
+  + 关联规则触发数  × 20   ← 多源印证额外加权
+)
+```
+
+#### 态势方向 (direction)
+
+比较原子信号中"上升"与"下降"的数量差：
+
+| 条件 | 方向 |
+|---|---|
+| 上升信号比下降多 > 2 | `worsening`（恶化） |
+| 下降信号比上升多 > 2 | `improving`（好转） |
+| 其余 | `stable`（平稳） |
+
+---
 
 ### 三层信号检测
 
-增量引擎 `computeDelta()` 实现三层信号模型:
-
 **Layer 1 — 原子信号 (14 个)**
 
-| 信号 | 数据源 | 默认级别 |
-|---|---|---|
-| new_critical_cves | NVD + EPSS | HIGH |
-| new_kev_entries | CISA KEV + VulnCheck | CRITICAL |
-| epss_spike | EPSS | MEDIUM |
-| poc_published | ExploitDB | HIGH |
-| osv_critical | OSV | MEDIUM |
-| new_malware_samples | MalwareBazaar | MEDIUM |
-| active_c2 | Feodo + ThreatFox | HIGH |
-| apt_techniques | ATT&CK STIX | MEDIUM |
-| mass_scanning | GreyNoise + DShield | MEDIUM |
-| ip_reputation_alerts | AbuseIPDB | MEDIUM |
-| ransomware_victims | Ransomware.live | HIGH |
-| cert_advisories | CISA + ENISA + CERTs | MEDIUM |
-| china_alerts | CNCERT + CNVD + CNNVD | MEDIUM |
-| sources_ok | 全部源 | (反向指标) |
+每次扫描提取当前值，与上次对比；变化量超过阈值即触发信号。变化量 ≥ 阈值×3 自动升为 HIGH，≥ 阈值×5 升为 CRITICAL。
+
+| 信号 Key | 数据源 | 默认级别 | 触发阈值 |
+|---|---|---|---|
+| `new_critical_cves` | NVD (CVSS ≥ 9.0) | HIGH | ≥ 1 |
+| `new_kev_entries` | CISA-KEV | **CRITICAL** | ≥ 1 |
+| `epss_spike` | EPSS (score > 0.5) | HIGH | ≥ 1 |
+| `poc_published` | ExploitDB + GitHub Advisory | MEDIUM | ≥ 3 |
+| `osv_critical` | OSV | MEDIUM | ≥ 5 |
+| `new_malware_samples` | MalwareBazaar + ThreatFox | MEDIUM | ≥ 10 |
+| `active_c2` | Feodo + URLhaus | HIGH | ≥ 5 |
+| `apt_techniques` | ATT&CK STIX | LOW | ≥ 0（仅记录） |
+| `mass_scanning` | GreyNoise + Shodan | MEDIUM | ≥ 5 |
+| `ip_reputation_alerts` | AbuseIPDB + Spamhaus | MEDIUM | ≥ 10 |
+| `ransomware_victims` | Ransomware-Live | HIGH | ≥ 2 |
+| `cert_advisories` | CISA + ENISA + 国际 CERTs | MEDIUM | ≥ 3 |
+| `china_alerts` | CNCERT + CNVD + CNNVD | MEDIUM | ≥ 3 |
+| `sources_ok` | 全部数据源 | LOW | — （反向指标，下降视为恶化） |
 
 **Layer 2 — 交叉关联规则 (4 条)**
 
-| 规则 | 触发条件 | 级别 |
+多源同时满足才触发，固定等级，且触发时威胁指数额外 +20：
+
+| 规则 ID | 触发条件 | 等级 |
 |---|---|---|
-| 漏洞武器化 | 高危 CVE + (PoC 或 主动扫描) | CRITICAL |
-| 定向攻击基础设施 | AbuseIPDB + (ThreatFox 或 Feodo C2) | HIGH |
-| 供应链攻击 | GitHub Advisory + (OSV 或 安全新闻) | HIGH |
-| 中国高置信度 | CNCERT + (CNVD/CNNVD) + (奇安信) | CRITICAL |
+| `vuln_weaponization` | (CVSS≥9 CVE **或** KEV 新增) **且** (PoC 已发布 **或** 大规模扫描) | **CRITICAL** |
+| `targeted_infrastructure` | AbuseIPDB 有报告 **且** (ThreatFox IOC **或** Feodo C2 > 3) | HIGH |
+| `supply_chain_attack` | GitHub Advisory > 2 **且** (OSV > 5 **或** 安全媒体含供应链关键词) | HIGH |
+| `china_high_confidence` | CNCERT 告警 **且** (CNVD **或** CNNVD) **且** (ThreatBook **或** 奇安信) | **CRITICAL** |
 
 **Layer 3 — 趋势异常**
 
-Z-Score 检测 (|z| >= 2.0 触发, |z| >= 3.0 标记 HIGH)，基于最近 30 次扫描的历史数据。
+对 14 个原子信号指标，跨历史扫描计算 Z-Score（需 ≥ 2 次历史数据）：
+
+| Z-Score 绝对值 | 触发级别 |
+|---|---|
+| ≥ 3.0 | HIGH |
+| ≥ 2.0 且 < 3.0 | MEDIUM |
+| < 2.0 | 不触发 |
 
 ### CVE 生命周期追踪
 
@@ -433,7 +468,7 @@ flowchart TD
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  简报中心    │────▶│  威胁态势    │────▶│  实体搜索    │
+│  仪表板      │────▶│  威胁态势    │────▶│  情报检索    │
 │ /index.html │     │ /briefing   │     │ /search     │
 │             │     │             │     │             │
 │ SSE 实时流   │     │ Delta 引擎   │     │ JSONB 全文   │

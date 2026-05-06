@@ -198,37 +198,60 @@
   import { apiFetch } from './auth.js';
   await initShell('search');
 
-  // === State ===
-  let currentMode = 'intel';   // 'intel' | 'entity'
-  let intelFilterType = '';     // source_type filter for intel mode
-  let entityTypeFilter = '';    // STIX type filter for entity mode
+  // === Parse drill-down params from URL ===
+  const _urlParams = new URLSearchParams(location.search);
 
-  // === Default date range: last 30 days ===
-  const toDate = new Date();
-  const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - 30);
+  // === State ===
+  let currentMode = _urlParams.get('mode') || 'intel';   // 'intel' | 'entity'
+  let intelFilterType = _urlParams.get('source_type') || '';     // source_type filter for intel mode
+  let _paramSource_type = _urlParams.get('source_type') || null; // for one-time auto-activation
+  let entityTypeFilter = _urlParams.get('entity_type') || '';    // STIX type filter for entity mode
+  const _paramEntityType = _urlParams.get('entity_type') || null; // for one-time auto-activation
+  const _paramHighRisk  = _urlParams.get('high_risk') === 'true';
+  const _paramActiveOnly = _urlParams.get('active_only') === 'true';
+
+  // === Date range: use URL params if provided, otherwise default 30 days ===
+  const _paramDateFrom = _urlParams.get('date_from');
+  const _paramDateTo = _urlParams.get('date_to');
   const fmt = d => d.toISOString().slice(0, 10);
-  document.getElementById('date-from').value = fmt(fromDate);
-  document.getElementById('date-to').value = fmt(toDate);
+  if (_paramDateFrom) {
+    document.getElementById('date-from').value = _paramDateFrom.slice(0, 10);
+  } else {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 30);
+    document.getElementById('date-from').value = fmt(fromDate);
+  }
+  if (_paramDateTo) {
+    document.getElementById('date-to').value = _paramDateTo.slice(0, 10);
+  } else {
+    document.getElementById('date-to').value = fmt(new Date());
+  }
 
   // === Mode Tab Switching ===
   const panelIntel = document.getElementById('panel-intel');
   const panelEntity = document.getElementById('panel-entity');
 
-  document.querySelectorAll('[data-mode]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-mode]').forEach(b => {
-        b.classList.remove('active', 'text-cyan-400', 'border-b-2', 'border-cyan-400');
-        b.classList.add('text-slate-500');
-      });
-      btn.classList.remove('text-slate-500');
-      btn.classList.add('active', 'text-cyan-400', 'border-b-2', 'border-cyan-400');
-      currentMode = btn.dataset.mode;
-
-      panelIntel.classList.toggle('hidden', currentMode !== 'intel');
-      panelEntity.classList.toggle('hidden', currentMode !== 'entity');
+  function activateModeTab(mode) {
+    document.querySelectorAll('[data-mode]').forEach(b => {
+      b.classList.remove('active', 'text-cyan-400', 'border-b-2', 'border-cyan-400');
+      b.classList.add('text-slate-500');
     });
+    const target = document.querySelector(`[data-mode="${mode}"]`);
+    if (target) {
+      target.classList.remove('text-slate-500');
+      target.classList.add('active', 'text-cyan-400', 'border-b-2', 'border-cyan-400');
+    }
+    currentMode = mode;
+    panelIntel.classList.toggle('hidden', currentMode !== 'intel');
+    panelEntity.classList.toggle('hidden', currentMode !== 'entity');
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => activateModeTab(btn.dataset.mode));
   });
+
+  // Apply initial mode from URL params
+  activateModeTab(currentMode);
 
   // === Intel Filters (dynamic) ===
   const INTEL_TYPE_LABEL = {
@@ -269,7 +292,9 @@
       const bar = document.getElementById('intel-filter-bar');
       bar.querySelectorAll('[data-intel-type]:not([data-intel-type=""])').forEach(b => b.remove());
 
+      let totalCount = 0;
       for (const { type, count } of json.data?.types ?? []) {
+        totalCount += count;
         const label = INTEL_TYPE_LABEL[type];
         if (!label) continue;
         const btn = document.createElement('button');
@@ -278,6 +303,24 @@
         btn.innerHTML = `${label}<span class="ml-1.5 opacity-50 font-normal">${count}</span>`;
         bindIntelFilterBtn(btn);
         bar.appendChild(btn);
+      }
+
+      // Update "全部" button count
+      const allBtn = bar.querySelector('[data-intel-type=""]');
+      if (allBtn) {
+        const isActive = allBtn.classList.contains('bg-cyan-500/15');
+        allBtn.innerHTML = `全部<span class="ml-1.5 opacity-50 font-normal">${totalCount}</span>`;
+      }
+
+      // Auto-activate source_type from URL drill-down
+      if (_paramSource_type) {
+        const target = bar.querySelector(`[data-intel-type="${_paramSource_type}"]`);
+        if (target) {
+          bar.querySelectorAll('[data-intel-type]').forEach(b => { b.className = 'intel-filter ' + CLS_FILTER_INACTIVE; });
+          target.className = 'intel-filter ' + CLS_FILTER_ACTIVE;
+          intelFilterType = _paramSource_type;
+        }
+        _paramSource_type = null; // only apply once
       }
     } catch (err) {
       console.error('[intel summary] error:', err);
@@ -325,7 +368,7 @@
 
     const allBtn = document.createElement('button');
     allBtn.dataset.typeTab = '_all';
-    allBtn.className = CLS_FILTER_ACTIVE;
+    allBtn.className = CLS_FILTER_INACTIVE;
     allBtn.textContent = '全部';
     allBtn.addEventListener('click', () => switchEntityTab(allBtn, '_all'));
     entityTabs.appendChild(allBtn);
@@ -338,6 +381,16 @@
       btn.innerHTML = `${meta.label}<span class="ml-1.5 opacity-50 font-normal">${t.count}</span>`;
       btn.addEventListener('click', () => switchEntityTab(btn, t.type));
       entityTabs.appendChild(btn);
+    }
+
+    // Auto-activate entity_type from URL drill-down
+    if (_paramEntityType) {
+      const target = entityTabs.querySelector(`[data-type-tab="${_paramEntityType}"]`);
+      if (target) {
+        switchEntityTab(target, _paramEntityType);
+      }
+    } else {
+      allBtn.className = CLS_FILTER_ACTIVE;
     }
   }
 
@@ -375,11 +428,14 @@
 
     const dateFrom = document.getElementById('date-from')?.value || '';
     const dateTo   = document.getElementById('date-to')?.value   || '';
-    const dateParams = (dateFrom ? `&date_from=${encodeURIComponent(dateFrom + 'T00:00:00Z')}` : '')
-                     + (dateTo   ? `&date_to=${encodeURIComponent(dateTo   + 'T23:59:59Z')}` : '');
+    let qs = `page=${page}&limit=20`;
+    if (dateFrom) qs += `&date_from=${encodeURIComponent(dateFrom + 'T00:00:00Z')}`;
+    if (dateTo)   qs += `&date_to=${encodeURIComponent(dateTo   + 'T23:59:59Z')}`;
+    if (_paramHighRisk)  qs += '&high_risk=true';
+    if (_paramActiveOnly) qs += '&active_only=true';
 
     try {
-      const res = await apiFetch(`/api/v1/entities/${type}?page=${page}&limit=20${dateParams}`);
+      const res = await apiFetch(`/api/v1/entities/${type}?${qs}`);
       if (!res?.ok) {
         container.innerHTML = '<div class="text-sm text-red-400 py-12 text-center col-span-3">加载失败</div>';
         return;
