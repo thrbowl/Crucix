@@ -153,7 +153,7 @@
       <!-- Header Section -->
       <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 class="font-h1 text-h2 text-on-surface uppercase tracking-tight">源健康状态 <span class="text-primary/40 font-light">/ HEALTH_MATRIX</span></h1>
+          <h1 class="font-h1 text-h2 text-on-surface uppercase tracking-tight">数据源状态</h1>
           <p id="health-status" class="text-text-secondary font-body-md mt-2">实时监控 49 个核心数据源的连通性与响应效能</p>
         </div>
         <div class="flex gap-3">
@@ -180,91 +180,8 @@
               <span class="material-symbols-outlined text-primary">grid_view</span>
               数据源矩阵
             </h3>
-            <div class="text-mono-data text-primary/60 text-xs tracking-widest">自动刷新: 5秒</div>
           </div>
-          <div class="grid grid-cols-4 sm:grid-cols-7 gap-3">
-            <!-- Item 1 (OK) -->
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start">
-                <span class="text-[10px] font-mono-data text-on-surface/40">SR-01</span>
-                <span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span>
-              </div>
-              <div>
-                <div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">GALAXY_API</div>
-                <div class="text-[9px] font-mono-data text-primary/60">24ms</div>
-              </div>
-            </div>
-            <!-- Item 2 (FAIL) -->
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-error/20 hover:border-error/50 transition-all cursor-crosshair group bg-error/5">
-              <div class="flex justify-between items-start">
-                <span class="text-[10px] font-mono-data text-on-surface/40">SR-02</span>
-                <span class="w-1.5 h-1.5 rounded-full status-dot-fail"></span>
-              </div>
-              <div>
-                <div class="text-[11px] font-bold font-mono-data text-error/90 truncate">LUNAR_DB</div>
-                <div class="text-[9px] font-mono-data text-error/60">TIMED_OUT</div>
-              </div>
-            </div>
-            <!-- OK States -->
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start">
-                <span class="text-[10px] font-mono-data text-on-surface/40">SR-03</span>
-                <span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span>
-              </div>
-              <div>
-                <div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">VECTOR_X</div>
-                <div class="text-[9px] font-mono-data text-primary/60">12ms</div>
-              </div>
-            </div>
-            <!-- Skip State -->
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-white/20 opacity-50 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start">
-                <span class="text-[10px] font-mono-data text-on-surface/40">SR-04</span>
-                <span class="w-1.5 h-1.5 rounded-full status-dot-skip"></span>
-              </div>
-              <div>
-                <div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">NEBUL_ARC</div>
-                <div class="text-[9px] font-mono-data text-on-surface/40">SUSPENDED</div>
-              </div>
-            </div>
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-05</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
-              <div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">TITAN_V3</div><div class="text-[9px] font-mono-data text-primary/60">45ms</div></div>
-            </div>
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-06</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
-              <div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">ORBIT_CORE</div><div class="text-[9px] font-mono-data text-primary/60">18ms</div></div>
-            </div>
-            <div class="aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 border-white/5 hover:border-primary/40 transition-all cursor-crosshair group">
-              <div class="flex justify-between items-start"><span class="text-[10px] font-mono-data text-on-surface/40">SR-07</span><span class="w-1.5 h-1.5 rounded-full status-dot-ok"></span></div>
-              <div><div class="text-[11px] font-bold font-mono-data text-on-surface/90 truncate">PHASE_DR</div><div class="text-[9px] font-mono-data text-primary/60">31ms</div></div>
-            </div>
-            <!-- Inline matrix generator script (decorative, computed from local data) -->
-            <script>
-                                const matrix = document.querySelector('.grid.grid-cols-4.sm\\:grid-cols-7');
-                                for(let i=8; i<=49; i++) {
-                                    const isFail = Math.random() > 0.95;
-                                    const isSkip = !isFail && Math.random() > 0.9;
-                                    const id = i < 10 ? '0'+i : i;
-                                    const names = ["SOLAR_W", "QUARK_Q", "VOID_S", "ZENITH", "PULSE", "FLUX", "STORM"];
-                                    const name = names[i % names.length] + "_" + (100 + i);
-
-                                    const div = document.createElement('div');
-                                    div.className = `aspect-square glass-panel rounded-lg flex flex-col justify-between p-3 transition-all cursor-crosshair group ${isFail ? 'border-error/20 bg-error/5' : isSkip ? 'opacity-50 border-white/5' : 'border-white/5 hover:border-primary/40'}`;
-                                    div.innerHTML = `
-                                        <div class="flex justify-between items-start">
-                                            <span class="text-[10px] font-mono-data text-on-surface/40">SR-${id}</span>
-                                            <span class="w-1.5 h-1.5 rounded-full ${isFail ? 'status-dot-fail' : isSkip ? 'status-dot-skip' : 'status-dot-ok'}"></span>
-                                        </div>
-                                        <div>
-                                            <div class="text-[11px] font-bold font-mono-data ${isFail ? 'text-error/90' : 'text-on-surface/90'} truncate">${name}</div>
-                                            <div class="text-[9px] font-mono-data ${isFail ? 'text-error/60' : 'text-primary/60'}">${isFail ? 'ERR_403' : isSkip ? 'INACTIVE' : Math.floor(Math.random()*60+10)+'ms'}</div>
-                                        </div>
-                                    `;
-                                    matrix.appendChild(div);
-                                }
-                            </script>
-          </div>
+          <div id="source-matrix" class="space-y-6"></div>
         </div>
 
         <!-- Right Column: Chart & Logs -->
@@ -280,22 +197,22 @@
                 <circle class="text-cyan-400 drop-shadow-[0_0_12px_rgba(0,229,255,0.6)]" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502.4" stroke-dashoffset="30.1" stroke-width="12"></circle>
               </svg>
               <div class="absolute flex flex-col items-center">
-                <span id="success-rate" class="font-h1 text-h1 text-cyan-400 leading-none">94.8</span>
+                <span id="success-rate" class="font-h1 text-h1 text-cyan-400 leading-none">--</span>
                 <span class="text-xs font-mono-data text-cyan-400/60 uppercase mt-1">百分比</span>
               </div>
             </div>
             <div class="grid grid-cols-3 gap-4 mt-8 w-full border-t border-white/5 pt-6">
               <div>
                 <div class="text-[10px] font-label-caps text-on-surface/40 uppercase">活跃</div>
-                <div id="count-active" class="text-lg font-mono-data text-on-surface">42</div>
+                <div id="count-active" class="text-lg font-mono-data text-on-surface">--</div>
               </div>
               <div>
                 <div class="text-[10px] font-label-caps text-on-surface/40 uppercase">故障</div>
-                <div id="count-fail" class="text-lg font-mono-data text-error">03</div>
+                <div id="count-fail" class="text-lg font-mono-data text-error">--</div>
               </div>
               <div>
                 <div class="text-[10px] font-label-caps text-on-surface/40 uppercase">跳过</div>
-                <div class="text-lg font-mono-data text-slate-400">04</div>
+                <div id="count-skip" class="text-lg font-mono-data text-slate-400">--</div>
               </div>
             </div>
           </div>
@@ -306,52 +223,7 @@
               <h3 class="font-label-caps text-on-surface/60 uppercase tracking-widest">最近故障日志</h3>
               <span class="material-symbols-outlined text-xs text-primary cursor-pointer hover:rotate-180 transition-transform">refresh</span>
             </div>
-            <div id="failure-log-list" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-              <!-- Log Item -->
-              <div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
-                <div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
-                    <span>LUNAR_DB</span>
-                    <span>14:02:11</span>
-                  </div>
-                  <div class="text-[12px] text-on-surface-variant font-medium mt-1">Socket timeout: Connection refused by target cluster.</div>
-                </div>
-              </div>
-              <!-- Log Item -->
-              <div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
-                <div class="text-error mt-1"><span class="material-symbols-outlined text-sm">error</span></div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
-                    <span>SOLAR_W_108</span>
-                    <span>13:58:45</span>
-                  </div>
-                  <div class="text-[12px] text-on-surface-variant font-medium mt-1">Invalid API Key: Access revoked for endpoint v3.</div>
-                </div>
-              </div>
-              <!-- Log Item -->
-              <div class="p-3 bg-tertiary-container/5 border-l-2 border-tertiary-container/50 rounded flex gap-4">
-                <div class="text-tertiary-container mt-1"><span class="material-symbols-outlined text-sm">notification_important</span></div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-[10px] font-mono-data text-tertiary-container uppercase">
-                    <span>VOID_S_110</span>
-                    <span>13:45:00</span>
-                  </div>
-                  <div class="text-[12px] text-on-surface-variant font-medium mt-1">Rate limit approaching: 89% threshold reached.</div>
-                </div>
-              </div>
-              <!-- Log Item -->
-              <div class="p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4">
-                <div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
-                    <span>QUARK_Q_109</span>
-                    <span>13:12:22</span>
-                  </div>
-                  <div class="text-[12px] text-on-surface-variant font-medium mt-1">DNS Resolution failed: No record for host.local</div>
-                </div>
-              </div>
-            </div>
+            <div id="failure-log-list" class="space-y-4 max-h-[300px] overflow-y-auto pr-2"></div>
           </div>
 
         </div>
@@ -375,65 +247,181 @@
   import { apiFetch } from './auth.js';
   await initShell('sources');
 
-  // GET /api/health for basic system status
-  async function loadHealth() {
+  const matrixEl = document.getElementById('source-matrix');
+  const logList = document.getElementById('failure-log-list');
+  const CIRC = 2 * Math.PI * 80; // 502.4
+
+  const DOMAIN_LABELS = {
+    vulnerability_intel: { label: '漏洞情报', icon: 'bug_report' },
+    threat_actors:      { label: '威胁行为者与恶意软件', icon: 'coronavirus' },
+    attack_exposure:    { label: '攻击活动与暴露面', icon: 'radar' },
+    event_tracking:     { label: '事件追踪与安全社区', icon: 'newspaper' },
+    china_intel:        { label: '中国情报源', icon: 'language' },
+    vendor_feeds:       { label: '厂商公告', icon: 'campaign' },
+  };
+
+  function renderMatrix(sources) {
+    matrixEl.innerHTML = '';
+    const active = sources.filter(s => s.last_status === 'active').length;
+    const errors = sources.filter(s => s.last_status === 'error').length;
+    const inactive = sources.filter(s => s.last_status === 'inactive').length;
+    const noData = sources.filter(s => !s.last_status).length;
+    const skip = inactive + noData;
+    const rate = sources.length ? (active / sources.length * 100) : 0;
+
+    // Group by domain
+    const groups = {};
+    for (const src of sources) {
+      const d = src.domain || 'other';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(src);
+    }
+
+    // Render groups in defined order
+    for (const [domain, meta] of Object.entries(DOMAIN_LABELS)) {
+      const items = groups[domain];
+      if (!items?.length) continue;
+      delete groups[domain];
+
+      const grpActive = items.filter(s => s.last_status === 'active').length;
+      const groupEl = document.createElement('div');
+      groupEl.innerHTML = `
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-primary text-base">${meta.icon}</span>
+          <span class="text-sm font-label-caps text-on-surface/70 uppercase tracking-widest">${meta.label}</span>
+          <span class="text-[10px] font-mono-data text-primary/50">${grpActive}/${items.length}</span>
+        </div>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2"></div>`;
+      const grid = groupEl.querySelector('div:last-child');
+
+      for (const src of items) {
+        grid.appendChild(createSourceCard(src));
+      }
+      matrixEl.appendChild(groupEl);
+    }
+
+    // Any remaining domains not in DOMAIN_LABELS
+    for (const [domain, items] of Object.entries(groups)) {
+      const groupEl = document.createElement('div');
+      groupEl.innerHTML = `
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-primary text-base">source</span>
+          <span class="text-sm font-label-caps text-on-surface/70 uppercase tracking-widest">${domain.replace(/_/g, ' ')}</span>
+        </div>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2"></div>`;
+      const grid = groupEl.querySelector('div:last-child');
+      for (const src of items) grid.appendChild(createSourceCard(src));
+      matrixEl.appendChild(groupEl);
+    }
+
+    // Update SVG chart
+    const rateEl = document.getElementById('success-rate');
+    const circle = document.querySelector('svg circle:nth-child(2)');
+    if (rateEl) rateEl.textContent = rate.toFixed(1);
+    if (circle) circle.setAttribute('stroke-dashoffset', CIRC * (1 - rate / 100));
+
+    const activeEl = document.getElementById('count-active');
+    const failEl = document.getElementById('count-fail');
+    const skipEl = document.getElementById('count-skip');
+    if (activeEl) activeEl.textContent = String(active).padStart(2, '0');
+    if (failEl) failEl.textContent = String(errors).padStart(2, '0');
+    if (skipEl) skipEl.textContent = String(skip).padStart(2, '0');
+  }
+
+  function createSourceCard(src) {
+    const st = src.last_status;
+    const isFail = st === 'error';
+    const isSkip = !st || st === 'inactive';
+
+    const card = document.createElement('div');
+    card.className = `aspect-square glass-panel rounded-lg flex flex-col justify-between p-2.5 transition-all cursor-crosshair group ${isFail ? 'border-error/20 hover:border-error/50 bg-error/5' : isSkip ? 'border-white/5 hover:border-white/20 opacity-50' : 'border-white/5 hover:border-primary/40'}`;
+    card.title = src.homepage_url || '';
+
+    const dot = isFail ? 'status-dot-fail' : isSkip ? 'status-dot-skip' : 'status-dot-ok';
+    const nameColor = isFail ? 'text-error/90' : 'text-on-surface/90';
+    const subColor = isFail ? 'text-error/60' : isSkip ? 'text-on-surface/40' : 'text-primary/60';
+    const subText = isFail ? (src.last_error || 'ERROR').substring(0, 12) : isSkip ? (src.enabled ? 'INACTIVE' : 'DISABLED') : (src.avg_duration_ms ? src.avg_duration_ms + 'ms' : '--');
+
+    card.innerHTML = `
+      <div class="flex justify-end">
+        <span class="w-1.5 h-1.5 rounded-full ${dot}"></span>
+      </div>
+      <div>
+        <div class="text-[11px] font-bold font-mono-data ${nameColor} truncate">${src.name}</div>
+        <div class="text-[9px] font-mono-data ${subColor}">${subText}</div>
+      </div>`;
+    return card;
+  }
+
+  function renderFailureLogs(sources) {
+    if (!logList) return;
+    logList.innerHTML = '';
+    const failed = sources
+      .filter(s => s.last_status === 'error' && s.last_failure_at)
+      .sort((a, b) => new Date(b.last_failure_at) - new Date(a.last_failure_at));
+
+    for (const src of failed) {
+      const time = new Date(src.last_failure_at).toLocaleTimeString('zh-CN', { hour12: false });
+      const item = document.createElement('div');
+      item.className = 'p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4';
+      item.innerHTML = `
+        <div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
+        <div class="flex-1">
+          <div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
+            <span>${src.name}</span>
+            <span>${time}</span>
+          </div>
+          <div class="text-[12px] text-on-surface-variant font-medium mt-1">${src.last_error || '连接异常'}</div>
+        </div>`;
+      logList.appendChild(item);
+    }
+    if (failed.length === 0) {
+      logList.innerHTML = '<div class="text-center text-on-surface/40 text-sm py-8">暂无故障记录</div>';
+    }
+  }
+
+  async function loadSources() {
     try {
-      const res = await apiFetch('/api/health');
+      const res = await apiFetch('/api/sources');
       if (!res?.ok) return;
-      const data = await res.json();
+      const sources = await res.json();
+      renderMatrix(sources);
+      renderFailureLogs(sources);
       const statusEl = document.getElementById('health-status');
       if (statusEl) {
-        statusEl.textContent = data.status === 'ok'
-          ? '实时监控 49 个核心数据源的连通性与响应效能'
-          : '⚠️ 系统健康检查异常，请联系管理员';
+        const active = sources.filter(s => s.last_status === 'active').length;
+        statusEl.textContent = `实时监控 ${sources.length} 个核心数据源 — ${active}/${sources.length} 活跃`;
       }
-    } catch { /* retain static text */ }
+    } catch { /* retain static content */ }
   }
-  loadHealth();
 
-  // SSE for real-time source_status events
+  loadSources();
+
+  // SSE: reload on data refresh
   const token = localStorage.getItem('crx_access_token');
   const evtSrc = new EventSource(`/events?token=${encodeURIComponent(token ?? '')}`);
-  const logList = document.getElementById('failure-log-list');
+  evtSrc.addEventListener('refresh', () => loadSources());
 
+  // SSE: real-time source failure alerts
   evtSrc.addEventListener('source_status', (e) => {
     try {
       const evt = JSON.parse(e.data);
-      if (!logList) return;
-      if (evt.status !== 'ok') {
-        const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-
-        const item = document.createElement('div');
-        item.className = 'p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4';
-
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'text-error mt-1';
-        const iconSpan = document.createElement('span');
-        iconSpan.className = 'material-symbols-outlined text-sm';
-        iconSpan.textContent = 'warning';
-        iconDiv.appendChild(iconSpan);
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'flex-1';
-
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'flex justify-between text-[10px] font-mono-data text-error/80 uppercase';
-        const sourceSpan = document.createElement('span');
-        sourceSpan.textContent = evt.source ?? 'UNKNOWN';
-        const timeSpan = document.createElement('span');
-        timeSpan.textContent = time;
-        metaDiv.append(sourceSpan, timeSpan);
-
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'text-[12px] text-on-surface-variant font-medium mt-1';
-        msgDiv.textContent = evt.message ?? '连接异常';
-
-        contentDiv.append(metaDiv, msgDiv);
-        item.append(iconDiv, contentDiv);
-        logList.prepend(item);
-        while (logList.children.length > 10) logList.lastElementChild.remove();
-      }
-    } catch { /* ignore parse errors */ }
+      if (!logList || evt.status === 'ok') return;
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      const item = document.createElement('div');
+      item.className = 'p-3 bg-error/5 border-l-2 border-error/50 rounded flex gap-4';
+      item.innerHTML = `
+        <div class="text-error mt-1"><span class="material-symbols-outlined text-sm">warning</span></div>
+        <div class="flex-1">
+          <div class="flex justify-between text-[10px] font-mono-data text-error/80 uppercase">
+            <span>${evt.source ?? 'UNKNOWN'}</span>
+            <span>${time}</span>
+          </div>
+          <div class="text-[12px] text-on-surface-variant font-medium mt-1">${evt.message ?? '连接异常'}</div>
+        </div>`;
+      logList.prepend(item);
+      while (logList.children.length > 10) logList.lastElementChild.remove();
+    } catch {}
   });
 
   evtSrc.onerror = () => evtSrc.close();

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html class="dark" lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/libs/tailwind.js"></script>
+<link href="/libs/fonts/space-grotesk-inter.css" rel="stylesheet"/>
+<link href="/libs/fonts/material-symbols.css" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#00daf3",
+                        "neon-glow": "rgba(0, 229, 255, 0.3)",
+                        "on-surface": "#dce4e5",
+                        "on-secondary": "#67001b",
+                        "tertiary-fixed-dim": "#f3bf26",
+                        "tertiary": "#ffeac0",
+                        "secondary": "#ffb2b7",
+                        "on-surface-variant": "#bac9cc",
+                        "secondary-fixed-dim": "#ffb2b7",
+                        "primary-container": "#00e5ff",
+                        "outline": "#849396",
+                        "on-tertiary-fixed": "#251a00",
+                        "on-tertiary": "#3e2e00",
+                        "primary": "#c3f5ff",
+                        "surface-container-highest": "#2e3638",
+                        "surface-container": "#192122",
+                        "text-secondary": "#94A3B8",
+                        "tertiary-fixed": "#ffdf96",
+                        "surface-variant": "#2e3638",
+                        "inverse-on-surface": "#2a3233",
+                        "background": "#0B0E14",
+                        "surface-container-lowest": "#080f11",
+                        "surface-bright": "#333a3c",
+                        "on-primary": "#00363d",
+                        "on-background": "#dce4e5",
+                        "primary-fixed-dim": "#00daf3",
+                        "on-primary-container": "#00626e",
+                        "tertiary-container": "#fec931",
+                        "border-subtle": "rgba(255, 255, 255, 0.08)",
+                        "surface-container-low": "#151d1e",
+                        "text-primary": "#E2E8F0",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#b50036",
+                        "surface": "rgba(20, 25, 35, 0.6)",
+                        "surface-container-high": "#242b2d",
+                        "outline-variant": "#3b494c",
+                        "inverse-surface": "#dce4e5",
+                        "surface-dim": "#0d1516",
+                        "on-error": "#690005",
+                        "inverse-primary": "#006875"
+                    },
+                    "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    "spacing": { "xl": "40px", "margin": "24px", "gutter": "16px", "lg": "24px", "unit": "4px", "md": "16px", "xs": "4px", "sm": "8px" },
+                    "fontFamily": { "mono-data": ["Space Grotesk"], "label-caps": ["Space Grotesk"], "h2": ["Space Grotesk"], "h3": ["Space Grotesk"], "h1": ["Space Grotesk"], "body-md": ["Inter"], "body-lg": ["Inter"] },
+                    "fontSize": {
+                        "mono-data": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "h1": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .glass-panel { backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); background: rgba(20,25,35,0.6); }
+  .tab-active { color: #00e5ff; border-color: #00e5ff; }
+  .tab-inactive { color: #94A3B8; border-color: transparent; }
+  .tab-inactive:hover { color: #c3f5ff; }
+  .status-dot-ok { background-color: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
+  .status-dot-fail { background-color: #ffb4ab; box-shadow: 0 0 8px #ffb4ab; }
+  .status-dot-skip { background-color: #849396; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 10px; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+
+<div id="page-content" style="visibility:hidden" class="flex h-screen pt-16">
+  <main class="flex-1 overflow-y-auto bg-background p-6 lg:p-10 relative ml-64">
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto space-y-6">
+
+      <!-- Header -->
+      <header>
+        <h1 class="font-h1 text-h2 text-on-surface uppercase tracking-tight">后台管理</h1>
+        <p class="text-text-secondary font-body-md mt-2">用户管理、数据源配置与审计日志</p>
+      </header>
+
+      <!-- Tabs -->
+      <div class="flex gap-1 border-b border-white/10">
+        <button data-tab="users" class="tab-btn tab-active px-5 py-3 text-sm font-label-caps border-b-2 transition-all">用户管理</button>
+        <button data-tab="sources" class="tab-btn tab-inactive px-5 py-3 text-sm font-label-caps border-b-2 transition-all">数据源管理</button>
+        <button data-tab="audit" class="tab-btn tab-inactive px-5 py-3 text-sm font-label-caps border-b-2 transition-all">审计日志</button>
+      </div>
+
+      <!-- Tab: Users -->
+      <div id="tab-users" class="tab-panel">
+        <div class="glass-panel rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 bg-white/5">
+                <th class="px-6 py-4 font-label-caps text-slate-500 text-[10px]">邮箱</th>
+                <th class="px-6 py-4 font-label-caps text-slate-500 text-[10px]">角色</th>
+                <th class="px-6 py-4 font-label-caps text-slate-500 text-[10px]">计划</th>
+                <th class="px-6 py-4 font-label-caps text-slate-500 text-[10px]">注册时间</th>
+                <th class="px-6 py-4 font-label-caps text-slate-500 text-[10px] text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="users-body" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Sources -->
+      <div id="tab-sources" class="tab-panel hidden">
+        <div id="sources-container" class="space-y-6"></div>
+      </div>
+
+      <!-- Tab: Audit -->
+      <div id="tab-audit" class="tab-panel hidden">
+        <div class="flex gap-3 mb-4">
+          <select id="audit-action-filter" class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-slate-300 focus:outline-none">
+            <option value="">全部操作</option>
+            <option value="user.login">登录</option>
+            <option value="user.logout">登出</option>
+            <option value="user.password_change">修改密码</option>
+            <option value="user.role_change">角色变更</option>
+            <option value="user.reset_password">重置密码</option>
+            <option value="user.ban">封禁用户</option>
+            <option value="source.enable">启用源</option>
+            <option value="source.disable">禁用源</option>
+            <option value="source.edit">编辑源</option>
+            <option value="source.trigger">触发采集</option>
+          </select>
+        </div>
+        <div class="glass-panel rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 bg-white/5">
+                <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">时间</th>
+                <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">用户</th>
+                <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">操作</th>
+                <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">目标</th>
+                <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">详情</th>
+              </tr>
+            </thead>
+            <tbody id="audit-body" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+        <div class="flex justify-center mt-4 gap-2">
+          <button id="audit-prev" class="px-4 py-2 text-sm glass-panel rounded text-slate-400 hover:text-cyan-400 disabled:opacity-30" disabled>上一页</button>
+          <span id="audit-page-info" class="px-4 py-2 text-sm font-mono-data text-slate-500"></span>
+          <button id="audit-next" class="px-4 py-2 text-sm glass-panel rounded text-slate-400 hover:text-cyan-400">下一页</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { initShell } from './shell.js';
+import { apiFetch } from './auth.js';
+const user = await initShell('admin');
+if (!user?.is_admin) { window.location.href = '/'; throw new Error('Not admin'); }
+
+// === Tab switching ===
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.className = b.className.replace('tab-active', 'tab-inactive'); });
+    btn.className = btn.className.replace('tab-inactive', 'tab-active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`tab-${btn.dataset.tab}`)?.classList.remove('hidden');
+  });
+});
+
+// === Users ===
+async function loadUsers() {
+  const res = await apiFetch('/api/admin/users');
+  if (!res?.ok) return;
+  const users = await res.json();
+  const body = document.getElementById('users-body');
+  body.innerHTML = '';
+  for (const u of users) {
+    const tr = document.createElement('tr');
+    const isBanned = !!u.banned;
+    const isSelf = String(u.id) === String(user.id);
+    tr.className = `hover:bg-white/5 transition-colors ${isBanned ? 'bg-error/5 border-l-2 border-error/50' : ''}`;
+    tr.innerHTML = `
+      <td class="px-6 py-4 text-sm font-mono-data text-slate-200 ${isBanned ? 'opacity-50' : ''}">${u.email}${isSelf ? ' <span class="text-[10px] text-cyan-400">(当前)</span>' : ''}</td>
+      <td class="px-6 py-4">
+        ${isSelf
+          ? `<span class="font-label-caps text-[10px] text-amber-400">${u.role.toUpperCase()}</span>`
+          : `<select data-user-id="${u.id}" data-email="${u.email}" class="role-select bg-slate-800 border border-white/10 rounded px-2 py-1 text-xs text-white focus:outline-none">
+              <option value="user" ${u.role === 'user' ? 'selected' : ''}>用户</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>管理员</option>
+            </select>`}
+      </td>
+      <td class="px-6 py-4 text-sm text-slate-400">${u.plan_name ?? '--'}</td>
+      <td class="px-6 py-4 text-sm text-slate-500 font-mono-data">${new Date(u.created_at).toLocaleDateString('zh-CN')}</td>
+      <td class="px-6 py-4 text-right space-x-2">
+        ${isSelf ? '' : isBanned
+          ? `<button data-user-id="${u.id}" data-email="${u.email}" class="unban-btn text-xs text-green-400 hover:text-green-300 border border-green-400/30 px-2 py-1 rounded">启用</button>`
+          : `<button data-user-id="${u.id}" data-email="${u.email}" class="ban-btn text-xs text-error hover:text-red-300 border border-error/30 px-2 py-1 rounded">封禁</button>`}
+        ${isSelf ? '' : `<button data-user-id="${u.id}" data-email="${u.email}" class="reset-pw-btn text-xs text-cyan-400 hover:text-cyan-300 border border-cyan-400/30 px-2 py-1 rounded">重置密码</button>`}
+      </td>`;
+    body.appendChild(tr);
+  }
+  body.querySelectorAll('.role-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      await apiFetch(`/api/admin/users/${sel.dataset.userId}/role`, {
+        method: 'PATCH', body: JSON.stringify({ role: sel.value }),
+      });
+      loadUsers();
+    });
+  });
+  body.querySelectorAll('.ban-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`确认封禁用户 ${btn.dataset.email}？该用户将无法登录。`)) return;
+      await apiFetch(`/api/admin/users/${btn.dataset.userId}/ban`, {
+        method: 'PATCH', body: JSON.stringify({ banned: true }),
+      });
+      loadUsers();
+    });
+  });
+  body.querySelectorAll('.unban-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await apiFetch(`/api/admin/users/${btn.dataset.userId}/ban`, {
+        method: 'PATCH', body: JSON.stringify({ banned: false }),
+      });
+      loadUsers();
+    });
+  });
+  body.querySelectorAll('.reset-pw-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`确认重置 ${btn.dataset.email} 的密码？`)) return;
+      const res = await apiFetch(`/api/admin/users/${btn.dataset.userId}/reset-password`, { method: 'POST' });
+      if (res?.ok) {
+        const d = await res.json();
+        alert(`密码已重置，临时密码：\n\n${d.temp_password}\n\n请通知用户尽快修改。`);
+      } else {
+        const d = await res?.json().catch(() => null);
+        alert(d?.error ?? '重置失败');
+      }
+    });
+  });
+}
+
+// === Sources ===
+const DOMAIN_LABELS = {
+  vulnerability_intel: { label: '漏洞情报', icon: 'bug_report' },
+  threat_actors: { label: '威胁行为者与恶意软件', icon: 'coronavirus' },
+  attack_exposure: { label: '攻击活动与暴露面', icon: 'radar' },
+  event_tracking: { label: '事件追踪与安全社区', icon: 'newspaper' },
+  china_intel: { label: '中国情报源', icon: 'language' },
+  vendor_feeds: { label: '厂商公告', icon: 'campaign' },
+};
+
+async function loadSources() {
+  const res = await apiFetch('/api/admin/sources');
+  if (!res?.ok) return;
+  const sources = await res.json();
+  const container = document.getElementById('sources-container');
+  container.innerHTML = '';
+
+  const groups = {};
+  for (const s of sources) {
+    const d = s.domain || 'other';
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(s);
+  }
+
+  for (const [domain, meta] of Object.entries(DOMAIN_LABELS)) {
+    const items = groups[domain];
+    if (!items?.length) continue;
+    delete groups[domain];
+    container.appendChild(buildSourceGroup(domain, meta, items));
+  }
+  for (const [domain, items] of Object.entries(groups)) {
+    container.appendChild(buildSourceGroup(domain, { label: domain, icon: 'source' }, items));
+  }
+}
+
+function buildSourceGroup(domain, meta, items) {
+  const grp = document.createElement('div');
+  grp.innerHTML = `
+    <div class="flex items-center gap-2 mb-3">
+      <span class="material-symbols-outlined text-primary text-base">${meta.icon}</span>
+      <span class="text-sm font-label-caps text-on-surface/70 uppercase tracking-widest">${meta.label}</span>
+    </div>
+    <div class="glass-panel rounded-xl overflow-hidden">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 bg-white/5">
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">名称</th>
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">状态</th>
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">延迟</th>
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">成功率</th>
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px]">启用</th>
+            <th class="px-4 py-3 font-label-caps text-slate-500 text-[10px] text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5"></tbody>
+      </table>
+    </div>`;
+  const tbody = grp.querySelector('tbody');
+  for (const s of items) {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-white/5 transition-colors';
+    const st = s.last_status;
+    const dotClass = st === 'error' ? 'status-dot-fail' : !st || st === 'inactive' ? 'status-dot-skip' : 'status-dot-ok';
+    const total = (s.total_successes || 0) + (s.total_failures || 0);
+    const rate = total > 0 ? ((s.total_successes / total) * 100).toFixed(0) : '--';
+    tr.innerHTML = `
+      <td class="px-4 py-3">
+        <div class="text-sm font-mono-data text-slate-200">${s.name}</div>
+        <div class="text-[10px] text-slate-500">${s.type}</div>
+      </td>
+      <td class="px-4 py-3"><span class="w-2 h-2 rounded-full inline-block ${dotClass}"></span> <span class="text-xs text-slate-400">${st ?? 'N/A'}</span></td>
+      <td class="px-4 py-3 text-sm font-mono-data text-slate-400">${s.avg_duration_ms ? s.avg_duration_ms + 'ms' : '--'}</td>
+      <td class="px-4 py-3 text-sm font-mono-data text-slate-400">${rate}%</td>
+      <td class="px-4 py-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" ${s.enabled ? 'checked' : ''} data-source="${s.name}" class="source-toggle sr-only peer">
+          <div class="w-8 h-4 bg-white/10 peer-checked:bg-cyan-500/40 rounded-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
+        </label>
+      </td>
+      <td class="px-4 py-3 text-right">
+        <button data-source="${s.name}" class="trigger-btn material-symbols-outlined text-sm text-slate-500 hover:text-cyan-400 transition-colors" title="触发采集">play_circle</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+
+  // Toggle handlers
+  grp.querySelectorAll('.source-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async () => {
+      await apiFetch(`/api/admin/sources/${encodeURIComponent(toggle.dataset.source)}`, {
+        method: 'PATCH', body: JSON.stringify({ enabled: toggle.checked }),
+      });
+    });
+  });
+  grp.querySelectorAll('.trigger-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const res = await apiFetch(`/api/admin/sources/${encodeURIComponent(btn.dataset.source)}/trigger`, { method: 'POST' });
+      if (res?.ok) alert(`${btn.dataset.source} 采集已触发`);
+    });
+  });
+  return grp;
+}
+
+// === Audit Logs ===
+let auditPage = 1;
+const auditLimit = 50;
+
+async function loadAuditLogs() {
+  const action = document.getElementById('audit-action-filter')?.value || '';
+  const res = await apiFetch(`/api/admin/audit-logs?page=${auditPage}&limit=${auditLimit}${action ? '&action=' + action : ''}`);
+  if (!res?.ok) return;
+  const { logs, total } = await res.json();
+  const body = document.getElementById('audit-body');
+  body.innerHTML = '';
+  const totalPages = Math.ceil(total / auditLimit) || 1;
+  document.getElementById('audit-page-info').textContent = `${auditPage} / ${totalPages}`;
+  document.getElementById('audit-prev').disabled = auditPage <= 1;
+  document.getElementById('audit-next').disabled = auditPage >= totalPages;
+
+  const actionLabels = {
+    'user.login': '登录', 'user.logout': '登出', 'user.password_change': '修改密码',
+    'user.role_change': '角色变更', 'user.reset_password': '重置密码', 'user.ban': '封禁', 'user.unban': '解封',
+    'source.enable': '启用源', 'source.disable': '禁用源', 'source.edit': '编辑源', 'source.trigger': '触发采集',
+  };
+
+  for (const log of logs) {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-white/5 transition-colors';
+    const time = new Date(log.created_at).toLocaleString('zh-CN', { hour12: false });
+    const detail = log.detail ? Object.entries(log.detail).map(([k,v]) => `${k}: ${v}`).join(', ') : '';
+    tr.innerHTML = `
+      <td class="px-4 py-3 text-xs font-mono-data text-slate-500 whitespace-nowrap">${time}</td>
+      <td class="px-4 py-3 text-xs text-slate-300">${log.user_email ?? '系统'}</td>
+      <td class="px-4 py-3 text-xs"><span class="text-cyan-400">${actionLabels[log.action] ?? log.action}</span></td>
+      <td class="px-4 py-3 text-xs font-mono-data text-slate-400">${log.target ?? '--'}</td>
+      <td class="px-4 py-3 text-xs text-slate-500 max-w-[200px] truncate" title="${detail}">${detail}</td>`;
+    body.appendChild(tr);
+  }
+  if (!logs.length) {
+    body.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">暂无日志</td></tr>';
+  }
+}
+
+document.getElementById('audit-prev')?.addEventListener('click', () => { auditPage--; loadAuditLogs(); });
+document.getElementById('audit-next')?.addEventListener('click', () => { auditPage++; loadAuditLogs(); });
+document.getElementById('audit-action-filter')?.addEventListener('change', () => { auditPage = 1; loadAuditLogs(); });
+
+// Initial load
+loadUsers();
+loadSources();
+loadAuditLogs();
+</script>
+</body>
+</html>
