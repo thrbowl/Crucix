@@ -1,5 +1,5 @@
 services:
-  crucix:
+  web:
     build: .
     ports:
       - "${PORT:-3117}:${PORT:-3117}"
@@ -8,3 +8,13 @@ services:
     volumes:
       - ./runs:/app/runs
     restart: unless-stopped
+    command: ["node", "server.mjs"]
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./runs:/app/runs
+    restart: unless-stopped
+    command: ["node", "worker.mjs"]

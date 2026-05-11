@@ -138,75 +138,72 @@ export async function runSource(name, fn, ...args) {
   }
 }
 
-export async function fullBriefing() {
-  const totalSources = 49; // ThreatBook disabled; BGP-Ranking/Bluesky/Shadowserver/PhishTank removed; +3 RSS feeds; +OpenPhish; +DShield; +Tavily; +Qianxin-Hunter; +Qianxin-TI; +Baidu-Search; +VulnCheck; +CIRCL-CVE; +CIRCL-PDNS; +Hybrid-Analysis; +Malpedia; +Censys; +Vendors-Intl; +Vendors-CN
-  console.error(`[Crucix] Starting cybersecurity sweep — ${totalSources} sources...`);
+const ALL_SOURCES = [
+  // Domain 1: Vulnerability Intelligence
+  { name: 'CISA-KEV', fn: cisaKev },
+  { name: 'NVD', fn: nvd },
+  { name: 'EPSS', fn: epss },
+  { name: 'GitHub-Advisory', fn: githubAdvisory },
+  { name: 'ExploitDB', fn: exploitdb },
+  { name: 'OSV', fn: osv },
+  { name: 'VulnCheck', fn: vulncheck },
+  { name: 'CIRCL-CVE', fn: circlCve },
+  // Domain 2: Threat Actors & Malware
+  { name: 'OTX', fn: otx },
+  { name: 'MalwareBazaar', fn: malwarebazaar },
+  { name: 'ThreatFox', fn: threatfox },
+  { name: 'Feodo', fn: feodo },
+  { name: 'ATT&CK-STIX', fn: attackStix },
+  { name: 'VirusTotal', fn: virustotal },
+  { name: 'URLhaus', fn: urlhaus },
+  { name: 'CIRCL-PDNS', fn: circlPdns },
+  { name: 'Hybrid-Analysis', fn: hybridAnalysis },
+  { name: 'Malpedia', fn: malpedia },
+  // Domain 3: Attack Activity & Exposure
+  { name: 'GreyNoise', fn: greynoise },
+  { name: 'Shodan', fn: shodan },
+  { name: 'AbuseIPDB', fn: abuseipdb },
+  { name: 'Cloudflare-Radar', fn: cloudflareRadar },
+  { name: 'Spamhaus', fn: spamhaus },
+  { name: 'OpenPhish', fn: openPhish },
+  { name: 'DShield', fn: dshield },
+  { name: 'Censys', fn: censys },
+  // Domain 4: Event Tracking & Intel Community
+  { name: 'Ransomware-Live', fn: ransomwareLive },
+  { name: 'ENISA', fn: enisa },
+  { name: 'CISA-Alerts', fn: cisaAlerts },
+  { name: 'CERTs-Intl', fn: certsIntl },
+  { name: 'Telegram', fn: telegram },
+  { name: 'HackerNews-RSS', fn: hackerNewsRss },
+  { name: 'BleepingComputer', fn: bleepingComputer },
+  { name: 'SecurityWeek', fn: securityWeek },
+  { name: 'Tavily', fn: tavily },
+  // Domain 5: China Intelligence
+  { name: 'CNCERT', fn: cncert },
+  { name: 'CNVD', fn: cnvd },
+  { name: 'CNNVD', fn: cnnvd },
+  { name: 'Qianxin', fn: qianxin },
+  { name: 'Qianxin-Hunter', fn: qianxinHunter },
+  { name: 'Qianxin-TI', fn: qianxinTI },
+  { name: 'Baidu-Search', fn: baiduSearch },
+  { name: 'FOFA', fn: fofa },
+  { name: 'ZoomEye', fn: zoomeye },
+  { name: 'FreeBuf', fn: freebuf },
+  { name: 'Anquanke', fn: anquanke },
+  { name: '4hou', fn: fourhou },
+  // Domain 6: Vendor Announcements
+  { name: 'Vendors-Intl', fn: vendorsIntl },
+  { name: 'Vendors-CN', fn: vendorsCn },
+];
+
+export async function fullBriefing(enabledSources = null) {
+  const target = enabledSources
+    ? ALL_SOURCES.filter(s => enabledSources.has(s.name))
+    : ALL_SOURCES;
+  console.error(`[Crucix] Starting cybersecurity sweep — ${target.length} sources...`);
   const start = Date.now();
 
-  const allPromises = [
-    // Domain 1: Vulnerability Intelligence
-    runSource('CISA-KEV', cisaKev),
-    runSource('NVD', nvd),
-    runSource('EPSS', epss),
-    runSource('GitHub-Advisory', githubAdvisory),
-    runSource('ExploitDB', exploitdb),
-    runSource('OSV', osv),
-    runSource('VulnCheck', vulncheck),
-    runSource('CIRCL-CVE', circlCve),
-
-    // Domain 2: Threat Actors & Malware
-    runSource('OTX', otx),
-    runSource('MalwareBazaar', malwarebazaar),
-    runSource('ThreatFox', threatfox),
-    runSource('Feodo', feodo),
-    runSource('ATT&CK-STIX', attackStix),
-    runSource('VirusTotal', virustotal),
-    runSource('URLhaus', urlhaus),
-    runSource('CIRCL-PDNS', circlPdns),
-    runSource('Hybrid-Analysis', hybridAnalysis),
-    runSource('Malpedia', malpedia),
-
-    // Domain 3: Attack Activity & Exposure
-    runSource('GreyNoise', greynoise),
-    runSource('Shodan', shodan),
-    runSource('AbuseIPDB', abuseipdb),
-    runSource('Cloudflare-Radar', cloudflareRadar),
-    runSource('Spamhaus', spamhaus),
-    runSource('OpenPhish', openPhish),
-    runSource('DShield', dshield),
-    runSource('Censys', censys),
-
-    // Domain 4: Event Tracking & Intel Community
-    runSource('Ransomware-Live', ransomwareLive),
-    runSource('ENISA', enisa),
-    runSource('CISA-Alerts', cisaAlerts),
-    runSource('CERTs-Intl', certsIntl),
-    runSource('Telegram', telegram),
-    runSource('HackerNews-RSS', hackerNewsRss),
-    runSource('BleepingComputer', bleepingComputer),
-    runSource('SecurityWeek', securityWeek),
-    runSource('Tavily', tavily),
-
-    // Domain 5: China Intelligence
-    runSource('CNCERT', cncert),
-    runSource('CNVD', cnvd),
-    runSource('CNNVD', cnnvd),
-    // runSource('ThreatBook', threatbook), // API broken — "Invalid Api method"
-    runSource('Qianxin', qianxin),
-    runSource('Qianxin-Hunter', qianxinHunter),
-    runSource('Qianxin-TI', qianxinTI),
-    runSource('Baidu-Search', baiduSearch),
-    runSource('FOFA', fofa),
-    runSource('ZoomEye', zoomeye),
-    runSource('FreeBuf', freebuf),
-    runSource('Anquanke', anquanke),
-    runSource('4hou', fourhou),
-
-    // Domain 6: Vendor Announcements
-    runSource('Vendors-Intl', vendorsIntl),
-    runSource('Vendors-CN', vendorsCn),
-
-  ];
+  const allPromises = target.map(s => runSource(s.name, s.fn));
 
   const results = await Promise.allSettled(allPromises);
 
@@ -230,6 +227,7 @@ export async function fullBriefing() {
     timing: Object.fromEntries(
       sources.map(s => [s.name, { status: s.status, ms: s.durationMs }])
     ),
+    _results: sources,
   };
 
   console.error(`[Crucix] Sweep complete in ${totalMs}ms — ${output.crucix.sourcesOk} active / ${output.crucix.sourcesInactive} inactive / ${output.crucix.sourcesFailed} failed`);
